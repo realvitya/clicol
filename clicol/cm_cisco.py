@@ -29,7 +29,7 @@ def init(ct):
       ["","",re.compile(BOL+r"((line)\ (con\ ?[0-9]?|vty [0-9]+(?: [0-9]+)?|aux [0-9]+|console))",flags=re.M),r"\1"+ct['interface']+r"\2"+ct['default'],CONT],
 
       #interface stats
-      ["","",re.compile(r"([1-9]+) (runts|giants|throttles|(?:input|output) errors|CRC|frame|overrun|ignored|watchdog|input packets with dribble|underruns|collisions|interface resets|unknown protocol drops|babbles|late collision|deferred|lost carrier|no carrier|output buffer)",flags=re.M),ct['alert']+r"\1"+ct['default']+r" \2",CONT],
+      ["","",re.compile(r"([1-9]+ )(runts|giants|throttles|(?:input|output) errors|CRC|frame|overrun|ignored|watchdog|input packets with dribble|underruns|collisions|interface resets|unknown protocol drops|babbles|late collision|deferred|lost carrier|no carrier|output buffer)",flags=re.M),ct['alert']+r"\1\2"+ct['default'],CONT],
 
       #Duplex
       ["","",re.compile(BOS+r"([hH]alf[\ -]?[dD]uplex)",flags=re.M),ct['lowalert']+r"\1"+ct['default'],CONT],
