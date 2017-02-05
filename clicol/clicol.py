@@ -10,13 +10,13 @@ buffer = ''
 effects = set()
 ct = dict()
 cmap = list()
+wait = 0
+INTERACT=re.compile(r".*(?:\r\n|[\]\)\:\>\#\$-]\ *)$",flags=re.S)
 
 def colorize(text):
  global effects, cmap
- #global DEFCOLOR
  colortext=""
  for line in text.splitlines(True): 
-   #print repr(line)
    for i in cmap:
       matcher=False
       try: 
@@ -40,7 +40,6 @@ def colorize(text):
       if matcher:
          if reg.match(line):
             effects.add(effect)
-            #print repr(effects)
          continue
       origline=line
       line=reg.sub(rep,origline)
@@ -49,7 +48,6 @@ def colorize(text):
       if line != origline: # we have a match
          if len(effect)>0: # we have an effect
             effects.add(effect)
-         #print repr(effects)
          if 'prompt' in effects: #prompt eliminates all effects
             effects=set()
          if break_:
@@ -59,27 +57,41 @@ def colorize(text):
 
 def ofilter(input):
    global buffer
-   global effects
+   global wait
    
-   # If not ending with linefeed we are interacting
-   if not re.match(r".*(\n|\r\n)",input,flags=re.M):
+   # If not ending with linefeed we are interacting or buffering
+   if not INTERACT.match(input):
       #special characters. e.g. moving cursor
-      if not input.isalnum():
-         return colorize(input)
+      lastline=input.rpartition('\r\n')[2]
+      if re.match(r"[\b]",lastline):
+        buffer=""
+        wait = 0
+        return colorize(input)
       #collect the input into buffer
       buffer += input
-      #Buffer too small, this shall be a oneline question or user echo
-      if len(buffer) < 200:
+      if len(buffer)<80: # most likely interactive prompt
+         bufout=buffer
          buffer = ""
-         return colorize(input)
+         wait = 0
+         return colorize(bufout)
       else:
          #Waiting for more input
-         return ""
+         if wait > 1: # Waited enough. To be on the safe side we print out
+             wait=0
+             bufout = buffer+input
+             buffer = ""
+             return colorize(bufout)
+         else:
+             wait+=1
+             return ""
    else:
-      #Got linefeed, dump buffer
-      bufout = buffer+input
-      buffer = ""
-      return colorize(bufout)
+       #Got linefeed, dump buffer
+       #
+       # BUG: sometimes after exiting, several extra linefeed. seems to be pexpect bug.
+       bufout = buffer+input
+       buffer = ""
+       wait = 0
+       return colorize(bufout)
 
 def main():
     global ct, cmap
@@ -88,7 +100,6 @@ def main():
                                             'regex': 'common,cisco'})
     config.add_section('clicol')
     config.read(['/etc/clicol.cfg', 'clicol.cfg', os.path.expanduser('~/clicol.cfg')])
-    #print config.get('clicol','background')
     bg = config.get('clicol','background')
     if bg == "dark":
         import ct_dark as colortables
@@ -124,8 +135,11 @@ def main():
             print ofilter(line),
         f.close()
     elif cmd == 'telnet' or cmd == 'ssh':
-        c = pexpect.spawn(cmd,sys.argv[1:])
-        c.interact(output_filter=ofilter)
+        try:
+            c = pexpect.spawn(cmd,sys.argv[1:])
+            c.interact(output_filter=ofilter)
+        except:
+            print "Error running "+cmd+" "+str.join(' ',sys.argv[1:])
     else:
         print "Usage: clicol-[telnet|ssh] [args]"
         print "Usage: clicol-test {inputfile}"
