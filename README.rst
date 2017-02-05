@@ -13,3 +13,4 @@ INSTALL
 USAGE
 -----
 Run the script clicol-telnet or clicol-ssh and specify arguments as for the telnet/ssh.
+Your terminal software should support ANSI colors. Putty/SecureCRT are tested. I am developing with default Putty ANSI colorset. If you are using other software, colors can differ somewhat.
