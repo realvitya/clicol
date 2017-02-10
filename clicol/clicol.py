@@ -11,7 +11,7 @@ effects = set()
 ct = dict()
 cmap = list()
 wait = 0
-INTERACT=re.compile(r".*(?:\r\n|[\]\)\:\>\#\$-]\ *)$",flags=re.S)
+INTERACT=re.compile(r".*(?:\r\n|[\]\)\:\>\#\$-][a-zA-Z0-9\ -]*)$",flags=re.S)
 
 def colorize(text):
  global effects, cmap
@@ -61,6 +61,7 @@ def ofilter(input):
    
    # If not ending with linefeed we are interacting or buffering
    if not INTERACT.match(input):
+      #print repr(input)
       #special characters. e.g. moving cursor
       lastline=input.rpartition('\r\n')[2]
       if re.match(r"[\b]",lastline):
@@ -69,7 +70,7 @@ def ofilter(input):
         return colorize(input)
       #collect the input into buffer
       buffer += input
-      if len(buffer)<80: # most likely interactive prompt
+      if len(buffer)<100: # most likely interactive prompt (testing this)
          bufout=buffer
          buffer = ""
          wait = 0
