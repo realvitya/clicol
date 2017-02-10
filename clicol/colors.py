@@ -43,7 +43,7 @@ colors = {
           'byellow'  :r"\033[93m",
           'u_byellow':r"\033[4;93m",
 
-          'orange'   :r"\033[38;5;202m",
+          'orange'   :r"\033[38;5;208m",
 
           'gray'     :r"\033[38;5;237m",
           'lgray'    :r"\033[37m",

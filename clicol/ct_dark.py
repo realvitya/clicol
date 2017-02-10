@@ -13,7 +13,7 @@ ct = dict(
               good                  = colors['bgreen'],
               interface             = colors['lblue'],
               general_configitem    = colors['purple'],
+              general_value         = colors['orange'],
               description           = colors['bgreen'],
               trafficrate           = colors['yellow'],
-              droprate              = colors['red'],
              )
