@@ -24,7 +24,7 @@ def init(ct):
       #interface names (long ethernet)
       ["","",re.compile(BOS+r"((?:[fF]ourty|[tT]en)?(?:[gG]igabit|[fF]ast)?[eE]thernet[0-9]+(?:[\/\.:][0-9]+)*[,:]?)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
       ["","",re.compile(BOS+r"((?:[Mm]anagement[0-9]+(?:[\/\.:][0-9]+)*[,:]?))",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
-      ["","",re.compile(BOS+r"\b([efgtEFGTmM][aie]*[0-9]{1,4}(?:[\/.:][0-9]{1,4})*[,:*]?)\b(?! -)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
+      ["","",re.compile(BOS+r"\b(?<![\(\)\[\]\\\/.-])([efgtEFGTmM][aie]*[0-9]{1,4}(?:[\/.:][0-9]{1,4})*[,:*]?)\b(?! -)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
       ["","",re.compile(BOS+r"((?:ATM|nvi|[pP]ort-channel|[sS]e(rial)?|[pP]o|vfc|BRI|Dialer)[0-9\/:,.]+[,:]?)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
       ["","",re.compile(BOS+r"((?:[Mm]ulti|[lL]o|[Tt]u|[Mm]gmt|[Nn]ull|[vV]lan)(link|opback|nnel)?[0-9]+,?)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
       ["","",re.compile(BOL+r"((line)\ (con\ ?[0-9]?|vty [0-9]+(?: [0-9]+)?|aux [0-9]+|console))",flags=re.M),r"\1"+ct['interface']+r"\2"+ct['default'],CONT],
@@ -44,6 +44,10 @@ def init(ct):
       ["","",re.compile(BOL+r"(switchport mode )(.*)$",flags=re.M),r"\1\2"+ct['general_value']+r"\3"+ct['default'],BREAK],
       ["","",re.compile(BOL+r"(switchport trunk allowed vlan )(.*)$",flags=re.M),r"\1\2"+ct['good']+r"\3"+ct['default'],BREAK],
 
+      #show ver
+      ["","",re.compile(BOL+r"((?:.*\buptime|.*\brestarted|Last reload).*)",flags=re.M),r"\1"+ct['general_value']+r"\2"+ct['default'],BREAK],
+      ["","",re.compile(BOL+r"(.*\b(?:Configuration register|System image file) is )(.*)",flags=re.M),r"\1\2"+ct['general_value']+r"\3"+ct['default'],BREAK],
+
       #IOS router ping
       ["ping","",re.compile(BOS+r"[sS]ending [0-9]+",flags=re.M)], # only turns on ping effect
       #'.' and '!' means loss or received packets
@@ -51,5 +55,16 @@ def init(ct):
       ["","ping",re.compile(r"^(\!+\r?\n?)$",flags=re.M),ct['good']+r"\1"+ct['default'],BREAK],
       # Reload confirmation
       ["","",re.compile(r"^(Proceed with reload\?)( \[confirm\].*)$",flags=re.M),ct['highalert']+r"\1"+ct['default']+r"\2",BREAK],
+
+      # ASA show failover
+      ["","",re.compile(BOL+r"(Last failover at )(.*)",flags=re.M),r"\1\2"+ct['general_value']+r"\3"+ct['default'],BREAK],
+      ["","",re.compile(r"(?<=\): )(Normal \((?:Not-)?Monitored\))",flags=re.M),ct['good']+r"\1"+ct['default'],BREAK],
+      ["","",re.compile(r"(?<=\): )(Normal )(\(Waiting\))",flags=re.M),ct['good']+r"\1"+ct['lowalert']+r"\2"+ct['default'],BREAK],
+      ["","",re.compile(r"(?<=\): )(Failed(?: \(.*)?)",flags=re.M),ct['alert']+r"\1"+ct['default'],BREAK],
+
+      # ASA show run access-list
+      #  remark
+      ["","",re.compile(BOL+r"(access-list [0-9a-zA-Z_-]+ )(remark .*)",flags=re.M),r"\1\2"+ct['comment']+r"\3"+ct['default'],BREAK],
+
      ]
   return cmap
