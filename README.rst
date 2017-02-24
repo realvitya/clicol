@@ -7,7 +7,15 @@ INSTALL
 -------
 - You will need python 2 and pexpect
 - telnet and/or ssh should be installed
-- After copying files add clicol folder into your PATH
+- Get clicol:
+  - git clone http://github.com/realvitya/clicol ~/clicol
+  - cd ~/clicol
+- I recommend installing virtualenv and install clicol into that virtual environment:
+  - pip install virtualenv
+  - virtualenv ~/mypython
+  - source ~/mypython/bin/activate
+  - make
+  - make install
 - Copy clicol.cfg to your $HOME directory
 
 USAGE

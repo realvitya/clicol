@@ -6,11 +6,14 @@ import pexpect
 import ConfigParser
 from importlib import import_module
 
-buffer = ''
-effects = set()
-ct = dict()
-cmap = list()
-wait = 0
+#Global variables
+buffer = ''      # input buffer
+effects = set()  # state effects set
+ct = dict()      # color table (contains colors)
+cmap = list()    # color map (contains coloring rules)
+wait = 0         # counter for waiting incoming chunks
+pause = 0        # if true, then coloring is paused
+                 # match for interactive input (prompt,eof)
 INTERACT=re.compile(r".*(?:\r\n|[\]\)\:\>\#\$-][a-zA-Z0-9\ -]*)$",flags=re.S)
 
 def colorize(text):
@@ -58,6 +61,10 @@ def colorize(text):
 def ofilter(input):
    global buffer
    global wait
+   global pause
+
+   if pause:
+       return input
    
    # If not ending with linefeed we are interacting or buffering
    if not INTERACT.match(input):
@@ -95,8 +102,7 @@ def ofilter(input):
        return colorize(bufout)
 
 def main():
-    global ct, cmap
-
+    global ct, cmap, pause
     config = ConfigParser.SafeConfigParser({'background': 'dark',
                                             'regex': 'common,cisco'})
     config.add_section('clicol')
@@ -114,7 +120,7 @@ def main():
     regex = set(str(config.get('clicol','regex')).split(','))
     for cm in regex:
         if cm in ["common","cisco","juniper"]:
-            cmod=import_module("cm_"+cm)
+            cmod=import_module("clicol.cm_"+cm)
             cmap.extend(cmod.init(ct))
     #Check how we were called
     # valid options: clicol-telnet, clicol-ssh, clicol-test
@@ -138,11 +144,16 @@ def main():
     elif cmd == 'telnet' or cmd == 'ssh':
         try:
             c = pexpect.spawn(cmd,sys.argv[1:])
-            c.interact(output_filter=ofilter)
+            while c.isalive():
+                #esc code table: http://academic.evergreen.edu/projects/biophysics/technotes/program/ascii_ctrl.htm
+                #\x1c = CTRL-\
+                c.interact(escape_character='\x1c',output_filter=ofilter)
+                pause = 1 - pause
         except:
             print "Error running "+cmd+" "+str.join(' ',sys.argv[1:])
     else:
-        print "Usage: clicol-[telnet|ssh] [args]"
+        print "Usage: clicol-{telnet|ssh} [args]"
         print "Usage: clicol-test {inputfile}"
 
-main()
+#Start program
+#main()
