@@ -22,5 +22,14 @@ INSTALL
 
 USAGE
 -----
-Run the script ``clicol-telnet`` or ``clicol-ssh`` and specify arguments as for the telnet/ssh.
+Run the script ``clicol-telnet`` or ``clicol-ssh`` and specify arguments a
+s for the telnet/ssh.
+
+*Note: If you installed into virtualenv then you must first activate it:*
+
+**source ~/mypython/bin/activate**
+
+Consider using aliases. A basic template can be found in *example* folder.
+
+
 Your terminal software should support ANSI colors. Putty/SecureCRT are tested. I am developing with default Putty ANSI colorset. If you are using other software, colors can differ somewhat.

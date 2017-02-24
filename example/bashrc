@@ -1,0 +1,3 @@
+# aliases for cli colorizer
+alias t=clicol-telnet
+alias s=clicol-ssh
