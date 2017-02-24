@@ -94,8 +94,6 @@ def ofilter(input):
              return ""
    else:
        #Got linefeed, dump buffer
-       #
-       # BUG: sometimes after exiting, several extra linefeed. seems to be pexpect bug.
        bufout = buffer+input
        buffer = ""
        wait = 0

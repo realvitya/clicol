@@ -31,8 +31,8 @@ def init(ct):
       ["","",re.compile(r"^(.*-+\ *\(?[mM][oO][rR][eE](?:\ [0-9]+\%)?\)?\ *[->]+)(.*)$",flags=re.M), ct['pager']+r"\1"+ct['default']+r"\2",BREAK],
 
       #Traffic
-      ["","",re.compile(BOS+r"(drop.*)([1-9]+ )(pkts\/sec)\b",flags=re.M),r"\1"+ct['lowalert']+r"\2"+ct['default']+r"\3",CONT],
-      ["","",re.compile(BOS+r"([1-9]+ )((?:bits|bytes|pkts)\/sec)\b",flags=re.M),ct['trafficrate']+r"\1"+ct['default']+r"\2",CONT],
+      ["","",re.compile(BOS+r"(drop.*)([1-9][0-9]* )((?:packets|pkts)\/sec)\b",flags=re.M),r"\1"+ct['lowalert']+r"\2"+ct['default']+r"\3",CONT],
+      ["","",re.compile(BOS+r"([1-9][0-9]* )((?:bits|bytes|pkts|packets)\/sec)\b",flags=re.M),ct['trafficrate']+r"\1"+ct['default']+r"\2",CONT],
 
       #MAC address
       ["","",re.compile(BOS+r"((?:[a-f0-9]{2}[:-]){5}[a-f0-9]{2})",flags=re.M), ct['address']+r"\1"+ct['default'],CONT],
