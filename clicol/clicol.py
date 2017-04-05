@@ -116,6 +116,8 @@ def main():
     ct = colortables.ct
 
     regex = set(str(config.get('clicol','regex')).split(','))
+    if "all" in regex:
+        regex = ["common","cisco","juniper"]
     for cm in regex:
         if cm in ["common","cisco","juniper"]:
             cmod=import_module("clicol.cm_"+cm)
@@ -153,5 +155,4 @@ def main():
         print "Usage: clicol-{telnet|ssh} [args]"
         print "Usage: clicol-test {inputfile}"
 
-#Start program
-#main()
+# END OF PROGRAM
