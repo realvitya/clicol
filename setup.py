@@ -24,8 +24,11 @@ setup(
     author=AUTHOR,
     author_email=AUTHOR_EMAIL,
     url=URL,
-    license=license,
+    license="GPLv3",
     packages=find_packages(exclude=('tests')),
+    install_requires=[
+        'pexpect',
+    ],
     entry_points={
             'console_scripts': [
                     'clicol-telnet = clicol.clicol:main',
@@ -42,9 +45,6 @@ setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: POSIX",
         "Programming Language :: Python",
-    ],
-    install_requires=[
-        "pexpect",
     ],
     zip_safe=False,
 )
