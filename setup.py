@@ -43,5 +43,8 @@ setup(
         "Operating System :: POSIX",
         "Programming Language :: Python",
     ],
+    install_requires=[
+        "pexpect",
+    ],
     zip_safe=False,
 )

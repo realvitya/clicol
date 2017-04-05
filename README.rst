@@ -16,6 +16,8 @@ INSTALL
    - pip install virtualenv
    - virtualenv ~/mypython
    - source ~/mypython/bin/activate
+   - pip install clicol (latest stable)
+   - OR (after pulling git source)
    - make
    - make install
 - Copy clicol.cfg to your $HOME directory
