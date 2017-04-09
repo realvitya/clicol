@@ -61,8 +61,9 @@ def colorize(text):
 def ofilter(input):
    global buffer
    global wait
-   global pause
+   global pause # coloring must be paused
 
+   # Coloring is paused by escape character
    if pause:
        return input
    
