@@ -56,6 +56,11 @@ def init(ct):
       # Reload confirmation
       ["","",re.compile(r"^(Proceed with reload\?)( \[confirm\].*)$",flags=re.M),ct['highalert']+r"\1"+ct['default']+r"\2",BREAK],
 
+      # show log
+      ["","",re.compile(r"(%.+-[0-3]-[0-9A-Z]+)(:)",flags=re.M),ct['alert']+r"\1"+ct['default']+r"\2",CONT],
+      ["","",re.compile(r"(%.+-4-[0-9A-Z]+)(:)",flags=re.M),ct['lowalert']+r"\1"+ct['default']+r"\2",CONT],
+      #["","",re.compile(r"(%.+-[5-9]-[0-9A-Z]+)(:)",flags=re.M),ct['alert']+r"\1"+ct['default']+r"\2",CONT],
+
       # ASA show failover
       ["","",re.compile(BOL+r"(Last failover at )(.*)",flags=re.M),r"\1\2"+ct['general_value']+r"\3"+ct['default'],BREAK],
       ["","",re.compile(r"(?<=\): )(Normal \((?:Not-)?Monitored\))",flags=re.M),ct['good']+r"\1"+ct['default'],BREAK],
