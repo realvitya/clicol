@@ -102,17 +102,17 @@ def ofilter(input):
 
 def main():
     global ct, cmap, pause
-    config = ConfigParser.SafeConfigParser({'background': 'dark',
+    config = ConfigParser.SafeConfigParser({'colortable': 'dbg_net',
                                             'regex': 'common,cisco'})
     config.add_section('clicol')
     config.read(['/etc/clicol.cfg', 'clicol.cfg', os.path.expanduser('~/clicol.cfg')])
-    bg = config.get('clicol','background')
-    if bg == "dark":
-        import ct_dark as colortables
-    elif bg == "light":
-        import ct_light as colortables
+    cct = config.get('clicol','colortable')
+    if cct == "dbg_net":
+        import ct_dbg_net as colortables
+    elif cct == "lbg_net":
+        import ct_lbg_net as colortables
     else:
-        print "No such colortable: "+bg
+        print "No such colortable: "+cct
         exit(1)
     ct = colortables.ct
 

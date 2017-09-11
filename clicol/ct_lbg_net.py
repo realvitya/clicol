@@ -15,6 +15,6 @@ ct = dict(
               general_configitem    = colors['purple'],
               general_value         = colors['orange'],
               description           = colors['bgreen'],
-              trafficrate           = colors['yellow'],
+              trafficrate           = colors['lbrown'],
               droprate              = colors['red'],
              )
