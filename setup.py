@@ -10,17 +10,10 @@ AUTHOR_EMAIL = "vkertesz2@gmail.com"
 URL = "https://github.com/realvitya/clicol"
 VERSION = __import__(PACKAGE).__version__
 
-with open('README.rst') as f:
-    readme = f.read()
-
-with open('LICENSE') as f:
-    license = f.read()
-
 setup(
     name='clicol',
     version=VERSION,
     description=DESCRIPTION,
-    long_description=readme,
     author=AUTHOR,
     author_email=AUTHOR_EMAIL,
     url=URL,
