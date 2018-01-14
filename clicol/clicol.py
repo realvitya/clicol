@@ -5,107 +5,145 @@ import string
 import pexpect
 import ConfigParser
 from importlib import import_module
+from command import getChar
 
 #Global variables
 buffer = ''      # input buffer
+lastline = ''    # input buffer's last line
+is_break = False # is break key pressed?
 effects = set()  # state effects set
 ct = dict()      # color table (contains colors)
 cmap = list()    # color map (contains coloring rules)
-wait = 0         # counter for waiting incoming chunks
 pause = 0        # if true, then coloring is paused
                  # match for interactive input (prompt,eof)
-INTERACT=re.compile(r".*(?:\r\n|[\]\)\:\>\#\$-][a-zA-Z0-9\ -]*)$",flags=re.S)
+ENDWITHLF=re.compile(r".*[\r\n]$",flags=re.S)
+#Interactive regex matches for
+# - prompt (asd# )
+# - question ([yes])
+# - more (-more-)
+# possible chars: "\):>#$/- "
+#INTERACT=re.compile(r"^([^\[\]\:\>\#\$]*)([\]\)\:\>\#\$\-])([^\[\]\)\:\>\#\$\-]*)(?<![^\[\]\)\:\>\#\$\-\ ])$",flags=re.S)
+#INTERACT=re.compile(r"^([^\:\>\#\$]+)([\]\)\:\>\#\$])([^\[\]\)\:\>\#\$\-]*)$",flags=re.S)
+INTERACT=re.compile(r"^([^\:\>\#\$]+)([\]\)\:\>\#\$-])([^\[\]\)\:\>\#\$\-]*)$",flags=re.S)
+#PROMPT=re.compile(r"^([^\:\>\#\$\ ]+)([\]\)\:\>\#\$])([^\[\]\)\:\>\#\$\-]*)$",flags=re.S)
 
-def colorize(text):
+def colorize(text,only_effect=[]):
+ #text       : input string to colorize
+ #only_effect: select specific regex group(with specified effect) to work with
  global effects, cmap
  colortext=""
  for line in text.splitlines(True): 
+   #print "\r\n\033[38;5;208mC-",repr(line),"\033[0m\r\n" # DEBUG
    for i in cmap:
       matcher=False
       try: 
-        effect=i[0] # invokes other rules
-        dep   =i[1]
-        reg   =i[2]
-        rep   =i[3]
-        break_=i[4]
-        debug =i[5]
+        prio  =i[0] # priority
+        effect=i[1] # invokes other rules
+        dep   =i[2] # dependency on effect
+        reg   =i[3] # regexp match string
+        rep   =i[4] # replacement string
+        option=i[5] # match options (continue,break,clear)
+        debug =i[6] # debug
       except IndexError:
-        if len(i) == 3:
+        if len(i) == 4:
            #this is a matcher
            matcher=True
-        elif len(i) == 5:
+        elif len(i) == 6:
            #don't have DEBUG
            debug=False
         else:
            raise
+      if only_effect!=[] and effect not in only_effect: # check if only specified regexes should be used
+         continue # move on to the next regex
       if len(dep)>0 and dep not in effects: # we don't meet our dependency
          continue # move on to the next regex
       if matcher:
          if reg.match(line):
             effects.add(effect)
          continue
+
       origline=line
+      if option == 2: #need to cleanup existing coloring (CLEAR)
+         backupline=line
+         origline=re.sub('\x1b[^m]*m','',line)
       line=reg.sub(rep,origline)
       if debug:
-         print repr(line), repr(effects)
+         print "\r\n\033[38;5;208mD-",repr(origline), repr(line), repr(effects), "\033[0m\r\n" # DEBUG
       if line != origline: # we have a match
          if len(effect)>0: # we have an effect
             effects.add(effect)
-         if 'prompt' in effects: #prompt eliminates all effects
+         if 'prompt' in effects: # prompt eliminates all effects
             effects=set()
-         if break_:
+         if option > 0:
             break
+      elif option == 2: # need to restore existing coloring as there was no match (by CLEAR)
+         line=backupline
+            
    colortext+=line
  return colortext
 
+def ifilter(input):
+   global is_break
+
+   is_break = input=='\x1c'
+   return input
+
 def ofilter(input):
    global buffer
-   global wait
    global pause # coloring must be paused
+   global lastline
 
    # Coloring is paused by escape character
    if pause:
        return input
    
    # If not ending with linefeed we are interacting or buffering
-   if not INTERACT.match(input):
-      #print repr(input)
+   if not ENDWITHLF.match(input):
+      #print "\r\n\033[38;5;208mI-",repr(input),"\033[0m\r\n" # DEBUG
+      lastline=input.splitlines()[-1]
+      #print "\r\n\033[38;5;208mL-",repr(lastline),"\033[0m\r\n" # DEBUG
       #special characters. e.g. moving cursor
-      lastline=input.rpartition('\r\n')[2]
-      if re.match(r"[\b]",lastline):
+      if re.match(r"[\a\b]",lastline):
         buffer=""
-        wait = 0
-        return colorize(input)
+        return colorize(input,["prompt"])
       #collect the input into buffer
       buffer += input
-      if len(buffer)<100: # most likely interactive prompt (testing this)
+      #print "\r\n\033[38;5;208mB-",repr(buffer),"\033[0m\r\n" # DEBUG
+      if INTERACT.match(lastline): # prompt or question at the end
          bufout=buffer
          buffer = ""
-         wait = 0
          return colorize(bufout)
-      else:
-         #Waiting for more input
-         if wait > 1: # Waited enough. To be on the safe side we print out
-             wait=0
-             bufout = buffer+input
-             buffer = ""
-             return colorize(bufout)
+        
+      if len(buffer)<100:  # interactive or end of large chunk
+         bufout=buffer
+         if buffer==input: # interactive
+           buffer = ""
+           return colorize(bufout,["prompt","ping"]) # colorize only short stuff (up key,ping)
+         else:             # need to collect more output
+           return ""
+      else: # large data. we need to print until last line which goes into buffer
+         #bufout="\r\n".join(buffer.splitlines()[:-1])+"\r\n" # all buffer except last line
+         bufout="".join(buffer.splitlines(True)[:-1]) # all buffer except last line
+         if bufout == "": # only one line was in buffer
+            return ""
          else:
-             wait+=1
-             return ""
+            buffer=lastline
+            return colorize(bufout)
    else:
+       #print "\r\n\033[38;5;208mNI-",repr(input),"\033[0m\r\n" # DEBUG
        #Got linefeed, dump buffer
        bufout = buffer+input
        buffer = ""
-       wait = 0
        return colorize(bufout)
 
 def main():
-    global ct, cmap, pause
+    global ct, cmap, pause, terminal, buffer, lastline
     config = ConfigParser.SafeConfigParser({'colortable': 'dbg_net',
+                                            'terminal': 'putty',
                                             'regex': 'common,cisco'})
     config.add_section('clicol')
     config.read(['/etc/clicol.cfg', 'clicol.cfg', os.path.expanduser('~/clicol.cfg')])
+    terminal = config.get('clicol','terminal')
     cct = config.get('clicol','colortable')
     if cct == "dbg_net":
         import ct_dbg_net as colortables
@@ -120,9 +158,10 @@ def main():
     if "all" in regex:
         regex = ["common","cisco","juniper"]
     for cm in regex:
-        if cm in ["common","cisco","juniper"]:
+        if cm in ["common","cisco","cisco_show","juniper"]:
             cmod=import_module("clicol.cm_"+cm)
             cmap.extend(cmod.init(ct))
+    cmap.sort(key=lambda match: match[0]) # sort colormap based on priority
     #Check how we were called
     # valid options: clicol-telnet, clicol-ssh, clicol-test
     cmd = str(os.path.basename(sys.argv[0])).replace('clicol-','');
@@ -130,10 +169,10 @@ def main():
         #Sanity check on colormaps
         cmbuf=list()
         for cm in cmap:
-            if cm[2] in cmbuf:
+            if cm[3] in cmbuf:
                 print "Duplicate pattern:"+repr(cm)
             else:
-                cmbuf.append(cm[2])
+                cmbuf.append(cm[3])
         try:
             f=open(sys.argv[1],'r')
         except:
@@ -144,13 +183,23 @@ def main():
         f.close()
     elif cmd == 'telnet' or cmd == 'ssh':
         try:
-            c = pexpect.spawn(cmd,sys.argv[1:])
+            c = pexpect.spawn(cmd,sys.argv[1:],timeout=1)
             while c.isalive():
                 #esc code table: http://academic.evergreen.edu/projects/biophysics/technotes/program/ascii_ctrl.htm
                 #\x1c = CTRL-\
-                c.interact(escape_character='\x1c',output_filter=ofilter)
-                pause = 1 - pause
-        except:
+                c.interact(escape_character='\x1c',output_filter=ofilter,input_filter=ifilter)
+                if is_break:
+                   print "\r"+" "*80+"\rCLICOL: p-pause | q-quit",
+                   command=getChar()
+                   if command=="p":
+                      pause = 1 - pause
+                   if command=="q":
+                      c.close()
+                      break
+                   print "\r"+" "*80+"\r"+colorize(lastline,"prompt"),
+            print colorize(buffer) # print remaining buffer
+        except Exception, e :
+            print e
             print "Error running "+cmd+" "+str.join(' ',sys.argv[1:])
     else:
         print "Usage: clicol-{telnet|ssh} [args]"

@@ -1,4 +1,9 @@
-from colors import colors
+from clicol import terminal
+
+if terminal == "securecrt":
+  from colors_securecrt import colors
+else: # fallback to putty
+  from colors_putty import colors
 
 ct = dict(
               default               = colors['default'],
@@ -14,6 +19,7 @@ ct = dict(
               interface             = colors['lblue'],
               general_configitem    = colors['purple'],
               general_value         = colors['orange'],
+              important_value       = colors['u_cyan'],
               description           = colors['bgreen'],
               trafficrate           = colors['lbrown'],
               droprate              = colors['red'],
