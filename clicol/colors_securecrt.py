@@ -1,14 +1,26 @@
 colors = {
           'default'  :r"\033[0m",
-          'white'    :r"\033[37m",
-          'u_white'  :r"\033[4;37m",
+          'bold'     :r"\033[1m",
+          'rbold'    :r"\033[21m",
+          'dim'      :r"\033[2m",
+          'rdim'     :r"\033[22m",
+          'under'    :r"\033[4m",
+          'runder'   :r"\033[24m",
+          'blink'    :r"\033[5m",
+          'rblink'   :r"\033[25m",
+          'reverse'  :r"\033[7m",
+          'rreverse' :r"\033[27m",
+          'hidden'   :r"\033[8m",
+          'rhidden'  :r"\033[28m",
+          'white'    :r"\033[38;5;255m",
+          'u_white'  :r"\033[4m\033[38;5;255m",
           'black'    :r"\033[30m",
           'u_black'  :r"\033[4;30m",
 
-          'blue'     :r"\033[34m",
+          'blue'     :r"\033[94m",
           'u_blue'   :r"\033[4;34m",
-          'lblue'    :r"\033[94m",
-          'u_lblue'  :r"\033[4;94m",
+          'lblue'    :r"\033[38;5;27m",
+          'u_lblue'  :r"\033[4m\033[38;5;27m",
           'bblue'    :r"\033[38;5;21m",
 
           'green'    :r"\033[32m",
@@ -44,8 +56,10 @@ colors = {
           'u_byellow':r"\033[4;93m",
 
           'orange'   :r"\033[38;5;208m",
+          'u_orange' :r"\033[4m\033[38;5;208m",
 
           'gray'     :r"\033[38;5;237m",
+          'u_gray'   :r"\033[4m\033[38;5;237m",
           'lgray'    :r"\033[37m",
           'u_lgray'  :r"\033[4;37m",
          }
