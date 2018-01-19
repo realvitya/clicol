@@ -94,6 +94,8 @@ def init(ct):
       # ISIS network ID
       #net 49.5001.1001.5914.9900.00
       [20,"","",re.compile(BOL+r"( net )([0-9]{2}\.(?:[0-9]{4}\.){4}[0-9]{2})$",flags=re.M),r"\1\2"+ct['important_value']+r"\3"+ct['default'],CLEAR],
+      #VRF stuff
+      [20,"","",re.compile(BOL+r"((?:ip route| ip| tunnel)? vrf(?: forwarding)? |ip vrf )([a-zA-Z0-9_-]+)( ?.*)$",flags=re.M),r"\1\2"+ct['important_value']+r"\3"+ct['default']+r'\4',CLEAR],
 
 
      ]

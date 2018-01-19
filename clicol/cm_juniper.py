@@ -17,12 +17,15 @@ def init(ct):
   cmap=[
       #Fields:
       #matcher:
-      #effect, dependency, regex
+      #priority, effect, dependency, regex
       #replacer:
-      #effect, dependency, regex, replacement, break, [debug]
+      #priority, effect, dependency, regex, replacement, break, [debug]
+
+      #Juniper prompt user@hostname>
+      [4,"prompt","",re.compile(r"(?i)^((?:[\b]+\ *[\b]*)?[a-z0-9\/_\-]+@[a-z0-9\/_\-]*(?:>|\$) )(.*)$",flags=re.M), ct['privprompt']+r"\1"+ct['default']+r"\2",BREAK],
 
       # interface names
-      [15,"","",re.compile(BOS+r"\b(?<![\(\)\[\]\\\/.-:])((?:(?:(?:[gx]e|gr|ip|[lmuv]t|p[de]|pf[eh]|lc|lsq|sp)-|ae|em|fxp|lo|lis|me|pip|pp)[0-9]{1,4}|(?:irb|cbp|gre|ipip|lsi|mtun|pim[de]|tap|dsc|demux)[0-9]?)(?:[\/.][0-9]{1,5})*)\b(?! -)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
+      [15,"","",re.compile(BOS+r"\b(?<![\(\)\[\]\\\/.-:])((?:(?:(?:[gx]e|gr|ip|[lmuv]t|p[de]|pf[eh]|lc|lsq|sp)-|ae|em|fxp|lo|lis|me|pip|pp)[0-9]{1,4}|(?:reth0|irb|cbp|lsi|mtun|pim[de]|tap|dsc|demux)[0-9]?)(?:[\/.][0-9]{1,5})*)\b(?! -)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
 
       #BGP
       # Juniper show bgp sum
@@ -35,5 +38,7 @@ def init(ct):
       [20,"","",re.compile(BOL+r"((?:[0-9]+\.){3}[0-9]+\ +)([0-9]+)((?:\ +[0-9]+\ +)(?:[0-9]+\ +)(?:[0-9]+\ +)(?:[0-9]+\ +))([0-9ywdh:]+)(\ +(?:[0-9]+\/)+.*)",flags=re.M),r"\1"+ct['address']+r"\2"+ct['important_value']+r"\3"+ct['default']+r"\4"+ct['general_value']+r"\5"+ct['good']+r"\6"+ct['default'],CLEAR],
       # Active, Connect, or Idle
       [20,"","",re.compile(BOL+r"((?:[0-9]+\.){3}[0-9]+\ +)([0-9]+)((?:\ +[0-9]+\ +)(?:[0-9]+\ +)(?:[0-9]+\ +)(?:[0-9]+\ +))([0-9ywdh]+)(\ +(?:Active|Connect|Idle).*)",flags=re.M),r"\1"+ct['address']+r"\2"+ct['important_value']+r"\3"+ct['default']+r"\4"+ct['general_value']+r"\5"+ct['alert']+r"\6"+ct['default'],CLEAR],
+      # Session timeout warning
+      [20,"timeoutwarn","",re.compile(BOL+r"\x07Warning: session will be closed in [0-9]{1,2} (?:minutes?|seconds) if there is no activity.*")],
      ]
   return cmap

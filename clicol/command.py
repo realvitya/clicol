@@ -26,3 +26,65 @@ def getChar():
 
     return getChar._func()
 
+#key[F3]        = '^[[[C'
+#key[F4]        = '^[[[D'
+#key[F5]        = '^[[[E'
+#key[F6]        = '^[[17~'
+#key[F7]        = '^[[18~'
+#key[F8]        = '^[[19~'
+#key[F9]        = '^[[20~'
+#key[F10]       = '^[[21~'
+#key[F11]       = '^[[23~'
+#key[F12]       = '^[[24~'
+#
+#key[Shift-F1]  = '^[[25~'
+#key[Shift-F2]  = '^[[26~'
+#key[Shift-F3]  = '^[[28~'
+#key[Shift-F4]  = '^[[29~'
+#key[Shift-F5]  = '^[[31~'
+#key[Shift-F6]  = '^[[32~'
+#key[Shift-F7]  = '^[[33~'
+#key[Shift-F8]  = '^[[34~'
+#
+#key[Insert]    = '^[[2~'
+#key[Delete]    = '^[[3~'
+#key[Home]      = '^[[1~'
+#key[End]       = '^[[4~'
+#key[PageUp]    = '^[[5~'
+#key[PageDown]  = '^[[6~'
+#key[Up]        = '^[[A'
+#key[Down]      = '^[[B'
+#key[Right]     = '^[[C'
+#key[Left]      = '^[[D'
+
+#key[Bksp]      = '^?'
+#key[Bksp-Alt]  = '^[^?'
+#key[Bksp-Ctrl] = '^H'
+def getCommand():
+    cmd=getChar()
+    try:
+        if cmd=='\x1b': # special function key, need get more
+            cmd=getChar()
+            if cmd=='[':
+                  cmd=getChar()
+                  if cmd=='[': # ^[[[ A-E : F1-F5
+                     cmd=getChar()
+                     cmd='F'+str(ord(cmd)-ord('A')+1)
+                  elif int(cmd)>=1 and int(cmd)<=3: # ^[[ 1-3 F6-SHIFT-F8
+                     code=cmd
+                     cmd=getChar()
+                     getChar() # last ~
+                     code=int(code+cmd)
+                     if int(code)>=17 and int(code)<22:
+                         cmd='F'+str(code-11) # F1-F10
+                     elif int(code)>=23 and int(code)<=24:
+                         cmd='F'+str(code-12) # F11-F12
+                     else:
+                         cmd=""
+                  else:
+                      cmd=""
+            else:
+                cmd=""
+    except (ValueError, TypeError):
+        return None
+    return cmd

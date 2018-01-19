@@ -27,6 +27,16 @@ USAGE
 Run the script ``clicol-telnet`` or ``clicol-ssh`` and specify arguments a
 s for the telnet/ssh.
 
+By default clicol will colorize with all colorsets and this behaviour can be tuned in config file.
+The config file can be saved in user directory and it will take preference over defaults.
+
+Default break key is CTRL-\
+After hitting the break key you have some options:
+p - pausing coloring
+q - quit from session
+h - print help
+F1-F12 keys are shortcuts for various commands. Examples are in example config file or try help 'h' key.
+
 *Note: If you installed into virtualenv then you must first activate it:*
 
 **source ~/mypython/bin/activate**
@@ -34,4 +44,4 @@ s for the telnet/ssh.
 Consider using aliases. A basic template can be found in *example* folder.
 
 
-Your terminal software should support ANSI colors. Putty/SecureCRT are tested. I am developing with default Putty ANSI colorset. If you are using other software, colors can differ somewhat.
+Your terminal software should support ANSI colors. Putty/SecureCRT are tested. I am developing with default colorsets. If you are using other software, colors can differ somewhat.

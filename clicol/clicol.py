@@ -5,9 +5,11 @@ import string
 import pexpect
 import ConfigParser
 from importlib import import_module
-from command import getChar
+from command import getCommand
+from __init__ import __version__
 
 #Global variables
+conn = ''        # connection handler
 buffer = ''      # input buffer
 lastline = ''    # input buffer's last line
 is_break = False # is break key pressed?
@@ -21,16 +23,23 @@ ENDWITHLF=re.compile(r".*[\r\n]$",flags=re.S)
 # - prompt (asd# )
 # - question ([yes])
 # - more (-more-)
+# - restore coloring (\x1b[m)
 # possible chars: "\):>#$/- "
-#INTERACT=re.compile(r"^([^\[\]\:\>\#\$]*)([\]\)\:\>\#\$\-])([^\[\]\)\:\>\#\$\-]*)(?<![^\[\]\)\:\>\#\$\-\ ])$",flags=re.S)
-#INTERACT=re.compile(r"^([^\:\>\#\$]+)([\]\)\:\>\#\$])([^\[\]\)\:\>\#\$\-]*)$",flags=re.S)
-INTERACT=re.compile(r"^([^\:\>\#\$]+)([\]\)\:\>\#\$-])([^\[\]\)\:\>\#\$\-]*)$",flags=re.S)
-#PROMPT=re.compile(r"^([^\:\>\#\$\ ]+)([\]\)\:\>\#\$])([^\[\]\)\:\>\#\$\-]*)$",flags=re.S)
+#INTERACT=re.compile(r"^([^\:\>\#\$]+)([\]\)\:\>\#\$-])([^\[\]\)\:\>\#\$\-]*)$",flags=re.S)
+INTERACT=re.compile(r"(?i)^([^ ]*([\]\>\#\$][: ]?)(.*)| ?-+\(?more(?: [0-9]{1,2}%)?\)?-+ ?|\x1b\[m)$",flags=re.S)
+
+def printhelp(shortcuts):
+    print "q: quit program"
+    print "p: pause coloring"
+    print
+    print "Shortcuts"
+    for (key,value) in shortcuts:
+        print "%s: \"%s\"" % (key.upper(),value.strip(r'"'))
 
 def colorize(text,only_effect=[]):
  #text       : input string to colorize
  #only_effect: select specific regex group(with specified effect) to work with
- global effects, cmap
+ global effects, cmap, conn, timeoutact
  colortext=""
  for line in text.splitlines(True): 
    #print "\r\n\033[38;5;208mC-",repr(line),"\033[0m\r\n" # DEBUG
@@ -60,6 +69,9 @@ def colorize(text,only_effect=[]):
       if matcher:
          if reg.match(line):
             effects.add(effect)
+         if 'timeoutwarn' in effects and timeoutact:
+             conn.send("\x05") # CTRL-E (goto end of line)
+             conn.send("\x0C") # CTRL-L (display again)
          continue
 
       origline=line
@@ -122,7 +134,6 @@ def ofilter(input):
          else:             # need to collect more output
            return ""
       else: # large data. we need to print until last line which goes into buffer
-         #bufout="\r\n".join(buffer.splitlines()[:-1])+"\r\n" # all buffer except last line
          bufout="".join(buffer.splitlines(True)[:-1]) # all buffer except last line
          if bufout == "": # only one line was in buffer
             return ""
@@ -137,14 +148,29 @@ def ofilter(input):
        return colorize(bufout)
 
 def main():
-    global ct, cmap, pause, terminal, buffer, lastline
-    config = ConfigParser.SafeConfigParser({'colortable': 'dbg_net',
-                                            'terminal': 'putty',
-                                            'regex': 'common,cisco'})
+    global conn, ct, cmap, pause, timeoutact, terminal, buffer, lastline
+    config = ConfigParser.SafeConfigParser({'colortable' :r'dbg_net',
+                                            'terminal'   :r'securecrt',
+                                            'regex'      :r'all',
+                                            'timeoutact' :r'true',
+                                            'F1'         :r'show ip interface brief | e unassign \r\n',
+                                            'F2'         :r'show ip bgp sum\r\n',
+                                            'F3'         :r'show ip bgp vpnv4 all sum\r\n',
+                                            'F4'         :r'"ping "',
+                                            'F5'         :r'',
+                                            'F6'         :r'',
+                                            'F7'         :r'',
+                                            'F8'         :r'',
+                                            'F9'         :r'',
+                                            'F10'        :r'',
+                                            'F11'        :r'',
+                                            'F12'        :r'',})
     config.add_section('clicol')
     config.read(['/etc/clicol.cfg', 'clicol.cfg', os.path.expanduser('~/clicol.cfg')])
     terminal = config.get('clicol','terminal')
+    shortcuts=filter(lambda (o,v): re.match(r'[fF][0-9][0-9]?',o) and v, config.items('clicol')) # read existing shortcuts
     cct = config.get('clicol','colortable')
+    timeoutact = config.getboolean('clicol','timeoutact')
     if cct == "dbg_net":
         import ct_dbg_net as colortables
     elif cct == "lbg_net":
@@ -154,7 +180,16 @@ def main():
         exit(1)
     ct = colortables.ct
 
+
+    #Check how we were called
+    # valid options: clicol-telnet, clicol-ssh, clicol-test
+    cmd = str(os.path.basename(sys.argv[0])).replace('clicol-','');
+
     regex = set(str(config.get('clicol','regex')).split(','))
+    if sys.argv[1] == '--c': # called with specified colormap
+        regex = sys.argv[2].split(",") # input is in "cisco,juniper,..." format
+        del sys.argv[1] # remove --c from args
+        del sys.argv[1] # remove colormap string from args
     if "all" in regex:
         regex = ["common","cisco","juniper"]
     for cm in regex:
@@ -162,9 +197,6 @@ def main():
             cmod=import_module("clicol.cm_"+cm)
             cmap.extend(cmod.init(ct))
     cmap.sort(key=lambda match: match[0]) # sort colormap based on priority
-    #Check how we were called
-    # valid options: clicol-telnet, clicol-ssh, clicol-test
-    cmd = str(os.path.basename(sys.argv[0])).replace('clicol-','');
     if cmd == 'test' and len(sys.argv)>1:
         #Sanity check on colormaps
         cmbuf=list()
@@ -179,30 +211,58 @@ def main():
             print "Error opening "+sys.argv[1]
             raise
         for line in f:
-            print ofilter(line),
+            print ofilter(line.replace("\n","\r\n")), # convert to CRLF to support files created in linux
         f.close()
-    elif cmd == 'telnet' or cmd == 'ssh':
+    elif cmd == 'telnet' or cmd == 'ssh' or (cmd == 'cmd' and len(sys.argv)>1):
         try:
-            c = pexpect.spawn(cmd,sys.argv[1:],timeout=1)
-            while c.isalive():
-                #esc code table: http://academic.evergreen.edu/projects/biophysics/technotes/program/ascii_ctrl.htm
-                #\x1c = CTRL-\
-                c.interact(escape_character='\x1c',output_filter=ofilter,input_filter=ifilter)
-                if is_break:
-                   print "\r"+" "*80+"\rCLICOL: p-pause | q-quit",
-                   command=getChar()
-                   if command=="p":
-                      pause = 1 - pause
-                   if command=="q":
-                      c.close()
-                      break
-                   print "\r"+" "*80+"\r"+colorize(lastline,"prompt"),
-            print colorize(buffer) # print remaining buffer
+            args = sys.argv[1:]
+            if cmd == 'cmd':
+                cmd  = sys.argv[1]
+                args = sys.argv[2:]
+            conn = pexpect.spawn(cmd,args,timeout=1)
         except Exception, e :
+            if cmd != 'telnet' and cmd != 'ssh':
+                print "Error starting %s" % cmd
+                return
+        try:
+            while conn.isalive():
+                #esc code table: http://jkorpela.fi/chars/c0.html
+                #\x1c = CTRL-\
+                conn.interact(escape_character='\x1c',output_filter=ofilter,input_filter=ifilter)
+                if is_break:
+                   print "\r"+" "*100+"\rCLICOL: q:quit,p:pause,F1-F12:shortcuts,h-help",
+                   command=getCommand()
+                   if command=="p":
+                       pause = 1 - pause
+                   if command=="q":
+                       conn.close()
+                       break
+                   if command=="h":
+                       printhelp(shortcuts)
+
+                   print "\r"+" "*100+"\r"+colorize(lastline,"prompt"), # restore last line/prompt
+
+                   for (key,value) in shortcuts:
+                       if command.upper()==key.upper():
+                           conn.send(value.decode('string_escape').strip(r'"')) # decode to have CRLF as it is and remove ""
+                           break
+        except OSError:
+            conn.close()
+        except Exception, e :
+            #import traceback
+            #print traceback.format_exc()
             print e
-            print "Error running "+cmd+" "+str.join(' ',sys.argv[1:])
+            print "Error while running "+cmd+" "+str.join(' ',args)
+        print colorize(buffer) # print remaining buffer
     else:
-        print "Usage: clicol-{telnet|ssh} [args]"
-        print "Usage: clicol-test {inputfile}"
+        print "CLICOL - CLI colorizer and more... Version %s" % __version__
+        print "Usage: clicol-{telnet|ssh} [--c {colormap}] [args]"
+        print "Usage: clicol-test         [--c {colormap}] {inputfile}"
+        print "Usage: clicol-cmd          [--c {colormap}] {command} [args]"
+        print
+        print "Usage while in session"
+        print "Press break key CTRL-\\"
+        print
+        printhelp(shortcuts)
 
 # END OF PROGRAM

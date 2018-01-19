@@ -58,6 +58,6 @@ def init(ct):
 
 
       #banner
-      [10,"","",re.compile(BOL+r"(\ {0,2}\*[\*\ ]+.*\*\ *[\r\n]?)$",flags=re.M),r"\1"+ct['comment']+r"\2"+ct['default'],BREAK],
+      [10,"","",re.compile(BOL+r"( *\*[\*\ ]+.*\*\ *[\r\n]?)$",flags=re.M),r"\1"+ct['comment']+r"\2"+ct['default'],BREAK],
      ]
   return cmap
