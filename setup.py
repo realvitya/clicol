@@ -9,11 +9,13 @@ AUTHOR = "Viktor Kertesz"
 AUTHOR_EMAIL = "vkertesz2@gmail.com"
 URL = "https://github.com/realvitya/clicol"
 VERSION = __import__(PACKAGE).__version__
+LONGDESCRIPTION=open("README.rst", "rt").read()
 
 setup(
     name='clicol',
     version=VERSION,
     description=DESCRIPTION,
+    long_description=LONGDESCRIPTION,
     author=AUTHOR,
     author_email=AUTHOR_EMAIL,
     url=URL,
@@ -21,13 +23,13 @@ setup(
     packages=find_packages(exclude=('tests')),
     install_requires=[
         'pexpect',
-        'importlib',
     ],
     entry_points={
             'console_scripts': [
                     'clicol-telnet = clicol.clicol:main',
                     'clicol-ssh    = clicol.clicol:main',
                     'clicol-test   = clicol.clicol:main',
+                    'clicol-cmd    = clicol.clicol:main',
                 ],
         },
     classifiers=[
