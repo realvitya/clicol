@@ -70,7 +70,7 @@ def colorize(text,only_effect=[]):
          if reg.match(line):
             effects.add(effect)
          if 'timeoutwarn' in effects and timeoutact:
-             conn.send("\x05") # CTRL-E (goto end of line)
+             #conn.send("\x05") # CTRL-E (goto end of line)
              conn.send("\x0C") # CTRL-L (display again)
          continue
 
@@ -153,7 +153,7 @@ def main():
                                             'terminal'   :r'securecrt',
                                             'regex'      :r'all',
                                             'timeoutact' :r'true',
-                                            'F1'         :r'show ip interface brief | e unassign \r\n',
+                                            'F1'         :r'show ip interface brief | e unassign\r\n',
                                             'F2'         :r'show ip bgp sum\r\n',
                                             'F3'         :r'show ip bgp vpnv4 all sum\r\n',
                                             'F4'         :r'"ping "',
@@ -186,10 +186,13 @@ def main():
     cmd = str(os.path.basename(sys.argv[0])).replace('clicol-','');
 
     regex = set(str(config.get('clicol','regex')).split(','))
-    if sys.argv[1] == '--c': # called with specified colormap
-        regex = sys.argv[2].split(",") # input is in "cisco,juniper,..." format
-        del sys.argv[1] # remove --c from args
-        del sys.argv[1] # remove colormap string from args
+    try:
+        if len(sys.argv)>1 and sys.argv[1] == '--c': # called with specified colormap
+            regex = sys.argv[2].split(",") # input is in "cisco,juniper,..." format
+            del sys.argv[1] # remove --c from args
+            del sys.argv[1] # remove colormap string from args
+    except: # index error, wrong call
+        cmd='error'
     if "all" in regex:
         regex = ["common","cisco","juniper"]
     for cm in regex:
@@ -243,6 +246,7 @@ def main():
                    print "\r"+" "*100+"\r"+colorize(lastline,"prompt"), # restore last line/prompt
 
                    for (key,value) in shortcuts:
+                       #print "Command:%s" % command
                        if command.upper()==key.upper():
                            conn.send(value.decode('string_escape').strip(r'"')) # decode to have CRLF as it is and remove ""
                            break
