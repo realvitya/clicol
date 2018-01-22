@@ -24,11 +24,15 @@ def getChar():
 
             getChar._func=_ttyRead
 
-    return getChar._func()
+    output = getChar._func()
+    #print "K:%s " % repr(output),
+    return output
 
-#key[F3]        = '^[[[C'
-#key[F4]        = '^[[[D'
-#key[F5]        = '^[[[E'
+#key[F1]        = '^[[[A' or '^[[11~'
+#key[F2]        = '^[[[B' or '^[[12~'
+#key[F3]        = '^[[[C' or '^[[13~'
+#key[F4]        = '^[[[D' or '^[[14~'
+#key[F5]        = '^[[[E' or '^[[15~'
 #key[F6]        = '^[[17~'
 #key[F7]        = '^[[18~'
 #key[F8]        = '^[[19~'
@@ -75,8 +79,10 @@ def getCommand():
                      cmd=getChar()
                      getChar() # last ~
                      code=int(code+cmd)
-                     if int(code)>=17 and int(code)<22:
-                         cmd='F'+str(code-11) # F1-F10
+                     if int(code)>=11 and int(code)<=15: #F1-F5
+                         cmd='F'+str(code-10)
+                     elif int(code)>=17 and int(code)<=21:
+                         cmd='F'+str(code-11) # F6-F10
                      elif int(code)>=23 and int(code)<=24:
                          cmd='F'+str(code-12) # F11-F12
                      else:
