@@ -25,8 +25,8 @@ ENDWITHLF=re.compile(r".*[\r\n]$",flags=re.S)
 # - more (-more-)
 # - restore coloring (\x1b[m)
 # possible chars: "\):>#$/- "
-#INTERACT=re.compile(r"^([^\:\>\#\$]+)([\]\)\:\>\#\$-])([^\[\]\)\:\>\#\$\-]*)$",flags=re.S)
-INTERACT=re.compile(r"(?i)^([^ ]*([\]\>\#\$][: ]?)(.*)| ?-+\(?more(?: [0-9]{1,2}%)?\)?-+ ?|\x1b\[m)$",flags=re.S)
+#INTERACT=re.compile(r"(?i)^([^ ]*([\]\>\#\$][: ]?)(.*)| ?-+\(?more(?: [0-9]{1,2}%)?\)?-+ ?|\x1b\[m)$",flags=re.S)
+INTERACT=re.compile(r"(?i)^([^ ]*([\]\>\#\$][: ]?)(.*)| ?-+\(?more(?: [0-9]{1,2}%)?\)?-+ ?|\x1b\[m|username: ?|password: ?)$",flags=re.S)
 
 def printhelp(shortcuts):
     print "q: quit program"
