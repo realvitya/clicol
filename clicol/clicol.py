@@ -18,14 +18,15 @@ ct = dict()      # color table (contains colors)
 cmap = list()    # color map (contains coloring rules)
 pause = 0        # if true, then coloring is paused
                  # match for interactive input (prompt,eof)
+debug = False    # global debug (D: hidden command)
 ENDWITHLF=re.compile(r".*[\r\n]$",flags=re.S)
 #Interactive regex matches for
-# - prompt (asd# )
-# - question ([yes])
-# - more (-more-)
-# - restore coloring (\x1b[m)
+# - prompt (asd# ) (all)
+# - question ([yes]) (cisco)
+# - more (-more-) (cisco,juniper)
+# - restore coloring (\x1b[m) (linux)
 # possible chars: "\):>#$/- "
-#INTERACT=re.compile(r"(?i)^([^ ]*([\]\>\#\$][: ]?)(.*)| ?-+\(?more(?: [0-9]{1,2}%)?\)?-+ ?|\x1b\[m)$",flags=re.S)
+#INTERACT=re.compile(r"(?i)^([^ ]*([\]\>\#\$][: ]?)(.*)| ?-+\(?more(?: [0-9]{1,2}%)?\)?-+ ?|\x1b\[m|username: ?|password: ?)$",flags=re.S)
 INTERACT=re.compile(r"(?i)^([^ ]*([\]\>\#\$][: ]?)(.*)| ?-+\(?more(?: [0-9]{1,2}%)?\)?-+ ?|\x1b\[m|username: ?|password: ?)$",flags=re.S)
 
 def printhelp(shortcuts):
@@ -52,14 +53,14 @@ def colorize(text,only_effect=[]):
         reg   =i[3] # regexp match string
         rep   =i[4] # replacement string
         option=i[5] # match options (continue,break,clear)
-        debug =i[6] # debug
+        cdebug=i[6] # debug
       except IndexError:
         if len(i) == 4:
            #this is a matcher
            matcher=True
         elif len(i) == 6:
-           #don't have DEBUG
-           debug=False
+           #don't have debug
+           cdebug=False
         else:
            raise
       if only_effect!=[] and effect not in only_effect: # check if only specified regexes should be used
@@ -79,8 +80,8 @@ def colorize(text,only_effect=[]):
          backupline=line
          origline=re.sub('\x1b[^m]*m','',line)
       line=reg.sub(rep,origline)
-      if debug:
-         print "\r\n\033[38;5;208mD-",repr(origline), repr(line), repr(effects), "\033[0m\r\n" # DEBUG
+      if cdebug:
+         print "\r\n\033[38;5;208mD-",repr(origline), repr(line), repr(effects), "\033[0m\r\n" # debug
       if line != origline: # we have a match
          if len(effect)>0: # we have an effect
             effects.add(effect)
@@ -104,6 +105,7 @@ def ofilter(input):
    global buffer
    global pause # coloring must be paused
    global lastline
+   global debug
 
    # Coloring is paused by escape character
    if pause:
@@ -111,16 +113,16 @@ def ofilter(input):
    
    # If not ending with linefeed we are interacting or buffering
    if not ENDWITHLF.match(input):
-      #print "\r\n\033[38;5;208mI-",repr(input),"\033[0m\r\n" # DEBUG
+      if debug: print "\r\n\033[38;5;208mI-",repr(input),"\033[0m\r\n" # DEBUG
       lastline=input.splitlines()[-1]
-      #print "\r\n\033[38;5;208mL-",repr(lastline),"\033[0m\r\n" # DEBUG
+      if debug: print "\r\n\033[38;5;208mL-",repr(lastline),"\033[0m\r\n" # DEBUG
       #special characters. e.g. moving cursor
       if re.match(r"[\a\b]",lastline):
         buffer=""
         return colorize(input,["prompt"])
       #collect the input into buffer
       buffer += input
-      #print "\r\n\033[38;5;208mB-",repr(buffer),"\033[0m\r\n" # DEBUG
+      if debug: print "\r\n\033[38;5;208mB-",repr(buffer),"\033[0m\r\n" # DEBUG
       if INTERACT.match(lastline): # prompt or question at the end
          bufout=buffer
          buffer = ""
@@ -141,36 +143,51 @@ def ofilter(input):
             buffer=lastline
             return colorize(bufout)
    else:
-       #print "\r\n\033[38;5;208mNI-",repr(input),"\033[0m\r\n" # DEBUG
+       if debug: print "\r\n\033[38;5;208mNI-",repr(input),"\033[0m\r\n" # DEBUG
        #Got linefeed, dump buffer
        bufout = buffer+input
        buffer = ""
        return colorize(bufout)
 
 def main():
-    global conn, ct, cmap, pause, timeoutact, terminal, buffer, lastline
-    config = ConfigParser.SafeConfigParser({'colortable' :r'dbg_net',
-                                            'terminal'   :r'securecrt',
-                                            'regex'      :r'all',
-                                            'timeoutact' :r'true',
-                                            'F1'         :r'show ip interface brief | e unassign\r\n',
-                                            'F2'         :r'show ip bgp sum\r\n',
-                                            'F3'         :r'show ip bgp vpnv4 all sum\r\n',
-                                            'F4'         :r'"ping "',
-                                            'F5'         :r'',
-                                            'F6'         :r'',
-                                            'F7'         :r'',
-                                            'F8'         :r'',
-                                            'F9'         :r'',
-                                            'F10'        :r'',
-                                            'F11'        :r'',
-                                            'F12'        :r'',})
+    global conn, ct, cmap, pause, timeoutact, terminal, buffer, lastline, debug
+    default_config={'colortable' :r'dbg_net',
+                                                'terminal'   :r'securecrt',
+                                                'regex'      :r'all',
+                                                'timeoutact' :r'true',
+                                                'debug'      :r'false',
+                                                'F1'         :r'show ip interface brief | e unassign\r',
+                                                'F2'         :r'show ip bgp sum\r',
+                                                'F3'         :r'show ip bgp vpnv4 all sum\r',
+                                                'F4'         :r'"ping "', # space requires quoting
+                                                'F5'         :r'',
+                                                'F6'         :r'',
+                                                'F7'         :r'',
+                                                'F8'         :r'',
+                                                'F9'         :r'',
+                                                'F10'        :r'',
+                                                'F11'        :r'',
+                                                'F12'        :r'',
+                                                'SF1'        :r'show interface terse | match inet\r',
+                                                'SF2'        :r'show bgp summary\r',
+                                                'SF3'        :r'',
+                                                'SF4'        :r'',
+                                                'SF5'        :r'',
+                                                'SF6'        :r'',
+                                                'SF7'        :r'',
+                                                'SF8'        :r'',}
+    try:
+        config = ConfigParser.SafeConfigParser(default_config,allow_no_value=True)
+    except TypeError:
+        config = ConfigParser.SafeConfigParser(default_config) # keep compatibility with pre2.7
     config.add_section('clicol')
     config.read(['/etc/clicol.cfg', 'clicol.cfg', os.path.expanduser('~/clicol.cfg')])
     terminal = config.get('clicol','terminal')
-    shortcuts=filter(lambda (o,v): re.match(r'[fF][0-9][0-9]?',o) and v, config.items('clicol')) # read existing shortcuts
+    shortcuts=filter(lambda (o,v): re.match(r'[sS]?[fF][0-9][0-9]?',o) and v, config.items('clicol')) # read existing shortcuts
+    shortcuts.sort(key=lambda (o,v): o) # sort by function key
     cct = config.get('clicol','colortable')
     timeoutact = config.getboolean('clicol','timeoutact')
+    debug = config.getboolean('clicol','debug')
     if cct == "dbg_net":
         import ct_dbg_net as colortables
     elif cct == "lbg_net":
@@ -192,7 +209,7 @@ def main():
             del sys.argv[1] # remove --c from args
             del sys.argv[1] # remove colormap string from args
     except: # index error, wrong call
-        cmd='error'
+        cmd = 'error'
     if "all" in regex:
         regex = ["common","cisco","juniper"]
     for cm in regex:
@@ -233,8 +250,10 @@ def main():
                 #\x1c = CTRL-\
                 conn.interact(escape_character='\x1c',output_filter=ofilter,input_filter=ifilter)
                 if is_break:
-                   print "\r"+" "*100+"\rCLICOL: q:quit,p:pause,F1-F12:shortcuts,h-help",
+                   print "\r"+" "*100+"\rCLICOL: q:quit,p:pause,F1-12,SF1-8:shortcuts,h-help",
                    command=getCommand()
+                   if command=="D":
+                       debug = not debug
                    if command=="p":
                        pause = 1 - pause
                    if command=="q":
@@ -246,15 +265,15 @@ def main():
                    print "\r"+" "*100+"\r"+colorize(lastline,"prompt"), # restore last line/prompt
 
                    for (key,value) in shortcuts:
-                       #print "Command:%s" % command
                        if command.upper()==key.upper():
                            conn.send(value.decode('string_escape').strip(r'"')) # decode to have CRLF as it is and remove ""
                            break
         except OSError:
             conn.close()
         except Exception, e :
-            #import traceback
-            #print traceback.format_exc()
+            if debug:
+                import traceback
+                print traceback.format_exc() # DEBUG
             print e
             print "Error while running "+cmd+" "+str.join(' ',args)
         print colorize(buffer) # print remaining buffer

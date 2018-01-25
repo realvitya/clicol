@@ -25,7 +25,6 @@ def getChar():
             getChar._func=_ttyRead
 
     output = getChar._func()
-    #print "K:%s " % repr(output),
     return output
 
 #key[F1]        = '^[[[A' or '^[[11~'
@@ -49,6 +48,7 @@ def getChar():
 #key[Shift-F6]  = '^[[32~'
 #key[Shift-F7]  = '^[[33~'
 #key[Shift-F8]  = '^[[34~'
+#---------------- implemented the above only
 #
 #key[Insert]    = '^[[2~'
 #key[Delete]    = '^[[3~'
@@ -85,6 +85,12 @@ def getCommand():
                          cmd='F'+str(code-11) # F6-F10
                      elif int(code)>=23 and int(code)<=24:
                          cmd='F'+str(code-12) # F11-F12
+                     elif int(code)>=25 and int(code)<=26:
+                         cmd='SF'+str(code-24) # SHIFT + F1-F2
+                     elif int(code)>=28 and int(code)<=29:
+                         cmd='SF'+str(code-25) # SHIFT + F3-F4
+                     elif int(code)>=31 and int(code)<=34:
+                         cmd='SF'+str(code-26) # SHIFT + F5-F8
                      else:
                          cmd=""
                   else:
