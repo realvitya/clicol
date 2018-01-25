@@ -1,0 +1,20 @@
+#!/bin/bash
+
+help() {
+	echo "Usage: $_ [-t|-p|-h]"
+	echo "-t - upload to test repository"
+	echo "-p - upload to prod repository"
+	echo "-h - print this help"
+}
+if [ $# -lt 1 -o "$1" == "-h" ];then
+	help
+	exit
+fi
+
+if [ "$1" == "-t" ]; then
+	python setup.py sdist upload -r pypitest
+elif [ "$1" == "-p" ]; then
+	python setup.py sdist upload -r pypi
+else
+	help
+fi
