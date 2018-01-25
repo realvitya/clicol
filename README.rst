@@ -30,11 +30,16 @@ s for the telnet/ssh.
 By default clicol will colorize with all colorsets and this behaviour can be tuned in config file.
 The config file can be saved in user directory and it will take preference over defaults.
 
-Default break key is CTRL-\
+Default break key is CTRL-\\
+
 After hitting the break key you have some options:
+
 p - pausing coloring
+
 q - quit from session
+
 h - print help
+
 F1-F12 keys are shortcuts for various commands. Examples are in example config file or try help 'h' key.
 
 *Note: If you installed into virtualenv then you must first activate it:*
