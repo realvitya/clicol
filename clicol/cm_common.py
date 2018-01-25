@@ -31,7 +31,7 @@ def init(ct):
       [5,"prompt","",re.compile(r"^((?:[\b]+\ *[\b]*)?[a-zA-Z0-9\/_@\-\(\)]+(?:>|\$))(.*)$",flags=re.M), ct['nonprivprompt']+r"\1"+ct['default']+r"\2",BREAK],
 
       # Pager (more)
-      [5,"more","",re.compile(r"^(.*-+\ *\(?[mM][oO][rR][eE](?:\ [0-9]+\%)?\)?\ *[->]+)(.*)$",flags=re.M), ct['pager']+r"\1"+ct['default']+r"\2",BREAK],
+      [5,"more","",re.compile(r"^(.*-+\ *\(?[mM][oO][rR][eE](?:\ [0-9]+\%)?\)?\ *[->]+\ ?)$",flags=re.M), ct['pager']+r"\1"+ct['default'],BREAK],
 
       #Traffic
       [10,"","",re.compile(BOS+r"(drop.*)([1-9][0-9]* )((?:packets|pkts)\/sec)\b",flags=re.M),r"\1"+ct['lowalert']+r"\2"+ct['default']+r"\3",CONT],

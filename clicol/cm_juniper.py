@@ -25,7 +25,7 @@ def init(ct):
       [4,"prompt","",re.compile(r"(?i)^((?:[\b]+\ *[\b]*)?[a-z0-9\/_\-]+@[a-z0-9\/_\-]*(?:>|\$) )(.*)$",flags=re.M), ct['privprompt']+r"\1"+ct['default']+r"\2",BREAK],
 
       # interface names
-      [15,"","",re.compile(BOS+r"\b(?<![\(\)\[\]\\\/.-:])((?:(?:(?:[gx]e|gr|ip|[lmuv]t|p[de]|pf[eh]|lc|lsq|sp)-|ae|em|fxp|lo|lis|me|pip|pp)[0-9]{1,4}|(?:reth0|irb|cbp|lsi|mtun|pim[de]|tap|dsc|demux)[0-9]?)(?:[\/.][0-9]{1,5})*)\b(?! -)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
+      [15,"","",re.compile(BOS+r"\b(?<![\(\)\[\]\\\/.-:])((?:(?:(?:[gx]e|gr|ip|[lmuv]t|p[de]|pf[eh]|lc|lsq|sp)-|ae|em|fxp|lo|lis|me|pip|pp)[0-9]{1,4}|(?:reth|irb|cbp|lsi|mtun|pim[de]|tap|dsc|demux)[0-9]?)(?:[\/.][0-9]{1,5})*)\b(?! -)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
 
       #BGP
       # Juniper show bgp sum
