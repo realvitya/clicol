@@ -2,9 +2,11 @@
 
 help() {
 	echo "Usage: $_ [-t|-p|-h]"
-	echo "-t - upload to test repository"
-	echo "-p - upload to prod repository"
-	echo "-h - print this help"
+	echo "-t  - upload to test repository"
+        echo "-it - install from test repository"
+	echo "-p  - upload to prod repository"
+        echo "-i  - install from production repository"
+	echo "-h  - print this help"
 }
 if [ $# -lt 1 -o "$1" == "-h" ];then
 	help
@@ -15,6 +17,10 @@ if [ "$1" == "-t" ]; then
 	python setup.py sdist upload -r pypitest
 elif [ "$1" == "-p" ]; then
 	python setup.py sdist upload -r pypi
+elif [ "$1" == "-it" ]; then
+        pip install -i https://test.pypi.org/simple clicol
+elif [ "$1" == "-i" ]; then
+        pip install -i https://test.pypi.org/simple clicol
 else
 	help
 fi
