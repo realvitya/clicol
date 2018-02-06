@@ -9,23 +9,24 @@ INSTALL
 -------
 - You will need python 2 and pexpect
 - telnet and/or ssh should be installed
-- Get clicol:
-   - git clone http://github.com/realvitya/clicol ~/clicol
-   - cd ~/clicol
 - I recommend installing ``virtualenv`` and install ``clicol`` into that virtual environment:
    - pip install virtualenv
    - virtualenv ~/mypython
    - source ~/mypython/bin/activate
-   - pip install clicol (latest stable)
+   - pip install clicol
    - OR (after pulling git source)
    - make
    - make install
-- Copy clicol.cfg to your $HOME directory
+- Get clicol source:
+   - git clone http://github.com/realvitya/clicol ~/clicol
+   - cd ~/clicol
+- Copy `clicol.cfg <https://github.com/realvitya/clicol/blob/master/clicol.cfg>`_. to your $HOME directory
 
 USAGE
 -----
-Run the script ``clicol-telnet`` or ``clicol-ssh`` and specify arguments a
-s for the telnet/ssh.
+Run the script ``clicol-telnet`` or ``clicol-ssh`` and specify arguments as for the telnet/ssh.
+
+Beware that clicol is only works under linux! If you want to use it on your Windows desktop you will have to use a linux jump box and login to that box first. This linux box can be a dedicated management server or a simple virtual machine on your desktop. This is pexpect limitation with Windows.
 
 By default clicol will colorize with all colorsets and this behaviour can be tuned in config file.
 The config file can be saved in user directory and it will take preference over defaults.
