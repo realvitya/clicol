@@ -5,7 +5,7 @@ clean:
 	python setup.py clean
 
 install:
-	easy_install .
+	pip install .
 
 uninstall:
 	pip uninstall clicol
