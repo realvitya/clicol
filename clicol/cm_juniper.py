@@ -10,7 +10,7 @@ def init(ct):
 
   DEBUG=True
   #Beginning of line. Can be empty or couple of backspaces.
-  BOL=r"(^.*[\b\ ]+(?<! )|^)"
+  BOL=r"(^[\b\ ]+(?<! )|^)"
   #Beginning of a string. Can be empty or default color.
   BOS=string.replace("(?:"+ct['default']+r'|\b)',r'[',r'\[');
 

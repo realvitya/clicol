@@ -11,7 +11,7 @@ def init(ct):
   DEBUG=True
   #Beginning of line. Can be empty or couple of backspaces.
   # extra care should be taken as this is a matching group!
-  BOL=r"(^.*[\b\ ]+(?<! )|^)"
+  BOL=r"(^[\b\ ]+(?<! )|^)"
   #Beginning of a string. Can be empty or default color.
   # this will be cleared from output as this is nonmatching group!
   BOS=string.replace("(?:"+ct['default']+r'|\b)',r'[','\[');
@@ -31,7 +31,8 @@ def init(ct):
       [5,"prompt","",re.compile(r"^((?:[\b]+\ *[\b]*)?[a-zA-Z0-9\/_@\-\(\)]+(?:>|\$))(.*)$",flags=re.M), ct['nonprivprompt']+r"\1"+ct['default']+r"\2",BREAK],
 
       # Pager (more)
-      [5,"more","",re.compile(r"^(.*-+\ *\(?[mM][oO][rR][eE](?:\ [0-9]+\%)?\)?\ *[->]+\ ?)$",flags=re.M), ct['pager']+r"\1"+ct['default'],BREAK],
+      # CONT because sometimes there is output after 'more'
+      [5,"more","",re.compile(r"^([\b ]*[<-]+\ *\(?[mM][oO][rR][eE](?:\ [0-9]+\%)?\)?\ *[->]+\ ?)(.*)$",flags=re.M), ct['pager']+r"\1"+ct['default']+r"\2",CONT],
 
       #Traffic
       [10,"","",re.compile(BOS+r"(drop.*)([1-9][0-9]* )((?:packets|pkts)\/sec)\b",flags=re.M),r"\1"+ct['lowalert']+r"\2"+ct['default']+r"\3",CONT],

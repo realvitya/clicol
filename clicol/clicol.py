@@ -4,6 +4,7 @@ import os, sys, re
 import string
 import pexpect
 import ConfigParser
+import timeit
 from importlib import import_module
 from command import getCommand
 from __init__ import __version__
@@ -18,8 +19,7 @@ ct = dict()      # color table (contains colors)
 cmap = list()    # color map (contains coloring rules)
 pause = 0        # if true, then coloring is paused
                  # match for interactive input (prompt,eof)
-debug = False    # global debug (D: hidden command)
-ENDWITHLF=re.compile(r".*[\r\n]$",flags=re.S)
+debug = 0        # global debug (D: hidden command)
 #Interactive regex matches for
 # - prompt (asd# ) (all)
 # - question ([yes]) (cisco)
@@ -27,7 +27,15 @@ ENDWITHLF=re.compile(r".*[\r\n]$",flags=re.S)
 # - restore coloring (\x1b[m) (linux)
 # possible chars: "\):>#$/- "
 #INTERACT=re.compile(r"(?i)^([^ ]*([\]\>\#\$][: ]?)(.*)| ?-+\(?more(?: [0-9]{1,2}%)?\)?-+ ?|\x1b\[m|username: ?|password: ?)$",flags=re.S)
-INTERACT=re.compile(r"(?i)^([^ ]*([\]\>\#\$][: ]?)(.*)| ?-+\(?more(?: [0-9]{1,2}%)?\)?-+ ?|\x1b\[m|username: ?|password: ?)$",flags=re.S)
+INTERACT=re.compile(r"(?i)^(" # START of whole line matches
+                     "[^ ]*([\]\>\#\$][: ]?)(.*)" # prompt
+                     "| ?<?-+ ?\(?more(?: [0-9]{1,2}%)?\)? ?-+>? ?([\b ]+)?" # more (\b can be at the end when excessive enters are pressed
+                     "|\x1b\[m"                   # color escape sequence
+                     "|username: ?"
+                     "|password: ?"
+                     ")$"                         # END of whole line match
+                     "|\]:? ?$" # probably question (reload? [yes])
+                     ,flags=re.S)
 
 def printhelp(shortcuts):
     print "q: quit program"
@@ -40,11 +48,14 @@ def printhelp(shortcuts):
 def colorize(text,only_effect=[]):
  #text       : input string to colorize
  #only_effect: select specific regex group(with specified effect) to work with
- global effects, cmap, conn, timeoutact
+ global effects, cmap, conn, timeoutact, debug
  colortext=""
+ if debug>=2: start=timeit.default_timer()
  for line in text.splitlines(True): 
-   #print "\r\n\033[38;5;208mC-",repr(line),"\033[0m\r\n" # DEBUG
+   cmap_counter=0
+   if debug>=2: print "\r\n\033[38;5;208mC-",repr(line),"\033[0m\r\n" # DEBUG
    for i in cmap:
+      cmap_counter+=1
       matcher=False
       try: 
         prio  =i[0] # priority
@@ -68,7 +79,7 @@ def colorize(text,only_effect=[]):
       if len(dep)>0 and dep not in effects: # we don't meet our dependency
          continue # move on to the next regex
       if matcher:
-         if reg.match(line):
+         if reg.search(line):
             effects.add(effect)
          if 'timeoutwarn' in effects and timeoutact:
              #conn.send("\x05") # CTRL-E (goto end of line)
@@ -91,8 +102,9 @@ def colorize(text,only_effect=[]):
             break
       elif option == 2: # need to restore existing coloring as there was no match (by CLEAR)
          line=backupline
-            
+   if debug>=2: print "\033[38;5;208mCC-%d\033[0m" % cmap_counter         
    colortext+=line
+ if debug>=2: print "\r\n\033[38;5;208mCT-%f\033[0m\r\n" % (timeit.default_timer()-start)
  return colortext
 
 def ifilter(input):
@@ -112,25 +124,29 @@ def ofilter(input):
        return input
    
    # If not ending with linefeed we are interacting or buffering
-   if not ENDWITHLF.match(input):
+   if not (input[-1]=="\r" or input[-1]=="\n"):
       if debug: print "\r\n\033[38;5;208mI-",repr(input),"\033[0m\r\n" # DEBUG
       lastline=input.splitlines()[-1]
       if debug: print "\r\n\033[38;5;208mL-",repr(lastline),"\033[0m\r\n" # DEBUG
       #special characters. e.g. moving cursor
-      if re.match(r"[\a\b]",lastline):
+      #if input not starts with \b then it's sg like more or anything device wants to hide.
+      #regular text can follow which we want to colorize
+      if ("\a" in lastline or "\b" in lastline) and (lastline[0]!="\a" and lastline[0]!="\b") and input==lastline:
         buffer=""
         return colorize(input,["prompt"])
       #collect the input into buffer
       buffer += input
       if debug: print "\r\n\033[38;5;208mB-",repr(buffer),"\033[0m\r\n" # DEBUG
-      if INTERACT.match(lastline): # prompt or question at the end
+      if INTERACT.search(lastline): # prompt or question at the end
          bufout=buffer
          buffer = ""
          return colorize(bufout)
         
       if len(buffer)<100:  # interactive or end of large chunk
          bufout=buffer
-         if buffer==input: # interactive
+         if "\r" in input or "\n" in input: # multiline input, not interactive
+           return ""
+         elif buffer==input: # interactive
            buffer = ""
            return colorize(bufout,["prompt","ping"]) # colorize only short stuff (up key,ping)
          else:             # need to collect more output
@@ -155,7 +171,7 @@ def main():
                                                 'terminal'   :r'securecrt',
                                                 'regex'      :r'all',
                                                 'timeoutact' :r'true',
-                                                'debug'      :r'false',
+                                                'debug'      :r'0',
                                                 'F1'         :r'show ip interface brief | e unassign\r',
                                                 'F2'         :r'show ip bgp sum\r',
                                                 'F3'         :r'show ip bgp vpnv4 all sum\r',
@@ -187,7 +203,7 @@ def main():
     shortcuts.sort(key=lambda (o,v): o) # sort by function key
     cct = config.get('clicol','colortable')
     timeoutact = config.getboolean('clicol','timeoutact')
-    debug = config.getboolean('clicol','debug')
+    debug = config.getint('clicol','debug')
     if cct == "dbg_net":
         import ct_dbg_net as colortables
     elif cct == "lbg_net":
@@ -231,7 +247,7 @@ def main():
             print "Error opening "+sys.argv[1]
             raise
         for line in f:
-            print ofilter(line.replace("\n","\r\n")), # convert to CRLF to support files created in linux
+            print ofilter(line.replace("\n","\r\n").decode('string_escape')), # convert to CRLF to support files created in linux
         f.close()
     elif cmd == 'telnet' or cmd == 'ssh' or (cmd == 'cmd' and len(sys.argv)>1):
         try:
@@ -253,7 +269,9 @@ def main():
                    print "\r"+" "*100+"\rCLICOL: q:quit,p:pause,F1-12,SF1-8:shortcuts,h-help",
                    command=getCommand()
                    if command=="D":
-                       debug = not debug
+                       debug += 1
+                       if debug > 2:
+                          debug=0
                    if command=="p":
                        pause = 1 - pause
                    if command=="q":

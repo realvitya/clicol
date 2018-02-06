@@ -10,7 +10,7 @@ def init(ct):
 
   DEBUG=True
   #Beginning of line. Can be empty or couple of backspaces.
-  BOL=r"(^.*[\b\ ]+(?<! )|^)"
+  BOL=r"(^[\b\ ]+(?<! )|^)"
   #Beginning of a string. Can be empty or default color.
   BOS=string.replace("(?:"+ct['default']+r'|\b)',r'[',r'\[');
 
@@ -40,16 +40,17 @@ def init(ct):
       [20,"","",re.compile(BOS+r"([fF]ull[\ -]?[dD]uplex)",flags=re.M),ct['good']+r"\1"+ct['default'],CONT],
 
       #show interface status
-      [20,"","",re.compile(BOL+r"(.*\ +.*\ +)(notconnect)(\ +.*\ +.*)$",flags=re.M),r"\1\2"+ct['lowalert']+r"\3"+ct['default']+r"\4",CONT],
-      [20,"","",re.compile(BOL+r"(.*\ +.*\ +)(connected)(\ +.*\ +.*)$",flags=re.M),r"\1\2"+ct['good']+r"\3"+ct['default']+r"\4",CONT],
+      [20,"","",re.compile(r"(\ +.*\ +)(notconnect)(\ +.*\ +.*)$",flags=re.M),r"\1"+ct['lowalert']+r"\2"+ct['default']+r"\3",CONT],
+      [20,"","",re.compile(r"(\ +.*\ +)(connected)(\ +.*\ +.*)$",flags=re.M),r"\1"+ct['good']+r"\2"+ct['default']+r"\3",CONT],
 
       #interface configuration
       [20,"","",re.compile(BOL+r"(switchport mode )(.*)$",flags=re.M),r"\1\2"+ct['general_value']+r"\3"+ct['default'],BREAK],
       [20,"","",re.compile(BOL+r"(switchport trunk allowed vlan )(.*)$",flags=re.M),r"\1\2"+ct['good']+r"\3"+ct['default'],BREAK],
 
       #show ver
-      [20,"","",re.compile(BOL+r"((?:.*\buptime|.*\brestarted|Last reload).*)",flags=re.M),r"\1"+ct['general_value']+r"\2"+ct['default'],BREAK],
-      [20,"","",re.compile(BOL+r"(.*\b(?:Configuration register|System image file) is )(.*)",flags=re.M),r"\1\2"+ct['general_value']+r"\3"+ct['default'],BREAK],
+      [20,"","",re.compile(r"((?:\buptime|\brestarted|^Last reload).*)"),ct['general_value']+r"\1"+ct['default'],BREAK],
+      [20,"","",re.compile(r"(\bSoftware.*)(Version [^, ]*\b)"),r"\1"+ct['important_value']+r"\2"+ct['default'],BREAK],
+      [20,"","",re.compile(BOL+r"(\b(?:Configuration register|System image file) is )(.*)",flags=re.M),r"\1\2"+ct['general_value']+r"\3"+ct['default'],BREAK],
 
       #IOS router ping
       [20,"ping","",re.compile(BOS+r"[sS]ending [0-9]+",flags=re.M)], # only turns on ping effect
