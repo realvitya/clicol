@@ -41,7 +41,7 @@ q - quit from session
 
 h - print help
 
-F1-F12 keys are shortcuts for various commands. Examples are in example config file or try help 'h' key.
+F1-F12 keys are shortcuts for various commands. Examples are in example config file or try help 'h' key. Shortcuts for SHIFT+F1-F8 are only working if your terminal supports this. For SecureCRT you may setup mapped keys for these to work. (for putty I don't know yet how to implement this)
 
 *Note: If you installed into virtualenv then you must first activate it:*
 
