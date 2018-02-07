@@ -26,7 +26,7 @@ USAGE
 -----
 Run the script ``clicol-telnet`` or ``clicol-ssh`` and specify arguments as for the telnet/ssh.
 
-Beware that clicol is only works under linux! If you want to use it on your Windows desktop you will have to use a linux jump box and login to that box first. This linux box can be a dedicated management server or a simple virtual machine on your desktop. This is pexpect limitation with Windows.
+clicol can be run on Windows in cygwin. If you want to use SecureCRT, you must enable sshd in cygwin and connect to localhost. It is not necessary to be administrator on the desktop for this to work. You must bind to localhost and use port number >1024.
 
 By default clicol will colorize with all colorsets and this behaviour can be tuned in config file.
 The config file can be saved in user directory and it will take preference over defaults.
