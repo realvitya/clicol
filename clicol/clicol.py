@@ -43,7 +43,6 @@ INTERACT=re.compile(r"(?i)^(" # START of whole line matches
 
 def timeoutcheck():
     global timeout, maxtimeout
-    global conn
     
     while True:
         time.sleep(1)
@@ -58,6 +57,7 @@ def preventtimeout():
     global conn
     
     conn.send("\x0C")
+
 def printhelp(shortcuts):
     print "q: quit program"
     print "p: pause coloring"
