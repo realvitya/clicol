@@ -24,6 +24,8 @@ pause = 0        # if true, then coloring is paused
 debug = 0        # global debug (D: hidden command)
 timeout = 0      # counts timeout
 maxtimeout = 0   # maximum timeout (0 turns off this feature)
+prevents = 0     # counts timeout prevention
+maxprevents = 0  # maximum number of timeout prevention (0 turns this off)
 #Interactive regex matches for
 # - prompt (asd# ) (all)
 # - question ([yes]) (cisco)
@@ -54,9 +56,11 @@ def timeoutcheck():
             timeout += 1
 
 def preventtimeout():
-    global conn
+    global conn, prevents, maxprevents
     
-    conn.send("\x0C")
+    prevents+=1
+    if maxprevents<=0 or prevents<=maxprevents:
+        conn.send("\x0C")
 
 def printhelp(shortcuts):
     print "q: quit program"
@@ -130,10 +134,10 @@ def colorize(text,only_effect=[]):
  return colortext
 
 def ifilter(input):
-   global is_break, timeout
+   global is_break, timeout, prevents
 
    is_break = input=='\x1c'
-   if not is_break: timeout=0
+   if not is_break: timeout=0; prevents=0
    return input
 
 def ofilter(input):
@@ -190,13 +194,14 @@ def ofilter(input):
 
 def main():
     global conn, ct, cmap, pause, timeoutact, terminal, buffer, lastline, debug
-    global maxtimeout
+    global maxtimeout, maxprevents
     default_config={'colortable' :r'dbg_net',
                                                 'terminal'   :r'securecrt',
                                                 'regex'      :r'all',
                                                 'timeoutact' :r'true',
                                                 'debug'      :r'0',
                                                 'maxtimeout' :r'0',
+                                                'maxprevents':r'0',
                                                 'F1'         :r'show ip interface brief | e unassign\r',
                                                 'F2'         :r'show ip bgp sum\r',
                                                 'F3'         :r'show ip bgp vpnv4 all sum\r',
@@ -229,6 +234,7 @@ def main():
     cct = config.get('clicol','colortable')
     timeoutact = config.getboolean('clicol','timeoutact')
     maxtimeout = config.getint('clicol','maxtimeout')
+    maxprevents= config.getint('clicol','maxprevents')
     debug = config.getint('clicol','debug')
     if cct == "dbg_net":
         import ct_dbg_net as colortables
@@ -287,9 +293,10 @@ def main():
                 print "Error starting %s" % cmd
                 return
         try:
-            tc = threading.Thread(target=timeoutcheck)
-            tc.daemon = True
-            tc.start()
+            if maxtimeout>0: # enable this feature
+                tc = threading.Thread(target=timeoutcheck)
+                tc.daemon = True
+                tc.start()
             while conn.isalive():
                 #esc code table: http://jkorpela.fi/chars/c0.html
                 #\x1c = CTRL-\
