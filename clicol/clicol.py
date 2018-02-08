@@ -5,6 +5,8 @@ import string
 import pexpect
 import ConfigParser
 import timeit
+import threading
+import time
 from importlib import import_module
 from command import getCommand
 from __init__ import __version__
@@ -20,6 +22,8 @@ cmap = list()    # color map (contains coloring rules)
 pause = 0        # if true, then coloring is paused
                  # match for interactive input (prompt,eof)
 debug = 0        # global debug (D: hidden command)
+timeout = 0      # counts timeout
+maxtimeout = 0   # maximum timeout (0 turns off this feature)
 #Interactive regex matches for
 # - prompt (asd# ) (all)
 # - question ([yes]) (cisco)
@@ -37,6 +41,23 @@ INTERACT=re.compile(r"(?i)^(" # START of whole line matches
                      "|\]:? ?$" # probably question (reload? [yes])
                      ,flags=re.S)
 
+def timeoutcheck():
+    global timeout, maxtimeout
+    global conn
+    
+    while True:
+        time.sleep(1)
+        if maxtimeout<=0: continue # timeout disabled
+        if timeout>=maxtimeout:
+            preventtimeout()       # send something to prevent timeout on device
+            timeout=0
+        else:
+            timeout += 1
+
+def preventtimeout():
+    global conn
+    
+    conn.send("\x0C")
 def printhelp(shortcuts):
     print "q: quit program"
     print "p: pause coloring"
@@ -83,7 +104,8 @@ def colorize(text,only_effect=[]):
             effects.add(effect)
          if 'timeoutwarn' in effects and timeoutact:
              #conn.send("\x05") # CTRL-E (goto end of line)
-             conn.send("\x0C") # CTRL-L (display again)
+             #conn.send("\x0C") # CTRL-L (display again)
+             preventtimeout()
          continue
 
       origline=line
@@ -108,9 +130,10 @@ def colorize(text,only_effect=[]):
  return colortext
 
 def ifilter(input):
-   global is_break
+   global is_break, timeout
 
    is_break = input=='\x1c'
+   if not is_break: timeout=0
    return input
 
 def ofilter(input):
@@ -167,11 +190,13 @@ def ofilter(input):
 
 def main():
     global conn, ct, cmap, pause, timeoutact, terminal, buffer, lastline, debug
+    global maxtimeout
     default_config={'colortable' :r'dbg_net',
                                                 'terminal'   :r'securecrt',
                                                 'regex'      :r'all',
                                                 'timeoutact' :r'true',
                                                 'debug'      :r'0',
+                                                'maxtimeout' :r'0',
                                                 'F1'         :r'show ip interface brief | e unassign\r',
                                                 'F2'         :r'show ip bgp sum\r',
                                                 'F3'         :r'show ip bgp vpnv4 all sum\r',
@@ -203,6 +228,7 @@ def main():
     shortcuts.sort(key=lambda (o,v): o) # sort by function key
     cct = config.get('clicol','colortable')
     timeoutact = config.getboolean('clicol','timeoutact')
+    maxtimeout = config.getint('clicol','maxtimeout')
     debug = config.getint('clicol','debug')
     if cct == "dbg_net":
         import ct_dbg_net as colortables
@@ -261,6 +287,9 @@ def main():
                 print "Error starting %s" % cmd
                 return
         try:
+            tc = threading.Thread(target=timeoutcheck)
+            tc.daemon = True
+            tc.start()
             while conn.isalive():
                 #esc code table: http://jkorpela.fi/chars/c0.html
                 #\x1c = CTRL-\
