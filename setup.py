@@ -21,6 +21,9 @@ setup(
     url=URL,
     license="GPLv3",
     packages=find_packages(exclude=('tests')),
+    data_files=[
+        ('share/doc/clicol', ['doc/clicol.cfg']),
+    ],
     install_requires=[
         'pexpect',
     ],
