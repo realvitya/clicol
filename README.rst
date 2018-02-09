@@ -20,7 +20,7 @@ INSTALL
 - Get clicol source:
    - git clone http://github.com/realvitya/clicol ~/clicol
    - cd ~/clicol
-- Copy `clicol.cfg <https://github.com/realvitya/clicol/blob/master/clicol.cfg>`_. to your $HOME directory
+- Copy `clicol.cfg <https://github.com/realvitya/clicol/blob/master/doc/clicol.cfg>`_. to your $HOME directory
 
 USAGE
 -----
@@ -47,7 +47,7 @@ F1-F12 keys are shortcuts for various commands. Examples are in example config f
 
 **source ~/mypython/bin/activate**
 
-Consider using aliases. A basic template can be found in *example* folder.
+Consider using aliases. A basic template can be found in *doc* folder.
 
 
 Your terminal software should support ANSI colors. Putty/SecureCRT are tested. I am developing with default colorsets. If you are using other software, colors can differ somewhat.
