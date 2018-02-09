@@ -26,6 +26,7 @@ timeout = 0      # counts timeout
 maxtimeout = 0   # maximum timeout (0 turns off this feature)
 prevents = 0     # counts timeout prevention
 maxprevents = 0  # maximum number of timeout prevention (0 turns this off)
+RUNNING = True   # signal to timeoutcheck
 #Interactive regex matches for
 # - prompt (asd# ) (all)
 # - question ([yes]) (cisco)
@@ -44,16 +45,24 @@ INTERACT=re.compile(r"(?i)^(" # START of whole line matches
                      ,flags=re.S)
 
 def timeoutcheck():
-    global timeout, maxtimeout
+    global timeout, maxtimeout, buffer
+    global RUNNING
     
-    while True:
-        time.sleep(1)
-        if maxtimeout<=0: continue # timeout disabled
-        if timeout>=maxtimeout:
+    timeout = time.time()
+    while RUNNING:
+        time.sleep(0.5) # time clicks we run checks
+        now=time.time()
+        # Check if there was user input in the specified time range
+        if maxtimeout>0 and (now-timeout)>=maxtimeout:
             preventtimeout()       # send something to prevent timeout on device
-            timeout=0
-        else:
-            timeout += 1
+            timeout=time.time()    # reset timeout
+        # Check if there is some output stuck at buffer we should print out
+        # (to mitigate unresponsibleness)
+        if (now-timeout)>1 and len(buffer)>0: #send out buffer
+            print colorize(buffer),
+            sys.stdout.flush()
+            buffer=""
+            timeout=time.time()
 
 def preventtimeout():
     global conn, prevents, maxprevents
@@ -137,7 +146,7 @@ def ifilter(input):
    global is_break, timeout, prevents
 
    is_break = input=='\x1c'
-   if not is_break: timeout=0; prevents=0
+   if not is_break: timeout=time.time(); prevents=0
    return input
 
 def ofilter(input):
@@ -195,6 +204,7 @@ def ofilter(input):
 def main():
     global conn, ct, cmap, pause, timeoutact, terminal, buffer, lastline, debug
     global maxtimeout, maxprevents
+    global RUNNING
     default_config={'colortable' :r'dbg_net',
                                                 'terminal'   :r'securecrt',
                                                 'regex'      :r'all',
@@ -293,10 +303,10 @@ def main():
                 print "Error starting %s" % cmd
                 return
         try:
-            if maxtimeout>0: # enable this feature
-                tc = threading.Thread(target=timeoutcheck)
-                tc.daemon = True
-                tc.start()
+            # Start timeoutcheck to check timeout or string stuck in buffer
+            tc = threading.Thread(target=timeoutcheck)
+            tc.daemon = True
+            tc.start()
             while conn.isalive():
                 #esc code table: http://jkorpela.fi/chars/c0.html
                 #\x1c = CTRL-\
@@ -330,7 +340,11 @@ def main():
                 print traceback.format_exc() # DEBUG
             print e
             print "Error while running "+cmd+" "+str.join(' ',args)
-        print colorize(buffer) # print remaining buffer
+
+        # Stop timeoutcheck thread and exit
+        RUNNING=False
+        tc.join()
+        print colorize(buffer), # print remaining buffer
     else:
         print "CLICOL - CLI colorizer and more... Version %s" % __version__
         print "Usage: clicol-{telnet|ssh} [--c {colormap}] [args]"
@@ -343,3 +357,5 @@ def main():
         printhelp(shortcuts)
 
 # END OF PROGRAM
+if __name__ == "__main__":
+    main()
