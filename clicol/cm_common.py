@@ -11,7 +11,7 @@ def init(ct):
   DEBUG=True
   #Beginning of line. Can be empty or couple of backspaces.
   # extra care should be taken as this is a matching group!
-  BOL=r"(^[\b\ ]+(?<! )|^)"
+  BOL=r"(^(?: ?<?-+ ?\(?[mM][oO][rR][eE](?: [0-9]{1,2}%)?\)? ?-+>? ?)?(?:[\b ]+)|^)"
   #Beginning of a string. Can be empty or default color.
   # this will be cleared from output as this is nonmatching group!
   BOS=string.replace("(?:"+ct['default']+r'|\b)',r'[','\[');

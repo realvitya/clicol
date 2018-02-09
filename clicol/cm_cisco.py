@@ -9,8 +9,8 @@ def init(ct):
   CONT =0
 
   DEBUG=True
-  #Beginning of line. Can be empty or couple of backspaces.
-  BOL=r"(^[\b\ ]+(?<! )|^)"
+  #Beginning of line. Can be empty or more and/or couple of backspaces.
+  BOL=r"(^(?: ?<?-+ ?\(?[mM][oO][rR][eE](?: [0-9]{1,2}%)?\)? ?-+>? ?)?(?:[\b ]+)|^)"
   #Beginning of a string. Can be empty or default color.
   BOS=string.replace("(?:"+ct['default']+r'|\b)',r'[',r'\[');
 
