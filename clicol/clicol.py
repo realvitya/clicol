@@ -344,7 +344,7 @@ def main():
         # Stop timeoutcheck thread and exit
         RUNNING=False
         tc.join()
-        print colorize(buffer), # print remaining buffer
+        if len(buffer)>0: print colorize(buffer), # print remaining buffer
     else:
         print "CLICOL - CLI colorizer and more... Version %s" % __version__
         print "Usage: clicol-{telnet|ssh} [--c {colormap}] [args]"
