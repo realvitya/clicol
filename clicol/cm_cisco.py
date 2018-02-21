@@ -27,7 +27,7 @@ def init(ct):
       #interface names (long ethernet)
       [20,"","",re.compile(BOS+r"((?:[fF]ourty|[tT]en)?(?:[gG]igabit|[fF]ast)?[eE]thernet[0-9]+(?:[\/\.:][0-9]+)*[,:]?)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
       [20,"","",re.compile(BOS+r"((?:[Mm]anagement[0-9]+(?:[\/\.:][0-9]+)*[,:]?))",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
-      [20,"","",re.compile(BOS+r"\b(?<![\(\)\[\]\\\/.-:])([efgtEFGTmM][aie]*[0-9]{1,4}(?:[\/.:][0-9]{1,4})*[,:*]?)\b(?! -)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
+      [20,"","",re.compile(BOS+r"\b(?<![\(\)\[\]\\\/.-:])([efgtEFGTmM][aie]+[0-9]{1,4}(?:[\/.:][0-9]{1,4})*[,:*]?)\b(?! -)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
       [20,"","",re.compile(BOS+r"((?:ATM|nvi|[pP]ort-channel|[sS]e(rial)?|[pP]o|vfc|BRI|Dialer)[0-9\/:,.]+[,:]?)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
       [20,"","",re.compile(BOS+r"((?:[Mm]ulti|[lL]o|[Tt]u|[Mm]gmt|[Nn]ull|[vV]l(?:an)?)(link|opback|nnel)?[0-9]+,?)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
       [20,"","",re.compile(BOL+r"((line)\ (con\ ?[0-9]?|vty [0-9]+(?: [0-9]+)?|aux [0-9]+|console))",flags=re.M),r"\1"+ct['interface']+r"\2"+ct['default'],CONT],
