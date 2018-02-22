@@ -22,7 +22,7 @@ effects = set()  # state effects set
 ct = dict()      # color table (contains colors)
 cmap = list()    # color map (contains coloring rules)
 pause = 0        # if true, then coloring is paused
-                 # match for interactive input (prompt,eof)
+# match for interactive input (prompt,eof)
 debug = 0        # global debug (D: hidden command)
 timeout = 0      # counts timeout
 maxtimeout = 0   # maximum timeout (0 turns off this feature)
@@ -38,44 +38,44 @@ bufferlock = threading.Lock()
 # possible chars: "\):>#$/- "
 #INTERACT=re.compile(r"(?i)^([^ ]*([\]\>\#\$][: ]?)(.*)| ?-+\(?more(?: [0-9]{1,2}%)?\)?-+ ?|\x1b\[m|username: ?|password: ?)$",flags=re.S)
 INTERACT=re.compile(r"(?i)^(" # START of whole line matches
-                     "[^ ]*([\]\>\#\$][: ]?)(.*)" # prompt
-                     "| ?<?-+ ?\(?more(?: [0-9]{1,2}%)?\)? ?-+>? ?([\b ]+)?" # more (\b can be at the end when excessive enters are pressed
-                     "|\x1b\[m"                   # color escape sequence
-                     "|username: ?"
-                     "|password: ?"
-                     ")$"                         # END of whole line match
-                     "|\]:? ?$" # probably question (reload? [yes])
-                     ,flags=re.S)
+                    "[^ ]*([\]\>\#\$][: ]?)(.*)" # prompt
+                    "| ?<?-+ ?\(?more(?: [0-9]{1,2}%)?\)? ?-+>? ?([\b ]+)?" # more (\b can be at the end when excessive enters are pressed
+                    "|\x1b\[m"                   # color escape sequence
+                    "|username: ?"
+                    "|password: ?"
+                    ")$"                         # END of whole line match
+                    "|\]:? ?$" # probably question (reload? [yes])
+                    ,flags=re.S)
 
 def timeoutcheck():
     global bufferlock, debug, timeout, maxtimeout, buffer
     global RUNNING
-    
+
     timeout = time.time()
     while RUNNING:
-      time.sleep(0.5) # time clicks we run checks
-      now=time.time()
-      # Check if there was user input in the specified time range
-      if maxtimeout>0 and (now-timeout)>=maxtimeout:
-         preventtimeout()       # send something to prevent timeout on device
-         timeout=time.time()    # reset timeout
-      # Check if there is some output stuck at buffer we should print out
-      # (to mitigate unresponsibleness)
-      bufferlock.acquire()
-      if (now-timeout)>1 and len(buffer)>0: #send out buffer
-         if debug>=1: print "\r\n\033[38;5;208mTOB-",repr(buffer),"\033[0m\r\n" # DEBUG
-         sys.stdout.write(colorize(buffer))
-         sys.stdout.flush()
-         buffer=""
-         timeout=time.time()
-      bufferlock.release()
+        time.sleep(0.5) # time clicks we run checks
+        now=time.time()
+        # Check if there was user input in the specified time range
+        if maxtimeout>0 and (now-timeout)>=maxtimeout:
+            preventtimeout()       # send something to prevent timeout on device
+            timeout=time.time()    # reset timeout
+        # Check if there is some output stuck at buffer we should print out
+        # (to mitigate unresponsibleness)
+        bufferlock.acquire()
+        if (now-timeout)>1 and len(buffer)>0: #send out buffer
+            if debug>=1: print "\r\n\033[38;5;208mTOB-",repr(buffer),"\033[0m\r\n" # DEBUG
+            sys.stdout.write(colorize(buffer))
+            sys.stdout.flush()
+            buffer=""
+            timeout=time.time()
+        bufferlock.release()
 
 def preventtimeout():
     global conn, prevents, maxprevents
-    
+
     prevents+=1
     if maxprevents<=0 or prevents<=maxprevents:
-       conn.send("\x0C")
+        conn.send("\x0C")
 
 def printhelp(shortcuts):
     print "q: quit program"
@@ -86,165 +86,165 @@ def printhelp(shortcuts):
         print "%s: \"%s\"" % (key.upper(),value.strip(r'"'))
 
 def colorize(text,only_effect=[]):
- #text       : input string to colorize
- #only_effect: select specific regex group(with specified effect) to work with
- global effects, cmap, conn, timeoutact, debug
- colortext=""
- if debug>=2: start=timeit.default_timer()
- for line in text.splitlines(True): 
-   cmap_counter=0
-   if debug>=2: print "\r\n\033[38;5;208mC-",repr(line),"\033[0m\r\n" # DEBUG
-   for i in cmap:
-      cmap_counter+=1
-      matcher=False
-      try: 
-        prio  =i[0] # priority
-        effect=i[1] # invokes other rules
-        dep   =i[2] # dependency on effect
-        reg   =i[3] # regexp match string
-        rep   =i[4] # replacement string
-        option=i[5] # match options (continue,break,clear)
-        cdebug=i[6] # debug
-      except IndexError:
-        if len(i) == 4:
-           #this is a matcher
-           matcher=True
-        elif len(i) == 6:
-           #don't have debug
-           cdebug=False
-        else:
-           raise
-      if only_effect!=[] and effect not in only_effect: # check if only specified regexes should be used
-         continue # move on to the next regex
-      if len(dep)>0 and dep not in effects: # we don't meet our dependency
-         continue # move on to the next regex
-      if matcher:
-         if reg.search(line):
-            effects.add(effect)
-         if 'timeoutwarn' in effects and timeoutact:
-             #conn.send("\x05") # CTRL-E (goto end of line)
-             #conn.send("\x0C") # CTRL-L (display again)
-             preventtimeout()
-         continue
+    #text       : input string to colorize
+    #only_effect: select specific regex group(with specified effect) to work with
+    global effects, cmap, conn, timeoutact, debug
+    colortext=""
+    if debug>=2: start=timeit.default_timer()
+    for line in text.splitlines(True): 
+        cmap_counter=0
+        if debug>=2: print "\r\n\033[38;5;208mC-",repr(line),"\033[0m\r\n" # DEBUG
+        for i in cmap:
+            cmap_counter+=1
+            matcher=False
+            try: 
+                prio  =i[0] # priority
+                effect=i[1] # invokes other rules
+                dep   =i[2] # dependency on effect
+                reg   =i[3] # regexp match string
+                rep   =i[4] # replacement string
+                option=i[5] # match options (continue,break,clear)
+                cdebug=i[6] # debug
+            except IndexError:
+                if len(i) == 4:
+                    #this is a matcher
+                    matcher=True
+                elif len(i) == 6:
+                    #don't have debug
+                    cdebug=False
+                else:
+                    raise
+            if only_effect!=[] and effect not in only_effect: # check if only specified regexes should be used
+                continue # move on to the next regex
+            if len(dep)>0 and dep not in effects: # we don't meet our dependency
+                continue # move on to the next regex
+            if matcher:
+                if reg.search(line):
+                    effects.add(effect)
+                if 'timeoutwarn' in effects and timeoutact:
+                    #conn.send("\x05") # CTRL-E (goto end of line)
+                    #conn.send("\x0C") # CTRL-L (display again)
+                    preventtimeout()
+                continue
 
-      origline=line
-      if option == 2: #need to cleanup existing coloring (CLEAR)
-         backupline=line
-         origline=re.sub('\x1b[^m]*m','',line)
-      line=reg.sub(rep,origline)
-      if cdebug:
-         print "\r\n\033[38;5;208mD-",repr(origline), repr(line), repr(effects), "\033[0m\r\n" # debug
-      if line != origline: # we have a match
-         if len(effect)>0: # we have an effect
-            effects.add(effect)
-         if 'prompt' in effects: # prompt eliminates all effects
-            effects=set()
-         if option > 0:
-            break
-      elif option == 2: # need to restore existing coloring as there was no match (by CLEAR)
-         line=backupline
-   if debug>=2: print "\033[38;5;208mCC-%d\033[0m" % cmap_counter         
-   colortext+=line
- if debug>=2: print "\r\n\033[38;5;208mCT-%f\033[0m\r\n" % (timeit.default_timer()-start)
- return colortext
+            origline=line
+            if option == 2: #need to cleanup existing coloring (CLEAR)
+                backupline=line
+                origline=re.sub('\x1b[^m]*m','',line)
+            line=reg.sub(rep,origline)
+            if cdebug:
+                print "\r\n\033[38;5;208mD-",repr(origline), repr(line), repr(effects), "\033[0m\r\n" # debug
+            if line != origline: # we have a match
+                if len(effect)>0: # we have an effect
+                    effects.add(effect)
+                if 'prompt' in effects: # prompt eliminates all effects
+                    effects=set()
+                if option > 0:
+                    break
+            elif option == 2: # need to restore existing coloring as there was no match (by CLEAR)
+                line=backupline
+        if debug>=2: print "\033[38;5;208mCC-%d\033[0m" % cmap_counter         
+        colortext+=line
+    if debug>=2: print "\r\n\033[38;5;208mCT-%f\033[0m\r\n" % (timeit.default_timer()-start)
+    return colortext
 
 def ifilter(input):
-   global is_break, timeout, prevents
+    global is_break, timeout, prevents
 
-   is_break = input=='\x1c'
-   if not is_break: timeout=time.time(); prevents=0
-   return input
+    is_break = input=='\x1c'
+    if not is_break: timeout=time.time(); prevents=0
+    return input
 
 def ofilter(input):
-   global buffer
-   global pause # coloring must be paused
-   global lastline
-   global debug
-   global bufferlock
+    global buffer
+    global pause # coloring must be paused
+    global lastline
+    global debug
+    global bufferlock
 
-   # Coloring is paused by escape character
-   if pause:
-       return input
-   
-   bufferlock.acquire() # we got input, have to access buffer exclusively
-   try:
-    # If not ending with linefeed we are interacting or buffering
-    if not (input[-1]=="\r" or input[-1]=="\n"):
-      #collect the input into buffer
-      buffer += input
-      if debug: print "\r\n\033[38;5;208mI-",repr(input),"\033[0m\r\n" # DEBUG
-      lastline=buffer.splitlines(True)[-1]
-      if debug: print "\r\n\033[38;5;208mL-",repr(lastline),"\033[0m\r\n" # DEBUG
-      if debug: print "\r\n\033[38;5;208mB-",repr(buffer),"\033[0m\r\n" # DEBUG
-      #special characters. e.g. moving cursor
-      #if input not starts with \b then it's sg like more or anything device wants to hide.
-      #regular text can follow which we want to colorize
-      if ("\a" in lastline or "\b" in lastline) and (lastline[0]!="\a" and lastline[0]!="\b") and input==lastline:
-        buffer=""
-        return colorize(buffer,["prompt"])
-      if INTERACT.search(lastline): # prompt or question at the end
-        bufout=buffer
-        buffer = ""
-        return colorize(bufout)
-        
-      if len(buffer)<100:  # interactive or end of large chunk
-        bufout=buffer
-        if "\r" in input or "\n" in input: # multiline input, not interactive
-          bufout="".join(buffer.splitlines(True)[:-1]) # all buffer except last line
-          buffer=lastline # delete printed text. last line remains in buffer
-          return colorize(bufout)
-          #return ""
-        elif buffer==input: # interactive
-          buffer = ""
-          return colorize(bufout,["prompt","ping"]) # colorize only short stuff (up key,ping)
-        else:             # need to collect more output
-          return ""
-      else: # large data. we need to print until last line which goes into buffer
-        bufout="".join(buffer.splitlines(True)[:-1]) # all buffer except last line
-        if bufout == "": # only one line was in buffer
-          return ""
+    # Coloring is paused by escape character
+    if pause:
+        return input
+
+    bufferlock.acquire() # we got input, have to access buffer exclusively
+    try:
+        # If not ending with linefeed we are interacting or buffering
+        if not (input[-1]=="\r" or input[-1]=="\n"):
+            #collect the input into buffer
+            buffer += input
+            if debug: print "\r\n\033[38;5;208mI-",repr(input),"\033[0m\r\n" # DEBUG
+            lastline=buffer.splitlines(True)[-1]
+            if debug: print "\r\n\033[38;5;208mL-",repr(lastline),"\033[0m\r\n" # DEBUG
+            if debug: print "\r\n\033[38;5;208mB-",repr(buffer),"\033[0m\r\n" # DEBUG
+            #special characters. e.g. moving cursor
+            #if input not starts with \b then it's sg like more or anything device wants to hide.
+            #regular text can follow which we want to colorize
+            if ("\a" in lastline or "\b" in lastline) and (lastline[0]!="\a" and lastline[0]!="\b") and input==lastline:
+                buffer=""
+                return colorize(buffer,["prompt"])
+            if INTERACT.search(lastline): # prompt or question at the end
+                bufout=buffer
+                buffer = ""
+                return colorize(bufout)
+
+            if len(buffer)<100:  # interactive or end of large chunk
+                bufout=buffer
+                if "\r" in input or "\n" in input: # multiline input, not interactive
+                    bufout="".join(buffer.splitlines(True)[:-1]) # all buffer except last line
+                    buffer=lastline # delete printed text. last line remains in buffer
+                    return colorize(bufout)
+                    #return ""
+                elif buffer==input: # interactive
+                    buffer = ""
+                    return colorize(bufout,["prompt","ping"]) # colorize only short stuff (up key,ping)
+                else:             # need to collect more output
+                    return ""
+            else: # large data. we need to print until last line which goes into buffer
+                bufout="".join(buffer.splitlines(True)[:-1]) # all buffer except last line
+                if bufout == "": # only one line was in buffer
+                    return ""
+                else:
+                    buffer=lastline # delete printed text. last line remains in buffer
+                    return colorize(bufout)
         else:
-          buffer=lastline # delete printed text. last line remains in buffer
-          return colorize(bufout)
-    else:
-      if debug: print "\r\n\033[38;5;208mNI-",repr(input),"\033[0m\r\n" # DEBUG
-      #Got linefeed, dump buffer
-      bufout = buffer+input
-      buffer = ""
-      return colorize(bufout)
-   finally:
-     bufferlock.release()
+            if debug: print "\r\n\033[38;5;208mNI-",repr(input),"\033[0m\r\n" # DEBUG
+            #Got linefeed, dump buffer
+            bufout = buffer+input
+            buffer = ""
+            return colorize(bufout)
+    finally:
+        bufferlock.release()
 def main():
     global conn, ct, cmap, pause, timeoutact, terminal, buffer, lastline, debug
     global maxtimeout, maxprevents
     global RUNNING
     default_config={'colortable' :r'dbg_net',
-                                                'terminal'   :r'securecrt',
-                                                'regex'      :r'all',
-                                                'timeoutact' :r'true',
-                                                'debug'      :r'0',
-                                                'maxtimeout' :r'0',
-                                                'maxprevents':r'0',
-                                                'F1'         :r'show ip interface brief | e unassign\r',
-                                                'F2'         :r'show ip bgp sum\r',
-                                                'F3'         :r'show ip bgp vpnv4 all sum\r',
-                                                'F4'         :r'"ping "', # space requires quoting
-                                                'F5'         :r'',
-                                                'F6'         :r'',
-                                                'F7'         :r'',
-                                                'F8'         :r'',
-                                                'F9'         :r'',
-                                                'F10'        :r'',
-                                                'F11'        :r'',
-                                                'F12'        :r'',
-                                                'SF1'        :r'show interface terse | match inet\r',
-                                                'SF2'        :r'show bgp summary\r',
-                                                'SF3'        :r'',
-                                                'SF4'        :r'',
-                                                'SF5'        :r'',
-                                                'SF6'        :r'',
-                                                'SF7'        :r'',
-                                                'SF8'        :r'',}
+                    'terminal'   :r'securecrt',
+                    'regex'      :r'all',
+                    'timeoutact' :r'true',
+                    'debug'      :r'0',
+                    'maxtimeout' :r'0',
+                    'maxprevents':r'0',
+                    'F1'         :r'show ip interface brief | e unassign\r',
+                    'F2'         :r'show ip bgp sum\r',
+                    'F3'         :r'show ip bgp vpnv4 all sum\r',
+                    'F4'         :r'"ping "', # space requires quoting
+                    'F5'         :r'',
+                    'F6'         :r'',
+                    'F7'         :r'',
+                    'F8'         :r'',
+                    'F9'         :r'',
+                    'F10'        :r'',
+                    'F11'        :r'',
+                    'F12'        :r'',
+                    'SF1'        :r'show interface terse | match inet\r',
+                    'SF2'        :r'show bgp summary\r',
+                    'SF3'        :r'',
+                    'SF4'        :r'',
+                    'SF5'        :r'',
+                    'SF6'        :r'',
+                    'SF7'        :r'',
+                    'SF8'        :r'',}
     try:
         config = ConfigParser.SafeConfigParser(default_config,allow_no_value=True)
     except TypeError:
@@ -325,26 +325,26 @@ def main():
                 #\x1c = CTRL-\
                 conn.interact(escape_character='\x1c',output_filter=ofilter,input_filter=ifilter)
                 if is_break:
-                   print "\r"+" "*100+"\rCLICOL: q:quit,p:pause,F1-12,SF1-8:shortcuts,h-help",
-                   command=getCommand()
-                   if command=="D":
-                       debug += 1
-                       if debug > 2:
-                          debug=0
-                   if command=="p":
-                       pause = 1 - pause
-                   if command=="q":
-                       conn.close()
-                       break
-                   if command=="h":
-                       printhelp(shortcuts)
+                    print "\r"+" "*100+"\rCLICOL: q:quit,p:pause,F1-12,SF1-8:shortcuts,h-help",
+                    command=getCommand()
+                    if command=="D":
+                        debug += 1
+                        if debug > 2:
+                            debug=0
+                    if command=="p":
+                        pause = 1 - pause
+                    if command=="q":
+                        conn.close()
+                        break
+                    if command=="h":
+                        printhelp(shortcuts)
 
-                   print "\r"+" "*100+"\r"+colorize(lastline,"prompt"), # restore last line/prompt
+                    print "\r"+" "*100+"\r"+colorize(lastline,"prompt"), # restore last line/prompt
 
-                   for (key,value) in shortcuts:
-                       if command.upper()==key.upper():
-                           conn.send(value.decode('string_escape').strip(r'"')) # decode to have CRLF as it is and remove ""
-                           break
+                    for (key,value) in shortcuts:
+                        if command.upper()==key.upper():
+                            conn.send(value.decode('string_escape').strip(r'"')) # decode to have CRLF as it is and remove ""
+                            break
         except OSError:
             conn.close()
         except Exception, e :

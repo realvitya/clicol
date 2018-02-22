@@ -70,31 +70,31 @@ def getCommand():
         if cmd=='\x1b': # special function key, need get more
             cmd=getChar()
             if cmd=='[':
-                  cmd=getChar()
-                  if cmd=='[': # ^[[[ A-E : F1-F5
-                     cmd=getChar()
-                     cmd='F'+str(ord(cmd)-ord('A')+1)
-                  elif int(cmd)>=1 and int(cmd)<=3: # ^[[ 1-3 F6-SHIFT-F8
-                     code=cmd
-                     cmd=getChar()
-                     getChar() # last ~
-                     code=int(code+cmd)
-                     if int(code)>=11 and int(code)<=15: #F1-F5
-                         cmd='F'+str(code-10)
-                     elif int(code)>=17 and int(code)<=21:
-                         cmd='F'+str(code-11) # F6-F10
-                     elif int(code)>=23 and int(code)<=24:
-                         cmd='F'+str(code-12) # F11-F12
-                     elif int(code)>=25 and int(code)<=26:
-                         cmd='SF'+str(code-24) # SHIFT + F1-F2
-                     elif int(code)>=28 and int(code)<=29:
-                         cmd='SF'+str(code-25) # SHIFT + F3-F4
-                     elif int(code)>=31 and int(code)<=34:
-                         cmd='SF'+str(code-26) # SHIFT + F5-F8
-                     else:
-                         cmd=""
-                  else:
-                      cmd=""
+                cmd=getChar()
+                if cmd=='[': # ^[[[ A-E : F1-F5
+                    cmd=getChar()
+                    cmd='F'+str(ord(cmd)-ord('A')+1)
+                elif int(cmd)>=1 and int(cmd)<=3: # ^[[ 1-3 F6-SHIFT-F8
+                    code=cmd
+                    cmd=getChar()
+                    getChar() # last ~
+                    code=int(code+cmd)
+                    if int(code)>=11 and int(code)<=15: #F1-F5
+                        cmd='F'+str(code-10)
+                    elif int(code)>=17 and int(code)<=21:
+                        cmd='F'+str(code-11) # F6-F10
+                    elif int(code)>=23 and int(code)<=24:
+                        cmd='F'+str(code-12) # F11-F12
+                    elif int(code)>=25 and int(code)<=26:
+                        cmd='SF'+str(code-24) # SHIFT + F1-F2
+                    elif int(code)>=28 and int(code)<=29:
+                        cmd='SF'+str(code-25) # SHIFT + F3-F4
+                    elif int(code)>=31 and int(code)<=34:
+                        cmd='SF'+str(code-26) # SHIFT + F5-F8
+                    else:
+                        cmd=""
+                else:
+                    cmd=""
             else:
                 cmd=""
     except (ValueError, TypeError):
