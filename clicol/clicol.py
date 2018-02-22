@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
-import os, sys, re
+import os
+import sys
+import re
 import string
 import pexpect
 import ConfigParser
@@ -27,6 +29,7 @@ maxtimeout = 0   # maximum timeout (0 turns off this feature)
 prevents = 0     # counts timeout prevention
 maxprevents = 0  # maximum number of timeout prevention (0 turns this off)
 RUNNING = True   # signal to timeoutcheck
+bufferlock = threading.Lock()
 #Interactive regex matches for
 # - prompt (asd# ) (all)
 # - question ([yes]) (cisco)
@@ -45,31 +48,34 @@ INTERACT=re.compile(r"(?i)^(" # START of whole line matches
                      ,flags=re.S)
 
 def timeoutcheck():
-    global timeout, maxtimeout, buffer
+    global bufferlock, debug, timeout, maxtimeout, buffer
     global RUNNING
     
     timeout = time.time()
     while RUNNING:
-        time.sleep(0.5) # time clicks we run checks
-        now=time.time()
-        # Check if there was user input in the specified time range
-        if maxtimeout>0 and (now-timeout)>=maxtimeout:
-            preventtimeout()       # send something to prevent timeout on device
-            timeout=time.time()    # reset timeout
-        # Check if there is some output stuck at buffer we should print out
-        # (to mitigate unresponsibleness)
-        if (now-timeout)>1 and len(buffer)>0: #send out buffer
-            print colorize(buffer),
-            sys.stdout.flush()
-            buffer=""
-            timeout=time.time()
+      time.sleep(0.5) # time clicks we run checks
+      now=time.time()
+      # Check if there was user input in the specified time range
+      if maxtimeout>0 and (now-timeout)>=maxtimeout:
+         preventtimeout()       # send something to prevent timeout on device
+         timeout=time.time()    # reset timeout
+      # Check if there is some output stuck at buffer we should print out
+      # (to mitigate unresponsibleness)
+      bufferlock.acquire()
+      if (now-timeout)>1 and len(buffer)>0: #send out buffer
+         if debug>=1: print "\r\n\033[38;5;208mTOB-",repr(buffer),"\033[0m\r\n" # DEBUG
+         sys.stdout.write(colorize(buffer))
+         sys.stdout.flush()
+         buffer=""
+         timeout=time.time()
+      bufferlock.release()
 
 def preventtimeout():
     global conn, prevents, maxprevents
     
     prevents+=1
     if maxprevents<=0 or prevents<=maxprevents:
-        conn.send("\x0C")
+       conn.send("\x0C")
 
 def printhelp(shortcuts):
     print "q: quit program"
@@ -154,53 +160,60 @@ def ofilter(input):
    global pause # coloring must be paused
    global lastline
    global debug
+   global bufferlock
 
    # Coloring is paused by escape character
    if pause:
        return input
    
-   # If not ending with linefeed we are interacting or buffering
-   if not (input[-1]=="\r" or input[-1]=="\n"):
+   bufferlock.acquire() # we got input, have to access buffer exclusively
+   try:
+    # If not ending with linefeed we are interacting or buffering
+    if not (input[-1]=="\r" or input[-1]=="\n"):
+      #collect the input into buffer
+      buffer += input
       if debug: print "\r\n\033[38;5;208mI-",repr(input),"\033[0m\r\n" # DEBUG
-      lastline=input.splitlines()[-1]
+      lastline=buffer.splitlines(True)[-1]
       if debug: print "\r\n\033[38;5;208mL-",repr(lastline),"\033[0m\r\n" # DEBUG
+      if debug: print "\r\n\033[38;5;208mB-",repr(buffer),"\033[0m\r\n" # DEBUG
       #special characters. e.g. moving cursor
       #if input not starts with \b then it's sg like more or anything device wants to hide.
       #regular text can follow which we want to colorize
       if ("\a" in lastline or "\b" in lastline) and (lastline[0]!="\a" and lastline[0]!="\b") and input==lastline:
         buffer=""
-        return colorize(input,["prompt"])
-      #collect the input into buffer
-      buffer += input
-      if debug: print "\r\n\033[38;5;208mB-",repr(buffer),"\033[0m\r\n" # DEBUG
+        return colorize(buffer,["prompt"])
       if INTERACT.search(lastline): # prompt or question at the end
-         bufout=buffer
-         buffer = ""
-         return colorize(bufout)
+        bufout=buffer
+        buffer = ""
+        return colorize(bufout)
         
       if len(buffer)<100:  # interactive or end of large chunk
-         bufout=buffer
-         if "\r" in input or "\n" in input: # multiline input, not interactive
-           return ""
-         elif buffer==input: # interactive
-           buffer = ""
-           return colorize(bufout,["prompt","ping"]) # colorize only short stuff (up key,ping)
-         else:             # need to collect more output
-           return ""
+        bufout=buffer
+        if "\r" in input or "\n" in input: # multiline input, not interactive
+          bufout="".join(buffer.splitlines(True)[:-1]) # all buffer except last line
+          buffer=lastline # delete printed text. last line remains in buffer
+          return colorize(bufout)
+          #return ""
+        elif buffer==input: # interactive
+          buffer = ""
+          return colorize(bufout,["prompt","ping"]) # colorize only short stuff (up key,ping)
+        else:             # need to collect more output
+          return ""
       else: # large data. we need to print until last line which goes into buffer
-         bufout="".join(buffer.splitlines(True)[:-1]) # all buffer except last line
-         if bufout == "": # only one line was in buffer
-            return ""
-         else:
-            buffer=lastline
-            return colorize(bufout)
-   else:
-       if debug: print "\r\n\033[38;5;208mNI-",repr(input),"\033[0m\r\n" # DEBUG
-       #Got linefeed, dump buffer
-       bufout = buffer+input
-       buffer = ""
-       return colorize(bufout)
-
+        bufout="".join(buffer.splitlines(True)[:-1]) # all buffer except last line
+        if bufout == "": # only one line was in buffer
+          return ""
+        else:
+          buffer=lastline # delete printed text. last line remains in buffer
+          return colorize(bufout)
+    else:
+      if debug: print "\r\n\033[38;5;208mNI-",repr(input),"\033[0m\r\n" # DEBUG
+      #Got linefeed, dump buffer
+      bufout = buffer+input
+      buffer = ""
+      return colorize(bufout)
+   finally:
+     bufferlock.release()
 def main():
     global conn, ct, cmap, pause, timeoutact, terminal, buffer, lastline, debug
     global maxtimeout, maxprevents
