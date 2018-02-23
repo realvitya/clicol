@@ -194,7 +194,6 @@ def ofilter(input):
                     bufout="".join(buffer.splitlines(True)[:-1]) # all buffer except last line
                     buffer=lastline # delete printed text. last line remains in buffer
                     return colorize(bufout)
-                    #return ""
                 elif buffer==input: # interactive
                     buffer = ""
                     return colorize(bufout,["prompt","ping"]) # colorize only short stuff (up key,ping)
