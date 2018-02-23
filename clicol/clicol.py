@@ -47,13 +47,13 @@ INTERACT=re.compile(r"(?i)^(" # START of whole line matches
                     "|\]:? ?$" # probably question (reload? [yes])
                     ,flags=re.S)
 
-def timeoutcheck(wait=0.3):
+def timeoutcheck(maxwait=1.0):
     global bufferlock, debug, timeout, maxtimeout, buffer
     global RUNNING
 
     timeout = time.time()
     while RUNNING:
-        time.sleep(wait) # time clicks we run checks
+        time.sleep(0.33) # time clicks we run checks
         now=time.time()
         # Check if there was user input in the specified time range
         if maxtimeout>0 and (now-timeout)>=maxtimeout:
@@ -62,7 +62,7 @@ def timeoutcheck(wait=0.3):
         # Check if there is some output stuck at buffer we should print out
         # (to mitigate unresponsibleness)
         bufferlock.acquire()
-        if (now-timeout)>1 and len(buffer)>0: #send out buffer
+        if (now-timeout)>maxwait and len(buffer)>0: #send out buffer
             if debug>=1: print "\r\n\033[38;5;208mTOB-",repr(buffer),"\033[0m\r\n" # DEBUG
             sys.stdout.write(colorize(buffer))
             sys.stdout.flush()
@@ -225,7 +225,7 @@ def main():
                     'debug'      :r'0',
                     'maxtimeout' :r'0',
                     'maxprevents':r'0',
-                    'wait'       :r'0.3',
+                    'maxwait'    :r'1.0',
                     'F1'         :r'show ip interface brief | e unassign\r',
                     'F2'         :r'show ip bgp sum\r',
                     'F3'         :r'show ip bgp vpnv4 all sum\r',
@@ -318,7 +318,7 @@ def main():
                 return
         try:
             # Start timeoutcheck to check timeout or string stuck in buffer
-            tc = threading.Thread(target=timeoutcheck,args=(config.getfloat("clicol","wait"),))
+            tc = threading.Thread(target=timeoutcheck,args=(config.getfloat("clicol","maxwait"),))
             tc.daemon = True
             tc.start()
             while conn.isalive():
