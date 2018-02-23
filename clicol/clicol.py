@@ -180,8 +180,9 @@ def ofilter(input):
             #if input not starts with \b then it's sg like more or anything device wants to hide.
             #regular text can follow which we want to colorize
             if ("\a" in lastline or "\b" in lastline) and (lastline[0]!="\a" and lastline[0]!="\b") and input==lastline:
+                bufout=buffer
                 buffer=""
-                return colorize(buffer,["prompt"])
+                return colorize(bufout,["prompt"])
             if INTERACT.search(lastline): # prompt or question at the end
                 bufout=buffer
                 buffer = ""
