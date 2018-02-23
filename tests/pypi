@@ -1,12 +1,40 @@
 #!/bin/bash
 
+#Example .pypirc
+#[distutils]
+#index-servers =
+#  pypi
+#  pypitest
+#
+#[pypi]
+#repository=https://upload.pypi.org/legacy/
+#username=realvitya
+#password=topsecret
+#
+#[pypitest]
+#repository=https://test.pypi.org/legacy/
+#username=realvitya
+#password=topsecret
+
+# CACERTS environment contains a filename of CA certs. Used by TWINE.
+if [ ! -e "$CACERTS" ];then
+  if [ -e "$HOME/cacerts.pem" ];then
+    CACERTS="$HOME/cacerts.pem"
+  fi
+fi
+if [ "$CACERTS" ];then
+  CACERTS="--cert $CACERTS"
+fi
+
 help() {
-	echo "Usage: $_ [-t|-p|-h]"
-	echo "-t  - upload to test repository"
-        echo "-it - install from test repository"
-	echo "-p  - upload to prod repository"
-        echo "-i  - install from production repository"
-	echo "-h  - print this help"
+    echo "Usage: $0 [-t|-tt|-p|-pt|-it|-i|-h]"
+    echo "-t  - upload to test repository"
+    echo "-tt - upload to test repository with TWINE"
+    echo "-p  - upload to prod repository"
+    echo "-pt - upload to prod repository with TWINE"
+    echo "-it - install from test repository"
+    echo "-i  - install from production repository"
+    echo "-h  - print this help"
 }
 if [ $# -lt 1 -o "$1" == "-h" ];then
 	help
@@ -14,13 +42,23 @@ if [ $# -lt 1 -o "$1" == "-h" ];then
 fi
 
 if [ "$1" == "-t" ]; then
+    rm dist/*
 	python setup.py sdist upload -r pypitest
+elif [ "$1" == "-tt" ]; then
+    rm dist/*
+    python setup.py sdist
+    twine upload -r pypitest dist/* $CACERTS
 elif [ "$1" == "-p" ]; then
+    rm dist/*
 	python setup.py sdist upload -r pypi
+elif [ "$1" == "-pt" ]; then
+    rm dist/*
+    python setup.py sdist
+    twine upload -r pypi dist/* $CACERTS
 elif [ "$1" == "-it" ]; then
         pip install -i https://test.pypi.org/simple clicol
 elif [ "$1" == "-i" ]; then
-        pip install -i https://test.pypi.org/simple clicol
+        pip install -i https://pypi.pypi.org/simple clicol
 else
 	help
 fi
