@@ -47,13 +47,13 @@ INTERACT=re.compile(r"(?i)^(" # START of whole line matches
                     "|\]:? ?$" # probably question (reload? [yes])
                     ,flags=re.S)
 
-def timeoutcheck():
+def timeoutcheck(wait=0.3):
     global bufferlock, debug, timeout, maxtimeout, buffer
     global RUNNING
 
     timeout = time.time()
     while RUNNING:
-        time.sleep(0.5) # time clicks we run checks
+        time.sleep(wait) # time clicks we run checks
         now=time.time()
         # Check if there was user input in the specified time range
         if maxtimeout>0 and (now-timeout)>=maxtimeout:
@@ -225,6 +225,7 @@ def main():
                     'debug'      :r'0',
                     'maxtimeout' :r'0',
                     'maxprevents':r'0',
+                    'wait'       :r'0.3',
                     'F1'         :r'show ip interface brief | e unassign\r',
                     'F2'         :r'show ip bgp sum\r',
                     'F3'         :r'show ip bgp vpnv4 all sum\r',
@@ -317,7 +318,7 @@ def main():
                 return
         try:
             # Start timeoutcheck to check timeout or string stuck in buffer
-            tc = threading.Thread(target=timeoutcheck)
+            tc = threading.Thread(target=timeoutcheck,args=(config.getfloat("clicol","wait"),))
             tc.daemon = True
             tc.start()
             while conn.isalive():
