@@ -35,7 +35,7 @@ def init(ct):
         [5,"more","",re.compile(r"^([\b ]*[<-]+\ *\(?[mM][oO][rR][eE](?:\ [0-9]+\%)?\)?\ *[->]+\ ?)(.*)$",flags=re.M), ct['pager']+r"\1"+ct['default']+r"\2",CONT],
 
         #Traffic
-        [10,"","",re.compile(BOS+r"(drop.*)([1-9][0-9]* )((?:packets|pkts)\/sec)\b",flags=re.M),r"\1"+ct['lowalert']+r"\2"+ct['default']+r"\3",CONT],
+        [10,"","",re.compile(BOS+r"(drop.*)(\b[1-9][0-9]*\b )((?:packets|pkts)\/sec)\b",flags=re.M),r"\1"+ct['lowalert']+r"\2"+ct['default']+r"\3",CONT],
         [10,"","",re.compile(BOS+r"([1-9][0-9]* )((?:bits|bytes|pkts|packets)\/sec)\b",flags=re.M),ct['trafficrate']+r"\1"+ct['default']+r"\2",CONT],
 
         #MAC address
