@@ -36,9 +36,8 @@ bufferlock = threading.Lock()
 # - more (-more-) (cisco,juniper)
 # - restore coloring (\x1b[m) (linux)
 # possible chars: "\):>#$/- "
-#INTERACT=re.compile(r"(?i)^([^ ]*([\]\>\#\$][: ]?)(.*)| ?-+\(?more(?: [0-9]{1,2}%)?\)?-+ ?|\x1b\[m|username: ?|password: ?)$",flags=re.S)
 INTERACT=re.compile(r"(?i)^(" # START of whole line matches
-                    "[^ ]*([\]\>\#\$][: ]?)(.*)" # prompt
+                    "[^* ]+([\]\>\#\$][: ]?)(.*)" # prompt
                     "| ?<?-+ ?\(?more(?: [0-9]{1,2}%)?\)? ?-+>? ?([\b ]+)?" # more (\b can be at the end when excessive enters are pressed
                     "|\x1b\[m"                   # color escape sequence
                     "|username: ?"
