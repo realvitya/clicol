@@ -10,7 +10,7 @@ def init(ct):
 
     DEBUG=True
     #Beginning of line. Can be empty or more and/or couple of backspaces.
-    BOL=r"(^(?: ?<?-+ ?\(?[mM][oO][rR][eE](?: [0-9]{1,2}%)?\)? ?-+>? ?)?(?:[\b ]+)|^)"
+    BOL=r"(^(?: ?<?-+ ?\(?[mM][oO][rR][eE](?: [0-9]{1,2}%)?\)? ?-+>? ?)(?:[\b ]+)|^)"
     #Beginning of a string. Can be empty or default color.
     BOS=string.replace("(?:"+ct['default']+r'|\b)',r'[',r'\[');
 
@@ -21,15 +21,15 @@ def init(ct):
         #replacer:
         #priority, effect, dependency, regex, replacement, options, [debug]
         # Hostname in configuration
-        [20,"","",re.compile(BOL+r"(hostname )([a-zA-Z0-9_-]+)",flags=re.M),r'\1\2'+ct['privprompt']+r'\3'+ct['default'],CONT],
+        [20,"","",re.compile(BOL+r"(hostname )([a-zA-Z0-9_-]+)"),"%s%s%s%s" % (r'\1\2',ct['privprompt'],r'\3',ct['default']),CONT],
         #interface keyword
         [20,"","",re.compile(BOL+r"(interface )",flags=re.M),ct['general_configitem']+r"\1\2"+ct['default'],CONT],
         #interface names (long ethernet)
-        [20,"","",re.compile(BOS+r"((?:[fF]ourty|[tT]en)?(?:[gG]igabit|[fF]ast)?[eE]thernet[0-9]+(?:[\/\.:][0-9]+)*[,:]?)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
-        [20,"","",re.compile(BOS+r"((?:[Mm]anagement[0-9]+(?:[\/\.:][0-9]+)*[,:]?))",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
-        [20,"","",re.compile(BOS+r"\b(?<![\(\)\[\]\\\/.-:])([efgtEFGTmM][aie]+[0-9]{1,4}(?:[\/.:][0-9]{1,4})*[,:*]?)\b(?! -)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
-        [20,"","",re.compile(BOS+r"((?:ATM|nvi|[pP]ort-channel|[sS]e(rial)?|[pP]o|vfc|BRI|Dialer)[0-9\/:,.]+[,:]?)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
-        [20,"","",re.compile(BOS+r"((?:[Mm]ulti|[lL]o|[Tt]u|[Mm]gmt|[Nn]ull|[vV]l(?:an)?)(link|opback|nnel)?[0-9]+,?)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
+        [20,"","",re.compile(BOS+r"(?<![\(\)\[\]\\\/.:-])((?:[fF]ourty|[tT]en)?(?:[gG]igabit|[fF]ast)?[eE]thernet[0-9]+(?:[\/\.:][0-9]+)*[,:]?)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
+        [20,"","",re.compile(BOS+r"(?<![\(\)\[\]\\\/.:-])((?:[Mm]anagement[0-9]+(?:[\/\.:][0-9]+)*[,:]?))",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
+        [20,"","",re.compile(BOS+r"(?<![\(\)\[\]\\\/.:-])([efgtEFGTmM][aie]+[0-9]{1,4}(?:[\/.:][0-9]{1,4})*[,:*]?)\b(?! -)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
+        [20,"","",re.compile(BOS+r"(?<![\(\)\[\]\\\/.:-])((?:ATM|nvi|[pP]ort-channel|[sS]e(rial)?|[pP]o|vfc|BRI|Dialer)[0-9\/:,.]+[,:]?)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
+        [20,"","",re.compile(BOS+r"(?<![\(\)\[\]\\\/.:-])((?:[Mm]ulti|[lL]o|[Tt]u|[Mm]gmt|[Nn]ull|[vV]l(?:an)?)(link|opback|nnel)?[0-9]+,?)",flags=re.M),ct['interface']+r"\1"+ct['default'],CONT],
         [20,"","",re.compile(BOL+r"((line)\ (con\ ?[0-9]?|vty [0-9]+(?: [0-9]+)?|aux [0-9]+|console))",flags=re.M),r"\1"+ct['interface']+r"\2"+ct['default'],CONT],
 
         #interface stats
@@ -96,7 +96,7 @@ def init(ct):
         #net 49.5001.1001.5914.9900.00
         [20,"","",re.compile(BOL+r"( net )([0-9]{2}\.(?:[0-9]{4}\.){4}[0-9]{2})$",flags=re.M),r"\1\2"+ct['important_value']+r"\3"+ct['default'],CLEAR],
         #VRF stuff
-        [20,"","",re.compile(BOL+r"((?:ip route| ip| tunnel)? vrf(?: forwarding)? |ip vrf )([a-zA-Z0-9_-]+)( ?.*)$",flags=re.M),r"\1\2"+ct['important_value']+r"\3"+ct['default']+r'\4',CLEAR],
+        [20,"","",re.compile(r"\b(f?vrf (?:forwarding |definition )?)([a-zA-Z0-9_-]+)"),"%s%s%s%s" % (r"\1",ct['important_value'],r"\2",ct['default']),CLEAR],
 
 
     ]
