@@ -215,8 +215,10 @@ def ofilter(input):
         bufferlock.release()
 def main():
     global conn, ct, cmap, pause, timeoutact, terminal, buffer, lastline, debug
+    global is_break
     global maxtimeout, maxprevents
     global RUNNING
+
     default_config={'colortable' :r'dbg_net',
                     'terminal'   :r'securecrt',
                     'regex'      :r'all',
@@ -325,6 +327,7 @@ def main():
                 #\x1c = CTRL-\
                 conn.interact(escape_character='\x1c',output_filter=ofilter,input_filter=ifilter)
                 if is_break:
+                    is_break = False
                     print "\r"+" "*100+"\rCLICOL: q:quit,p:pause,F1-12,SF1-8:shortcuts,h-help",
                     command=getCommand()
                     if command=="D":
