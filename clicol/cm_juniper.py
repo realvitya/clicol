@@ -35,9 +35,9 @@ def init(ct):
         # Established
         [20,"","",re.compile(BOL+r"((?:[0-9]+\.){3}[0-9]+\ +)([0-9]+)((?:\ +[0-9]+\ +)(?:[0-9]+\ +)(?:[0-9]+\ +)(?:[0-9]+\ +))([0-9ywdh: ]+)(\ +Establ.*)"), "".join((r"\1",ct['address'],r"\2",ct['important_value'],r"\3",ct['default'],r"\4",ct['general_value'],r"\5",ct['good'],r"\6",ct['default'])),CLEAR],
         # from neighbor
-        [20,"","",re.compile(BOL+r"((?:[0-9]+\.){3}[0-9]+\ +)([0-9]+)((?:\ +[0-9]+\ +)(?:[0-9]+\ +)(?:[0-9]+\ +)(?:[0-9]+\ +))([0-9ywdh:]+)(\ +(?:[0-9]+\/)+.*)"), "".join((r"\1",ct['address'],r"\2",ct['important_value'],r"\3",ct['default'],r"\4",ct['general_value'],r"\5",ct['good'],r"\6",ct['default'])),CLEAR],
+        [20,"","",re.compile(BOL+r"((?:[0-9]+\.){3}[0-9]+\ +)([0-9]+)((?:\ +[0-9]+\ +)(?:[0-9]+\ +)(?:[0-9]+\ +)(?:[0-9]+\ +))([0-9ywdh: ]+)(\ +(?:[0-9]+\/)+.*)"), "".join((r"\1",ct['address'],r"\2",ct['important_value'],r"\3",ct['default'],r"\4",ct['general_value'],r"\5",ct['good'],r"\6",ct['default'])),CLEAR],
         # Active, Connect, or Idle
-        [20,"","",re.compile(BOL+r"((?:[0-9]+\.){3}[0-9]+\ +)([0-9]+)((?:\ +[0-9]+\ +)(?:[0-9]+\ +)(?:[0-9]+\ +)(?:[0-9]+\ +))([0-9ywdh:]+)(\ +(?:Active|Connect|Idle).*)"), "".join((r"\1",ct['address'],r"\2",ct['important_value'],r"\3",ct['default'],r"\4",ct['general_value'],r"\5",ct['alert'],r"\6",ct['default'])),CLEAR],
+        [20,"","",re.compile(BOL+r"((?:[0-9]+\.){3}[0-9]+\ +)([0-9]+)((?:\ +[0-9]+\ +)(?:[0-9]+\ +)(?:[0-9]+\ +)(?:[0-9]+\ +))([0-9ywdh: ]+)(\ +(?:Active|Connect|Idle).*)"), "".join((r"\1",ct['address'],r"\2",ct['important_value'],r"\3",ct['default'],r"\4",ct['general_value'],r"\5",ct['alert'],r"\6",ct['default'])),CLEAR],
         # Session timeout warning
         [20,"timeoutwarn","",re.compile(BOL+r"\x07Warning: session will be closed in [0-9]{1,2} (?:minutes?|seconds) if there is no activity.*")],
     ]
