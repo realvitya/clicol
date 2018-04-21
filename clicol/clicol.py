@@ -9,6 +9,7 @@ import ConfigParser
 import timeit
 import threading
 import time
+from pkg_resources import resource_filename
 from importlib import import_module
 from command import getCommand
 from __init__ import __version__
@@ -97,18 +98,19 @@ def colorize(text,only_effect=[]):
             cmap_counter+=1
             matcher=False
             try: 
-                prio  =i[0] # priority
-                effect=i[1] # invokes other rules
-                dep   =i[2] # dependency on effect
-                reg   =i[3] # regexp match string
-                rep   =i[4] # replacement string
-                option=i[5] # match options (continue,break,clear)
-                cdebug=i[6] # debug
+                matcher=int(i[0])>0 # is matcher?
+                prio   =i[1]   # priority
+                effect =i[2]   # invokes other rules
+                dep    =i[3]   # dependency on effect
+                reg    =i[4]   # regexp match string
+                rep    =i[5]   # replacement string
+                option =i[6]   # match options (continue,break,clear)
+                cdebug =int(i[7])>0 # debug
             except IndexError:
-                if len(i) == 4:
+                if len(i) == 5:
                     #this is a matcher
                     matcher=True
-                elif len(i) == 6:
+                elif len(i) == 7:
                     #don't have debug
                     cdebug=False
                 else:
@@ -261,20 +263,60 @@ def main():
     maxtimeout = config.getint('clicol','maxtimeout')
     maxprevents= config.getint('clicol','maxprevents')
     debug = config.getint('clicol','debug')
-    if cct == "dbg_net":
-        import ct_dbg_net as colortables
-    elif cct == "lbg_net":
-        import ct_lbg_net as colortables
+    
+    colors=ConfigParser.SafeConfigParser()
+    colors.add_section('colors')
+    colors.read([resource_filename(__name__,'colors_'+terminal+'.ini'),os.path.expanduser('~/clicol_customcolors.ini')])
+
+    ctfile = ConfigParser.SafeConfigParser(dict(colors.items('colors')))
+    del colors
+    ctfile.add_section('colortable')
+    if cct == "dbg_net" or cct == "lgb_net":
+        ctfile.read([resource_filename(__name__,'ct_'+cct+'.ini'),os.path.expanduser('~/clicol_customct.ini')])
     else:
         print "No such colortable: "+cct
         exit(1)
-    ct = colortables.ct
-
+    def merge_dicts(x, y):
+        z = x.copy()   # start with x's keys and values
+        z.update(y)    # modifies z with y's keys and values & returns None
+        return z
+    default_cmap={
+             'matcher'     : '0',
+             'priority'    : '100',
+             'effect'      : '',
+             'dependency'  : 'set_it_to_work',
+             'regex'       : '',
+             'replacement' : '',
+             'options'     : '1', #CONT=0,BREAK=1,CLEAR=2
+             'debug'       : '0',
+             }
+    cmaps=ConfigParser.SafeConfigParser(merge_dicts(dict(ctfile.items('colortable')),default_cmap))
+    del ctfile
+    regex = set(str(config.get('clicol','regex')).split(','))
+    try:
+        if len(sys.argv)>1 and sys.argv[1] == '--c': # called with specified colormap
+            regex = sys.argv[2].split(",") # input is in "cisco,juniper,..." format
+            del sys.argv[1] # remove --c from args
+            del sys.argv[1] # remove colormap string from args
+    except: # index error, wrong call
+        cmd = 'error'
+    if "all" in regex:
+        regex = ["common","cisco","juniper"]
+    for cm in regex:
+        if cm in ["common","cisco","cisco_show","juniper"]:
+            cmaps.read(resource_filename(__name__,'cm_'+cm+'.ini'))
+    cmaps.read([os.path.expanduser('~/clicol_customcmap.ini')])
+    for cmap_i in cmaps.sections():
+        c=dict(cmaps.items(cmap_i))
+        #print repr([c['matcher'],c['priority'],c['effect'],c['dependency'],c['regex'].decode('unicode_escape'),c['replacement'].decode('unicode_escape'),c['options'],c['debug']])
+        cmap.append([c['matcher'],c['priority'],c['effect'],c['dependency'],re.compile(c['regex'].decode('string_escape')),c['replacement'],c['options'],c['debug']])
+    cmap.sort(key=lambda match: match[1]) # sort colormap based on priority
 
     #Check how we were called
     # valid options: clicol-telnet, clicol-ssh, clicol-test
     cmd = str(os.path.basename(sys.argv[0])).replace('clicol-','');
 
+    '''
     regex = set(str(config.get('clicol','regex')).split(','))
     try:
         if len(sys.argv)>1 and sys.argv[1] == '--c': # called with specified colormap
@@ -290,11 +332,12 @@ def main():
             cmod=import_module("clicol.cm_"+cm)
             cmap.extend(cmod.init(ct))
     cmap.sort(key=lambda match: match[0]) # sort colormap based on priority
+    '''
     if cmd == 'test' and len(sys.argv)>1:
         #Sanity check on colormaps
         cmbuf=list()
         for cm in cmap:
-            if cm[3] in cmbuf:
+            if cm[4] in cmbuf:
                 print "Duplicate pattern:"+repr(cm)
             else:
                 cmbuf.append(cm[3])
