@@ -32,6 +32,7 @@ setup(
                     'clicol-telnet = clicol.clicol:main',
                     'clicol-ssh    = clicol.clicol:main',
                     'clicol-test   = clicol.clicol:main',
+                    'clicol-file   = clicol.clicol:main',
                     'clicol-cmd    = clicol.clicol:main',
                 ],
         },

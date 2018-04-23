@@ -94,27 +94,28 @@ def colorize(text,only_effect=[]):
     for line in text.splitlines(True): 
         cmap_counter=0
         if debug>=2: print "\r\n\033[38;5;208mC-",repr(line),"\033[0m\r\n" # DEBUG
+        if debug>=3: print "\r\n\033[38;5;208mCCM-",repr(cmap),"\033[0m\r\n" # DEBUG
         for i in cmap:
             cmap_counter+=1
             matcher=False
-            try: 
-                matcher=int(i[0])>0 # is matcher?
-                prio   =i[1]   # priority
-                effect =i[2]   # invokes other rules
-                dep    =i[3]   # dependency on effect
-                reg    =i[4]   # regexp match string
-                rep    =i[5]   # replacement string
-                option =i[6]   # match options (continue,break,clear)
-                cdebug =int(i[7])>0 # debug
-            except IndexError:
-                if len(i) == 5:
-                    #this is a matcher
-                    matcher=True
-                elif len(i) == 7:
-                    #don't have debug
-                    cdebug=False
-                else:
-                    raise
+            #try: 
+            matcher=i[0] # is matcher?
+            prio   =i[1]   # priority
+            effect =i[2]   # invokes other rules
+            dep    =i[3]   # dependency on effect
+            reg    =i[4]   # regexp match string
+            rep    =i[5]   # replacement string
+            option =i[6]   # match options (continue,break,clear)
+            cdebug =i[7] # debug
+            #except IndexError:
+                #if len(i) == 5:
+                #    #this is a matcher
+                #    matcher=True
+                #elif len(i) == 7:
+                #    #don't have debug
+                #    cdebug=False
+                #else:
+                    #raise
             if only_effect!=[] and effect not in only_effect: # check if only specified regexes should be used
                 continue # move on to the next regex
             if len(dep)>0 and dep not in effects: # we don't meet our dependency
@@ -284,12 +285,16 @@ def main():
              'matcher'     : '0',
              'priority'    : '100',
              'effect'      : '',
-             'dependency'  : 'set_it_to_work',
+             'dependency'  : '',
              'regex'       : '',
              'replacement' : '',
              'options'     : '1', #CONT=0,BREAK=1,CLEAR=2
              'debug'       : '0',
+             'disabled'    : '0',
+             'BOL'         : '(^(?: ?<?-+ ?\(?[mM][oO][rR][eE](?: [0-9]{1,2}%%)?\)? ?-+>? ?)?(?:[\b ]+)|^)',
+             'BOS'         : string.replace("(?:"+dict(ctfile.items('colortable'))['default']+r'|\b)',r'[','\['),
              }
+    #cmaps=ConfigParser.SafeConfigParser(merge_dicts(dict(ctfile.items('colortable')),default_cmap),allow_no_value=True)
     cmaps=ConfigParser.SafeConfigParser(merge_dicts(dict(ctfile.items('colortable')),default_cmap))
     del ctfile
     regex = set(str(config.get('clicol','regex')).split(','))
@@ -308,8 +313,9 @@ def main():
     cmaps.read([os.path.expanduser('~/clicol_customcmap.ini')])
     for cmap_i in cmaps.sections():
         c=dict(cmaps.items(cmap_i))
-        #print repr([c['matcher'],c['priority'],c['effect'],c['dependency'],c['regex'].decode('unicode_escape'),c['replacement'].decode('unicode_escape'),c['options'],c['debug']])
-        cmap.append([c['matcher'],c['priority'],c['effect'],c['dependency'],re.compile(c['regex'].decode('string_escape')),c['replacement'],c['options'],c['debug']])
+        if debug>=3: print repr([c['matcher'],c['priority'],c['effect'],c['dependency'],c['regex'],c['replacement'],c['options'],c['debug']])
+        if bool(int(c['disabled'])<1):
+            cmap.append([bool(int(c['matcher'])>0),int(c['priority']),c['effect'],c['dependency'],re.compile(c['regex']),c['replacement'],int(c['options']),int(c['debug'])])
     cmap.sort(key=lambda match: match[1]) # sort colormap based on priority
 
     #Check how we were called
@@ -341,6 +347,18 @@ def main():
                 print "Duplicate pattern:"+repr(cm)
             else:
                 cmbuf.append(cm[3])
+        if len(sys.argv)>1:
+            for test in filter(lambda x: re.match(sys.argv[1],x),cmaps.sections()):
+                test_d=dict(cmaps.items(test))
+                try:
+                    print test+":"+ofilter(test_d['example']+'\r')
+                    if test_d['debug'] == "1":
+                        print repr(test_d['regex'])
+                        print repr(test_d['replacement'])
+
+                except:
+                    pass
+    elif cmd == 'file' and len(sys.argv)>1:
         try:
             f=open(sys.argv[1],'r')
         except:
@@ -407,8 +425,9 @@ def main():
     else:
         print "CLICOL - CLI colorizer and more... Version %s" % __version__
         print "Usage: clicol-{telnet|ssh} [--c {colormap}] [args]"
-        print "Usage: clicol-test         [--c {colormap}] {inputfile}"
+        print "Usage: clicol-file         [--c {colormap}] {inputfile}"
         print "Usage: clicol-cmd          [--c {colormap}] {command} [args]"
+        print "Usage: clicol-test         {regex name (can be regex like .*)}"
         print
         print "Usage while in session"
         print "Press break key CTRL-\\"
