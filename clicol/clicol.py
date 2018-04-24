@@ -107,6 +107,7 @@ def colorize(text,only_effect=[]):
             rep    =i[5]   # replacement string
             option =i[6]   # match options (continue,break,clear)
             cdebug =i[7] # debug
+            name   =i[8] # regex name
             #except IndexError:
                 #if len(i) == 5:
                 #    #this is a matcher
@@ -133,10 +134,12 @@ def colorize(text,only_effect=[]):
             if option == 2: #need to cleanup existing coloring (CLEAR)
                 backupline=line
                 origline=re.sub('\x1b[^m]*m','',line)
+                if debug>=3: print "\r\n\033[38;5;208mCCL-",origline,"\033[0m\r\n" # debug
             line=reg.sub(rep,origline)
             if cdebug:
                 print "\r\n\033[38;5;208mD-",repr(origline), repr(line), repr(effects), "\033[0m\r\n" # debug
             if line != origline: # we have a match
+                if debug>=2: print "\r\n\033[38;5;208mCM-",name,"\033[0m\r\n" # debug
                 if len(effect)>0: # we have an effect
                     effects.add(effect)
                 if 'prompt' in effects: # prompt eliminates all effects
@@ -254,6 +257,7 @@ def main():
         config = ConfigParser.SafeConfigParser(default_config,allow_no_value=True)
     except TypeError:
         config = ConfigParser.SafeConfigParser(default_config) # keep compatibility with pre2.7
+    starttime = time.time()
     config.add_section('clicol')
     config.read(['/etc/clicol.cfg', 'clicol.cfg', os.path.expanduser('~/clicol.cfg')])
     terminal = config.get('clicol','terminal')
@@ -315,7 +319,7 @@ def main():
         c=dict(cmaps.items(cmap_i))
         if debug>=3: print repr([c['matcher'],c['priority'],c['effect'],c['dependency'],c['regex'],c['replacement'],c['options'],c['debug']])
         if bool(int(c['disabled'])<1):
-            cmap.append([bool(int(c['matcher'])>0),int(c['priority']),c['effect'],c['dependency'],re.compile(c['regex']),c['replacement'],int(c['options']),int(c['debug'])])
+            cmap.append([bool(int(c['matcher'])>0),int(c['priority']),c['effect'],c['dependency'],re.compile(c['regex']),c['replacement'],int(c['options']),int(c['debug']),cmap_i])
     cmap.sort(key=lambda match: match[1]) # sort colormap based on priority
 
     #Check how we were called
@@ -340,18 +344,20 @@ def main():
     cmap.sort(key=lambda match: match[0]) # sort colormap based on priority
     '''
     if cmd == 'test' and len(sys.argv)>1:
-        #Sanity check on colormaps
+        # Print starttime:
+        print "Starttime: %s s" % (round(time.time()-starttime,3))
+        # Sanity check on colormaps
         cmbuf=list()
         for cm in cmap:
             if cm[4] in cmbuf:
                 print "Duplicate pattern:"+repr(cm)
             else:
-                cmbuf.append(cm[3])
+                cmbuf.append(cm[4])
         if len(sys.argv)>1:
             for test in filter(lambda x: re.match(sys.argv[1],x),cmaps.sections()):
                 test_d=dict(cmaps.items(test))
                 try:
-                    print test+":"+ofilter(test_d['example']+'\r')
+                    print test+":"+ofilter(test_d['example'].replace('\'','')+'\n')
                     if test_d['debug'] == "1":
                         print repr(test_d['regex'])
                         print repr(test_d['replacement'])
