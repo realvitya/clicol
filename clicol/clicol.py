@@ -219,6 +219,12 @@ def ofilter(input):
             return colorize(bufout)
     finally:
         bufferlock.release()
+
+def merge_dicts(x, y):
+    z = x.copy()   # start with x's keys and values
+    z.update(y)    # modifies z with y's keys and values & returns None
+    return z
+
 def main():
     global conn, ct, cmap, pause, timeoutact, terminal, buffer, lastline, debug
     global is_break
@@ -281,10 +287,7 @@ def main():
     else:
         print "No such colortable: "+cct
         exit(1)
-    def merge_dicts(x, y):
-        z = x.copy()   # start with x's keys and values
-        z.update(y)    # modifies z with y's keys and values & returns None
-        return z
+
     default_cmap={
              'matcher'     : '0',
              'priority'    : '100',
@@ -298,10 +301,11 @@ def main():
              'BOL'         : '(^(?: ?<?-+ ?\(?[mM][oO][rR][eE](?: [0-9]{1,2}%%)?\)? ?-+>? ?)?(?:[\b ]+)|^)',
              'BOS'         : string.replace("(?:"+dict(ctfile.items('colortable'))['default']+r'|\b)',r'[','\['),
              }
-    #cmaps=ConfigParser.SafeConfigParser(merge_dicts(dict(ctfile.items('colortable')),default_cmap),allow_no_value=True)
     cmaps=ConfigParser.SafeConfigParser(merge_dicts(dict(ctfile.items('colortable')),default_cmap))
     del ctfile
-    regex = set(str(config.get('clicol','regex')).split(','))
+    regex = config.get('clicol','regex')
+    if regex == "all":
+        regex = '.*'
     try:
         if len(sys.argv)>1 and sys.argv[1] == '--c': # called with specified colormap
             regex = sys.argv[2].split(",") # input is in "cisco,juniper,..." format
@@ -309,40 +313,21 @@ def main():
             del sys.argv[1] # remove colormap string from args
     except: # index error, wrong call
         cmd = 'error'
-    if "all" in regex:
-        regex = ["common","cisco","juniper"]
-    for cm in regex:
-        if cm in ["common","cisco","cisco_show","juniper"]:
-            cmaps.read(resource_filename(__name__,'cm_'+cm+'.ini'))
+    for cm in ["common","cisco","juniper"]:
+        cmaps.read(resource_filename(__name__,'cm_'+cm+'.ini'))
     cmaps.read([os.path.expanduser('~/clicol_customcmap.ini')])
     for cmap_i in cmaps.sections():
         c=dict(cmaps.items(cmap_i))
-        if debug>=3: print repr([c['matcher'],c['priority'],c['effect'],c['dependency'],c['regex'],c['replacement'],c['options'],c['debug']])
-        if bool(int(c['disabled'])<1):
-            cmap.append([bool(int(c['matcher'])>0),int(c['priority']),c['effect'],c['dependency'],re.compile(c['regex']),c['replacement'],int(c['options']),int(c['debug']),cmap_i])
+        if re.match(regex,cmap_i): # configured rules only
+            if debug>=3: print repr([c['matcher'],c['priority'],c['effect'],c['dependency'],c['regex'],c['replacement'],c['options'],c['debug']])
+            if bool(int(c['disabled'])<1):
+                cmap.append([bool(int(c['matcher'])>0),int(c['priority']),c['effect'],c['dependency'],re.compile(c['regex']),c['replacement'],int(c['options']),int(c['debug']),cmap_i])
     cmap.sort(key=lambda match: match[1]) # sort colormap based on priority
 
     #Check how we were called
     # valid options: clicol-telnet, clicol-ssh, clicol-test
     cmd = str(os.path.basename(sys.argv[0])).replace('clicol-','');
 
-    '''
-    regex = set(str(config.get('clicol','regex')).split(','))
-    try:
-        if len(sys.argv)>1 and sys.argv[1] == '--c': # called with specified colormap
-            regex = sys.argv[2].split(",") # input is in "cisco,juniper,..." format
-            del sys.argv[1] # remove --c from args
-            del sys.argv[1] # remove colormap string from args
-    except: # index error, wrong call
-        cmd = 'error'
-    if "all" in regex:
-        regex = ["common","cisco","juniper"]
-    for cm in regex:
-        if cm in ["common","cisco","cisco_show","juniper"]:
-            cmod=import_module("clicol.cm_"+cm)
-            cmap.extend(cmod.init(ct))
-    cmap.sort(key=lambda match: match[0]) # sort colormap based on priority
-    '''
     if cmd == 'test' and len(sys.argv)>1:
         # Print starttime:
         print "Starttime: %s s" % (round(time.time()-starttime,3))
@@ -354,7 +339,7 @@ def main():
             else:
                 cmbuf.append(cm[4])
         if len(sys.argv)>1:
-            for test in filter(lambda x: re.match(sys.argv[1],x),cmaps.sections()):
+            for test in filter(lambda x: re.match(sys.argv[1],x) and re.match(regex,x), cmaps.sections()):
                 test_d=dict(cmaps.items(test))
                 try:
                     print test+":"+ofilter(test_d['example'].replace('\'','')+'\n')
