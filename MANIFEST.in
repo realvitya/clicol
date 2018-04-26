@@ -2,3 +2,4 @@
 include LICENSE
 
 include doc/*
+include clicol/ini/*.ini

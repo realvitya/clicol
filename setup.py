@@ -11,15 +11,6 @@ URL = "https://github.com/realvitya/clicol"
 VERSION = __import__(PACKAGE).__version__
 LONGDESCRIPTION=open("README.rst", "rt").read()
 
-def package_files(directory):
-    paths = []
-    for (path, directories, filenames) in os.walk(directory):
-        for filename in filenames:
-            paths.append(os.path.join("..", path, filename))
-    return paths
-
-datafiles=package_files("data")
-
 setup(
     name='clicol',
     version=VERSION,
@@ -30,9 +21,10 @@ setup(
     url=URL,
     license="GPLv3",
     packages=find_packages(exclude=('tests')),
+    package_data={'clicol': ['ini/*.ini']},
+
     data_files=[
         ('share/doc/clicol', ['doc/bashrc','doc/clicol.cfg']),
-        ('lib/clicol',datafiles),
     ],
     install_requires=[
         'pexpect',

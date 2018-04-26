@@ -277,13 +277,13 @@ def main():
     
     colors=ConfigParser.SafeConfigParser()
     colors.add_section('colors')
-    colors.read([resource_filename(__name__,'colors_'+terminal+'.ini'),os.path.expanduser('~/clicol_customcolors.ini')])
+    colors.read([resource_filename(__name__,'ini/colors_'+terminal+'.ini'),os.path.expanduser('~/clicol_customcolors.ini')])
 
     ctfile = ConfigParser.SafeConfigParser(dict(colors.items('colors')))
     del colors
     ctfile.add_section('colortable')
     if cct == "dbg_net" or cct == "lgb_net":
-        ctfile.read([resource_filename(__name__,'ct_'+cct+'.ini'),os.path.expanduser('~/clicol_customct.ini')])
+        ctfile.read([resource_filename(__name__,'ini/ct_'+cct+'.ini'),os.path.expanduser('~/clicol_customct.ini')])
     else:
         print "No such colortable: "+cct
         exit(1)
@@ -317,7 +317,7 @@ def main():
     except: # index error, wrong call
         cmd = 'error'
     for cm in ["common","cisco","juniper"]:
-        cmaps.read(resource_filename(__name__,'cm_'+cm+'.ini'))
+        cmaps.read(resource_filename(__name__,'ini/cm_'+cm+'.ini'))
     cmaps.read([os.path.expanduser('~/clicol_customcmap.ini')])
     for cmap_i in cmaps.sections():
         c=dict(cmaps.items(cmap_i))
