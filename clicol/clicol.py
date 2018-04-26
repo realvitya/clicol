@@ -295,11 +295,14 @@ def main():
              'dependency'  : '',
              'regex'       : '',
              'replacement' : '',
-             'options'     : '1', #CONT=0,BREAK=1,CLEAR=2
+             'options'     : '1', #CONTINUE=0,BREAK=1,CLEAR=2 as below
              'debug'       : '0',
              'disabled'    : '0',
              'BOL'         : '(^(?: ?<?-+ ?\(?[mM][oO][rR][eE](?: [0-9]{1,2}%%)?\)? ?-+>? ?)?(?:[\b ]+)|^)',
              'BOS'         : string.replace("(?:"+dict(ctfile.items('colortable'))['default']+r'|\b)',r'[','\['),
+             'CONTINUE'    : '0',
+             'BREAK'       : '1',
+             'CLEAR'       : '2',
              }
     cmaps=ConfigParser.SafeConfigParser(merge_dicts(dict(ctfile.items('colortable')),default_cmap))
     del ctfile
@@ -307,10 +310,10 @@ def main():
     if regex == "all":
         regex = '.*'
     try:
-        if len(sys.argv)>1 and sys.argv[1] == '--c': # called with specified colormap
-            regex = sys.argv[2].split(",") # input is in "cisco,juniper,..." format
+        if len(sys.argv)>1 and sys.argv[1] == '--c': # called with specified colormap regex
+            regex = sys.argv[2]
             del sys.argv[1] # remove --c from args
-            del sys.argv[1] # remove colormap string from args
+            del sys.argv[1] # remove colormap regex string from args
     except: # index error, wrong call
         cmd = 'error'
     for cm in ["common","cisco","juniper"]:
@@ -418,7 +421,7 @@ def main():
         print "Usage: clicol-{telnet|ssh} [--c {colormap}] [args]"
         print "Usage: clicol-file         [--c {colormap}] {inputfile}"
         print "Usage: clicol-cmd          [--c {colormap}] {command} [args]"
-        print "Usage: clicol-test         {regex name (can be regex like .*)}"
+        print "Usage: clicol-test         {colormap regex name (e.g.: '.*' or 'cisco_if|juniper_if')}"
         print
         print "Usage while in session"
         print "Press break key CTRL-\\"
