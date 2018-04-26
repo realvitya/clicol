@@ -51,3 +51,26 @@ Consider using aliases. A basic template can be found in *doc* folder.
 
 
 Your terminal software should support ANSI colors. Putty/SecureCRT are tested. I am developing with default colorsets. If you are using other software, colors can differ somewhat.
+
+TESTING
+-------
+You can list all supported matchers and see them in action. This is good to create a list of matcher and filter on those only. This way one can select the preferred matchers if finds all of them disturbing.
+Run the script ``clicol-test {regex}``
+
+Use case examples:
+
+List all matcher:
+
+``clicol-test ".*"``
+
+List only BGP matchers:
+
+``clicol-test ".*bgp.*"``
+
+List only certain matchers:
+
+``clicol-test ".*ipv4|cisco_if_stats|juniper_if"``
+
+Then the desired regex can be specified in the clicol.cfg in your $HOME and only these matchers will be used.
+
+Output can be tested by running ``clicol-file {filename}`` script. This will colorize the textfile and dump it. Good for testing.
