@@ -46,7 +46,8 @@ setup(
         "Intended Audience :: Telecommunications Industry",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: POSIX",
-        "Programming Language :: Python",
+        "Programming Language :: Python :: 2.4",
+        "Programming Language :: Python :: 2.7",
     ],
     zip_safe=False,
 )
