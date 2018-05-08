@@ -267,8 +267,13 @@ def main():
     config.add_section('clicol')
     config.read(['/etc/clicol.cfg', 'clicol.cfg', os.path.expanduser('~/clicol.cfg')])
     terminal = config.get('clicol','terminal')
-    shortcuts=filter(lambda (o,v): re.match(r'[sS]?[fF][0-9][0-9]?',o) and v, config.items('clicol')) # read existing shortcuts
-    shortcuts.sort(key=lambda (o,v): o) # sort by function key
+
+    shortcuts=filter(lambda (o,v): re.match(r'[fF][0-9][0-9]?',o) and v, config.items('clicol')) # read existing shortcuts
+    shortcuts_shift=filter(lambda (o,v): re.match(r'[sS][fF][0-9][0-9]?',o) and v, config.items('clicol')) # read existing shortcuts+shift
+    shortcuts.sort(key=lambda (o,v): int(o.lstrip("SFsf"))) # sort by function key
+    shortcuts_shift.sort(key=lambda (o,v): int(o.lstrip("SFsf"))) # sort by function key
+    shortcuts.extend(shortcuts_shift)
+
     cct = config.get('clicol','colortable')
     timeoutact = config.getboolean('clicol','timeoutact')
     maxtimeout = config.getint('clicol','maxtimeout')
