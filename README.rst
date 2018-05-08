@@ -18,7 +18,7 @@ INSTALL
    - make
    - make install
 - Get clicol source:
-   - git clone http://github.com/realvitya/clicol ~/clicol
+   - git clone https://github.com/realvitya/clicol ~/clicol
    - cd ~/clicol
 - Copy `clicol.cfg <https://github.com/realvitya/clicol/blob/master/doc/clicol.cfg>`_. to your $HOME directory
 
@@ -74,3 +74,46 @@ List only certain matchers:
 Then the desired regex can be specified in the clicol.cfg in your $HOME and only these matchers will be used.
 
 Output can be tested by running ``clicol-file {filename}`` script. This will colorize the textfile and dump it. Good for testing.
+
+CUSTOMIZING
+===========
+You can override or extend the colors and regexes so you can modify default behaviour and view.
+This can be done by creating the customized files in the format below. You may find examples in default ini files here
+
+``ls -l $VIRTUAL_ENV/lib/python2*/site-packages/clicol/ini``
+
+Custom colors
+-------------
+``$HOME/clicol_customcolors.ini``
+This file is for overriding extending current colorset.
+Example:
+::
+ [colors]
+ c_blue     :\033[94m
+
+Custom colortable
+-----------------
+``$HOME/clicol_customct.ini``
+This file is for overriding or extending keywords for colors.
+Example:
+::
+ [colortable]
+ #add blinking to high alert color:
+ highalert              = %(c_blink)s%(c_u_lred)s
+ 
+Custom colormap
+---------------
+``$HOME/clicol_customcmap.ini``
+This file is for overriding or extending rules for recoloring/matching.
+Example:
+::
+ #disable ipv6 coloring
+ [common_ipv6]
+ disabled=1
+  
+ #alter coloring for 'shutdown'
+ [common_shut]
+ #replacement=%(alert)s\1%(default)s
+ replacement=%(lowalert)s\1%(default)s
+
+You can test your changes: ``clicol-test common_shut``
