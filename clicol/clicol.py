@@ -343,15 +343,24 @@ def main():
         # Sanity check on colormaps
         cmbuf=list()
         for cm in cmap:
+            # search for duplicate patterns
             if cm[4] in cmbuf:
                 print "Duplicate pattern:"+repr(cm)
             else:
                 cmbuf.append(cm[4])
+
         if len(sys.argv)>1:
             for test in filter(lambda x: re.match(sys.argv[1],x) and re.match(regex,x), cmaps.sections()):
                 test_d=dict(cmaps.items(test))
                 try:
+                    # search for dirty patterns
+                    match_in_regex=re.findall(r'(?<!\\)\((?!\?)',test_d['regex'].replace(r'%(BOS)s',''))
+                    match_in_replace=re.findall(r'(?<!\\)\\[0-9](?![0-9])',test_d['replacement'])
+
                     print test+":"+ofilter(test_d['example'].replace('\'','')+'\n')
+                    if len(match_in_regex) <> len(match_in_replace):
+                        print "Warning: match group numbers are not equal! (%s/%s)" % (match_in_regex,match_in_replace)
+                        test_d['debug'] = "1"
                     if test_d['debug'] == "1":
                         print repr(test_d['regex'])
                         print repr(test_d['replacement'])
