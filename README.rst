@@ -76,7 +76,7 @@ Then the desired regex can be specified in the clicol.cfg in your $HOME and only
 Output can be tested by running ``clicol-file {filename}`` script. This will colorize the textfile and dump it. Good for testing.
 
 CUSTOMIZING
-===========
+-----------
 You can override or extend the colors and regexes so you can modify default behaviour and view.
 This can be done by creating the customized files in the format below. You may find examples in default ini files here
 
