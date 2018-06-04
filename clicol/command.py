@@ -1,3 +1,5 @@
+import re
+
 def getChar():
     # figure out which function to use once, and store it in _func
     if "_func" not in getChar.__dict__:
@@ -100,3 +102,14 @@ def getCommand():
     except (ValueError, TypeError):
         return None
     return cmd
+
+def getRegex():
+    str=raw_input("\r"+" "*100+"\rHighlight regex: ")
+    try:
+        output=re.compile('('+str+')')
+    except Exception, e :
+        print "Wrong regex!"
+        return ""
+    if str=="":
+        return ""
+    return output

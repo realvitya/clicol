@@ -12,6 +12,7 @@ import time
 from pkg_resources import resource_filename
 from importlib import import_module
 from command import getCommand
+from command import getRegex
 from __init__ import __version__
 
 #Global variables
@@ -80,6 +81,7 @@ def preventtimeout():
 def printhelp(shortcuts):
     print "q: quit program"
     print "p: pause coloring"
+    print "T: highlight regex (empty turns off)"
     print
     print "Shortcuts"
     for (key,value) in shortcuts:
@@ -231,6 +233,7 @@ def main():
     global is_break
     global maxtimeout, maxprevents
     global RUNNING
+    highlight = ""
 
     default_config={'colortable' :r'dbg_net',
                     'terminal'   :r'securecrt',
@@ -311,7 +314,6 @@ def main():
              'CLEAR'       : '2',
              }
     cmaps=ConfigParser.SafeConfigParser(merge_dicts(dict(ctfile.items('colortable')),default_cmap))
-    del ctfile
     regex = config.get('clicol','regex')
     if regex == "all":
         regex = '.*'
@@ -398,7 +400,7 @@ def main():
                 conn.interact(escape_character='\x1c',output_filter=ofilter,input_filter=ifilter)
                 if is_break:
                     is_break = False
-                    print "\r"+" "*100+"\rCLICOL: q:quit,p:pause,F1-12,SF1-8:shortcuts,h-help",
+                    print "\r"+" "*100+"\rCLICOL: q:quit,p:pause,T:highlight,F1-12,SF1-8:shortcuts,h-help",
                     command=getCommand()
                     if command=="D":
                         debug += 1
@@ -409,6 +411,16 @@ def main():
                     if command=="q":
                         conn.close()
                         break
+                    if command=="T":
+                        highlight=getRegex()
+                        cmap_highlight = [False,0,"","",highlight,dict(ctfile.items('colortable'))['highlight']+r"\1"+dict(ctfile.items('colortable'))['default'],0,0,'user_highlight']
+                        if highlight=="":
+                            if cmap[0][8] == 'user_highlight': # If we have highlight regex, we remove it on user request
+                                del cmap[0]
+                        elif cmap[0][8] == 'user_highlight':
+                            cmap[0] = cmap_highlight
+                        else:
+                            cmap.insert(0,cmap_highlight)
                     if command=="h":
                         printhelp(shortcuts)
 
