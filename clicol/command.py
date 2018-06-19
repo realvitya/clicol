@@ -1,4 +1,5 @@
 import re
+import readline
 
 def getChar():
     # figure out which function to use once, and store it in _func
