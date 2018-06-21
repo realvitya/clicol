@@ -10,7 +10,6 @@ import timeit
 import threading
 import time
 from pkg_resources import resource_filename
-from importlib import import_module
 from command import getCommand
 from command import getRegex
 from __init__ import __version__

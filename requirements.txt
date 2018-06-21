@@ -1,3 +1,2 @@
 pexpect
-importlib
 setuptools
