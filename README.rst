@@ -15,8 +15,7 @@ INSTALL
    - source ~/mypython/bin/activate
    - pip install clicol
    - OR (after pulling git source)
-   - make
-   - make install
+     - pip install clicol-xxxx.zip
 - Get clicol source:
    - git clone https://github.com/realvitya/clicol ~/clicol
    - cd ~/clicol
@@ -40,6 +39,8 @@ p - pausing coloring
 q - quit from session
 
 h - print help
+
+T - highlight regex (set regex in runtime to highligh something important)
 
 F1-F12 keys are shortcuts for various commands. Examples are in example config file or try help 'h' key. Shortcuts for SHIFT+F1-F8 are only working if your terminal supports this. For SecureCRT you may setup mapped keys for these to work. (for putty I don't know yet how to implement this)
 

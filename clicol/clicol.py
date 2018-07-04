@@ -126,8 +126,6 @@ def colorize(text,only_effect=[]):
                 if reg.search(line):
                     effects.add(effect)
                 if 'timeoutwarn' in effects and timeoutact:
-                    #conn.send("\x05") # CTRL-E (goto end of line)
-                    #conn.send("\x0C") # CTRL-L (display again)
                     effects.remove('timeoutwarn')
                     preventtimeout()
                 continue
