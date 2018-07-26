@@ -288,7 +288,7 @@ def main():
     ctfile = ConfigParser.SafeConfigParser(dict(colors.items('colors')))
     del colors
     ctfile.add_section('colortable')
-    if cct == "dbg_net" or cct == "lgb_net":
+    if cct == "dbg_net" or cct == "lbg_net":
         ctfile.read([resource_filename(__name__,'ini/ct_'+cct+'.ini'),os.path.expanduser('~/clicol_customct.ini')])
     else:
         print "No such colortable: "+cct
