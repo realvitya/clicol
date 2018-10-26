@@ -9,9 +9,11 @@ import ConfigParser
 import timeit
 import threading
 import time
+import signal
 from pkg_resources import resource_filename
 from command import getCommand
 from command import getRegex
+from command import getTerminalSize
 from __init__ import __version__
 
 #Global variables
@@ -69,6 +71,13 @@ def timeoutcheck(maxwait=1.0):
             buffer=""
             timeout=time.time()
         bufferlock.release()
+
+def sigwinch_passthrough (sig, data):
+    global conn
+
+    rows,cols=getTerminalSize()
+    conn.setwinsize(rows,cols)
+
 
 def preventtimeout():
     global conn, prevents, maxprevents
@@ -382,9 +391,17 @@ def main():
                 cmd  = sys.argv[1]
                 args = sys.argv[2:]
             conn = pexpect.spawn(cmd,args,timeout=1)
+            # Set signal handler for window resizing
+            signal.signal(signal.SIGWINCH, sigwinch_passthrough)
+            # Set initial terminal size
+            rows,cols=getTerminalSize()
+            conn.setwinsize(rows,cols)
         except Exception, e :
             if cmd != 'telnet' and cmd != 'ssh':
                 print "Error starting %s" % cmd
+                return
+            else:
+                print "Unknown error %s" % e
                 return
         try:
             # Start timeoutcheck to check timeout or string stuck in buffer
