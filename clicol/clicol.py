@@ -131,8 +131,11 @@ def colorize(text,only_effect=[]):
                 continue # move on to the next regex
             if len(dep)>0 and dep not in effects: # we don't meet our dependency
                 continue # move on to the next regex
+            if cdebug>0:
+                print "\r\n\033[38;5;208mD-",name,repr(origline), repr(line), repr(effects), "\033[0m\r\n" # debug
             if matcher:
                 if reg.search(line):
+                    if debug>=2: print "\r\n\033[38;5;208mCM-",name,"\033[0m\r\n" # debug
                     effects.add(effect)
                 if 'timeoutwarn' in effects and timeoutact:
                     effects.remove('timeoutwarn')
@@ -145,15 +148,13 @@ def colorize(text,only_effect=[]):
                 origline=re.sub('\x1b[^m]*m','',line)
                 if debug>=3: print "\r\n\033[38;5;208mCCL-",origline,"\033[0m\r\n" # debug
             line=reg.sub(rep,origline)
-            if cdebug:
-                print "\r\n\033[38;5;208mD-",repr(origline), repr(line), repr(effects), "\033[0m\r\n" # debug
             if line != origline: # we have a match
                 if debug>=2: print "\r\n\033[38;5;208mCM-",name,"\033[0m\r\n" # debug
                 if len(effect)>0: # we have an effect
                     effects.add(effect)
                 if 'prompt' in effects: # prompt eliminates all effects
                     effects=set()
-                if option > 0:
+                if option > 0: # non-zero means non-final match
                     break
             elif option == 2: # need to restore existing coloring as there was no match (by CLEAR)
                 line=backupline
