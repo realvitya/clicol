@@ -242,34 +242,36 @@ def main():
     global RUNNING
     highlight = ""
 
-    default_config={'colortable' :r'dbg_net',
-                    'terminal'   :r'securecrt',
-                    'regex'      :r'all',
-                    'timeoutact' :r'true',
-                    'debug'      :r'0',
-                    'maxtimeout' :r'0',
-                    'maxprevents':r'0',
-                    'maxwait'    :r'1.0',
-                    'F1'         :r'show ip interface brief | e unassign\r',
-                    'F2'         :r'show ip bgp sum\r',
-                    'F3'         :r'show ip bgp vpnv4 all sum\r',
-                    'F4'         :r'"ping "', # space requires quoting
-                    'F5'         :r'',
-                    'F6'         :r'',
-                    'F7'         :r'',
-                    'F8'         :r'',
-                    'F9'         :r'',
-                    'F10'        :r'',
-                    'F11'        :r'',
-                    'F12'        :r'',
-                    'SF1'        :r'show interface terse | match inet\r',
-                    'SF2'        :r'show bgp summary\r',
-                    'SF3'        :r'',
-                    'SF4'        :r'',
-                    'SF5'        :r'',
-                    'SF6'        :r'',
-                    'SF7'        :r'',
-                    'SF8'        :r'',}
+    default_config={'colortable'      :r'dbg_net',
+                    'terminal'        :r'securecrt',
+                    'regex'           :r'all',
+                    'timeoutact'      :r'true',
+                    'debug'           :r'0',
+                    'maxtimeout'      :r'0',
+                    'maxprevents'     :r'0',
+                    'maxwait'         :r'1.0',
+                    'update_caption'  :r'false',
+                    'default_caption' :os.environ['HOSTNAME'],
+                    'F1'              :r'show ip interface brief | e unassign\r',
+                    'F2'              :r'show ip bgp sum\r',
+                    'F3'              :r'show ip bgp vpnv4 all sum\r',
+                    'F4'              :r'"ping "', # space requires quoting
+                    'F5'              :r'',
+                    'F6'              :r'',
+                    'F7'              :r'',
+                    'F8'              :r'',
+                    'F9'              :r'',
+                    'F10'             :r'',
+                    'F11'             :r'',
+                    'F12'             :r'',
+                    'SF1'             :r'show interface terse | match inet\r',
+                    'SF2'             :r'show bgp summary\r',
+                    'SF3'             :r'',
+                    'SF4'             :r'',
+                    'SF5'             :r'',
+                    'SF6'             :r'',
+                    'SF7'             :r'',
+                    'SF8'             :r'',}
     try:
         config = ConfigParser.SafeConfigParser(default_config,allow_no_value=True)
     except TypeError:
@@ -287,6 +289,8 @@ def main():
 
     cct = config.get('clicol','colortable')
     timeoutact = config.getboolean('clicol','timeoutact')
+    update_caption = config.getboolean('clicol','update_caption')
+    default_caption = config.get('clicol','default_caption')
     maxtimeout = config.getint('clicol','maxtimeout')
     maxprevents= config.getint('clicol','maxprevents')
     debug = config.getint('clicol','debug')
@@ -391,6 +395,21 @@ def main():
             if cmd == 'cmd':
                 cmd  = sys.argv[1]
                 args = sys.argv[2:]
+            skip=False
+            if update_caption and (cmd == 'telnet' or cmd == 'ssh'): # only update on telnet/ssh
+                for arg in args:
+                    if skip:
+                        skip=False
+                        continue
+                    if re.match("-[46AaCfGgKkMNnqsTtVvXxYy]",arg):
+                        continue
+                    if re.match("-\w+",arg):
+                        skip=True
+                        continue
+                    m=re.match("(?:\w+@)?([0-9a-zA-Z_.-]+)",arg)
+                    # Print caption update code:
+                    print "\033]2;%s\007" % m.group(1)
+                    break
             conn = pexpect.spawn(cmd,args,timeout=1)
             # Set signal handler for window resizing
             signal.signal(signal.SIGWINCH, sigwinch_passthrough)
@@ -403,6 +422,10 @@ def main():
                 return
             else:
                 print "Unknown error %s" % e
+                # Restore caption
+                if update_caption:
+                    # Print caption update code:
+                    print "\033]2;%s\007" % default_caption
                 return
         try:
             # Start timeoutcheck to check timeout or string stuck in buffer
@@ -454,6 +477,10 @@ def main():
             print e
             print "Error while running "+cmd+" "+str.join(' ',args)
 
+        # Restore caption
+        if update_caption and (cmd == 'telnet' or cmd == 'ssh'):
+            # Print caption update code:
+            print "\033]2;%s\007" % default_caption
         # Stop timeoutcheck thread and exit
         RUNNING=False
         tc.join()
