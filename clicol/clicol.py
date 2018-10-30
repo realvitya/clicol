@@ -63,14 +63,15 @@ def timeoutcheck(maxwait=1.0):
             timeout=time.time()    # reset timeout
         # Check if there is some output stuck at buffer we should print out
         # (to mitigate unresponsibleness)
-        bufferlock.acquire()
-        if (now-timeout)>maxwait and len(buffer)>0: #send out buffer
-            if debug>=1: print "\r\n\033[38;5;208mTOB-",repr(buffer),"\033[0m\r\n" # DEBUG
-            sys.stdout.write(colorize(buffer))
-            sys.stdout.flush()
-            buffer=""
-            timeout=time.time()
-        bufferlock.release()
+        if (now-timeout)>maxwait:
+            bufferlock.acquire()
+            if len(buffer)>0:  # send out buffer
+                if debug>=1: print "\r\n\033[38;5;208mTOB-",repr(buffer),"\033[0m\r\n" # DEBUG
+                sys.stdout.write(colorize(buffer))
+                sys.stdout.flush()
+                buffer=""
+                timeout=time.time()
+            bufferlock.release()
 
 def sigwinch_passthrough (sig, data):
     global conn
@@ -496,6 +497,7 @@ def main():
         print "Press break key CTRL-\\"
         print
         printhelp(shortcuts)
+
 
 # END OF PROGRAM
 if __name__ == "__main__":
