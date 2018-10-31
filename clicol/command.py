@@ -1,17 +1,18 @@
 import re
 import readline
 
+
 def getChar():
     # figure out which function to use once, and store it in _func
     if "_func" not in getChar.__dict__:
         try:
             # for Windows-based systems
-            import msvcrt # If successful, we are on Windows
-            getChar._func=msvcrt.getch
+            import msvcrt  # If successful, we are on Windows
+            getChar._func = msvcrt.getch
 
         except ImportError:
             # for POSIX-based systems (with termios & tty support)
-            import tty, sys, termios # raises ImportError if unsupported
+            import tty, sys, termios  # raises ImportError if unsupported
 
             def _ttyRead():
                 fd = sys.stdin.fileno()
@@ -25,7 +26,7 @@ def getChar():
 
                 return answer
 
-            getChar._func=_ttyRead
+            getChar._func = _ttyRead
 
     output = getChar._func()
     return output
@@ -67,63 +68,69 @@ def getChar():
 #key[Bksp]      = '^?'
 #key[Bksp-Alt]  = '^[^?'
 #key[Bksp-Ctrl] = '^H'
+
+
 def getCommand():
-    cmd=getChar()
+    cmd = getChar()
     try:
-        if cmd=='\x1b': # special function key, need get more
-            cmd=getChar()
-            if cmd=='[':
-                cmd=getChar()
-                if cmd=='[': # ^[[[ A-E : F1-F5
-                    cmd=getChar()
-                    cmd='F'+str(ord(cmd)-ord('A')+1)
-                elif int(cmd)>=1 and int(cmd)<=3: # ^[[ 1-3 F6-SHIFT-F8
-                    code=cmd
-                    cmd=getChar()
-                    getChar() # last ~
-                    code=int(code+cmd)
-                    if int(code)>=11 and int(code)<=15: #F1-F5
-                        cmd='F'+str(code-10)
-                    elif int(code)>=17 and int(code)<=21:
-                        cmd='F'+str(code-11) # F6-F10
-                    elif int(code)>=23 and int(code)<=24:
-                        cmd='F'+str(code-12) # F11-F12
-                    elif int(code)>=25 and int(code)<=26:
-                        cmd='SF'+str(code-24) # SHIFT + F1-F2
-                    elif int(code)>=28 and int(code)<=29:
-                        cmd='SF'+str(code-25) # SHIFT + F3-F4
-                    elif int(code)>=31 and int(code)<=34:
-                        cmd='SF'+str(code-26) # SHIFT + F5-F8
+        if cmd == '\x1b':  # special function key, need get more
+            cmd = getChar()
+            if cmd == '[':
+                cmd = getChar()
+                if cmd == '[':  # ^[[[ A-E : F1-F5
+                    cmd = getChar()
+                    cmd = 'F' + str(ord(cmd) - ord('A') + 1)
+                elif int(cmd) >= 1 and int(cmd) <= 3:  # ^[[ 1-3 F6-SHIFT-F8
+                    code = cmd
+                    cmd = getChar()
+                    getChar()  # last ~
+                    code = int(code + cmd)
+                    if int(code) >= 11 and int(code) <= 15:  # F1-F5
+                        cmd = 'F' + str(code - 10)
+                    elif int(code) >= 17 and int(code) <= 21:
+                        cmd = 'F' + str(code - 11)  # F6-F10
+                    elif int(code) >= 23 and int(code) <= 24:
+                        cmd = 'F' + str(code - 12)  # F11-F12
+                    elif int(code) >= 25 and int(code) <= 26:
+                        cmd = 'SF' + str(code - 24)  # SHIFT + F1-F2
+                    elif int(code) >= 28 and int(code) <= 29:
+                        cmd = 'SF' + str(code - 25)  # SHIFT + F3-F4
+                    elif int(code) >= 31 and int(code) <= 34:
+                        cmd = 'SF' + str(code - 26)  # SHIFT + F5-F8
                     else:
-                        cmd=""
+                        cmd = ""
                 else:
-                    cmd=""
+                    cmd = ""
             else:
-                cmd=""
+                cmd = ""
     except (ValueError, TypeError):
         return None
     return cmd
 
+
 def getRegex():
-    str=raw_input("\r"+" "*100+"\rHighlight regex: ")
+    str = raw_input("\r" + " " * 100 + "\rHighlight regex: ")
     try:
-        output=re.compile('('+str+')')
-    except Exception, e :
+        output = re.compile('(' + str + ')')
+    except Exception, e:
         print "Wrong regex!"
         return ""
-    if str=="":
+    if str == "":
         return ""
     return output
 
-#Source: http://stackoverflow.com/a/566752/2646228
+# Source: http://stackoverflow.com/a/566752/2646228
+
+
 def getTerminalSize():
     import os
     env = os.environ
+
     def ioctl_GWINSZ(fd):
         try:
             import fcntl, termios, struct, os
             cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,
-        '1234'))
+                                                 '1234'))
         except:
             return
         return cr
