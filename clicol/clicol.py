@@ -63,16 +63,19 @@ def timeoutcheck(maxwait=1.0):
             preventtimeout()       # send something to prevent timeout on device
             timeout = time.time()    # reset timeout
         # Check if there is some output stuck at buffer we should print out
-        # (to mitigate unresponsibleness)
+        # (to mitigate unresponsiveness)
         if (now - timeout) > maxwait:
-            bufferlock.acquire()
-            if len(buffer) > 0:  # send out buffer
-                if debug >= 1: print "\r\n\033[38;5;208mTOB-", repr(buffer), "\033[0m\r\n"  # DEBUG
-                sys.stdout.write(colorize(buffer))
-                sys.stdout.flush()
-                buffer = ""
-                timeout = time.time()
-            bufferlock.release()
+            try:
+                bufferlock.acquire()
+                if len(buffer) > 0:  # send out buffer
+                    if debug >= 1: print "\r\n\033[38;5;208mTOB-", repr(buffer), "\033[0m\r\n"  # DEBUG
+                    sys.stdout.write(colorize(buffer))
+                    sys.stdout.flush()
+                    buffer = ""
+                    timeout = time.time()
+            finally:
+                bufferlock.release()
+
 
 
 def sigwinch_passthrough(sig, data):
