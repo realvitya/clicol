@@ -32,6 +32,7 @@ maxtimeout = 0    # maximum timeout (0 turns off this feature)
 prevents = 0      # counts timeout prevention
 maxprevents = 0   # maximum number of timeout prevention (0 turns this off)
 RUNNING = True    # signal to timeoutcheck
+WORKING = True    # signal to timeoutcheck
 bufferlock = threading.Lock()
 # Interactive regex matches for
 # - prompt (asd# ) (all)
@@ -52,11 +53,13 @@ INTERACT = re.compile(r"(?i)^("  # START of whole line matches
 
 def timeoutcheck(maxwait=1.0):
     global bufferlock, debug, timeout, maxtimeout, buffer
-    global RUNNING
+    global RUNNING, WORKING
 
     timeout = time.time()
     while RUNNING:
         time.sleep(0.33)  # time clicks we run checks
+        if WORKING:  # ifilter is working, do not send anything
+            continue
         now = time.time()
         # Check if there was user input in the specified time range
         if maxtimeout > 0 and (now - timeout) >= maxtimeout:
@@ -175,11 +178,13 @@ def ofilter(input):
     global lastline
     global debug
     global bufferlock
+    global WORKING
 
     # Coloring is paused by escape character
     if pause:
         return input
 
+    WORKING = True
     bufferlock.acquire()  # we got input, have to access buffer exclusively
     try:
         # If not ending with linefeed we are interacting or buffering
@@ -228,6 +233,7 @@ def ofilter(input):
             return colorize(bufout)
     finally:
         bufferlock.release()
+        WORKING = False
 
 
 def merge_dicts(x, y):
