@@ -1,9 +1,7 @@
 CLI colorizer
 =============
 
-This project is to colorize output of command line interface for devices
-where CLI is not colored by default. Goal is to ease troubleshooting and
-make output more pretty.
+This project is to colorize output of command line interface for devices where CLI is not colored by default. Goal is to ease troubleshooting and make output more pretty.
 
 [![License](http://img.shields.io/badge/license-GPLv3-blue.svg)](https://www.gnu.org/copyleft/gpl.html)
 [![Cisco Devnet Published](https://static.production.devnetcloud.com/codeexchange/assets/images/devnet-published.svg)](https://developer.cisco.com/codeexchange/github/repo/realvitya/clicol)
@@ -28,24 +26,16 @@ INSTALL
         *   `cd \~/clicol`
 
  -   Copy
-    [clicol.cfg](https://github.com/realvitya/clicol/blob/master/doc/clicol.cfg)
-    to your \$HOME directory and modify to your needs
+    [clicol.cfg](https://github.com/realvitya/clicol/blob/master/doc/clicol.cfg) to your \$HOME directory and modify to your needs
 
 USAGE
 -----
 
-Run the script `clicol-telnet` or `clicol-ssh` and specify arguments as
-for the telnet/ssh.
+Run the script `clicol-telnet` or `clicol-ssh` and specify arguments as for the telnet/ssh.
 
-clicol can be run on Windows in [cygwin](https://www.cygwin.com). If you
-want to use [SecureCRT](https://www.vandyke.com/products/securecrt), you
-must enable sshd in [cygwin](https://www.cygwin.com) and connect to
-localhost. It is not necessary to be administrator on the desktop for
-this to work. You must bind to localhost and use port number \>1024.
+clicol can be run on Windows in [cygwin](https://www.cygwin.com). If you want to use [SecureCRT](https://www.vandyke.com/products/securecrt), you must enable sshd in [cygwin](https://www.cygwin.com) and connect to localhost. It is not necessary to be administrator on the desktop for this to work. You must bind to localhost and use port number \>1024.
 
-By default clicol will colorize with all colorsets and this behaviour
-can be tuned in config file. The config file can be saved in user
-directory and it will take preference over defaults.
+By default clicol will colorize with all colorsets and this behaviour can be tuned in config file. The config file can be saved in user directory and it will take preference over defaults.
 
 Default break key is CTRL-\\
 
@@ -57,36 +47,22 @@ q - quit from session
 
 h - print help
 
-T - highlight regex (set regex in runtime to highligh something
-important)
+T - highlight regex (set regex in runtime to highligh something important)
 
-F1-F12 keys are shortcuts for various commands. Examples are in example
-config file or try help 'h' key. Shortcuts for SHIFT+F1-F8 are only
-working if your terminal supports this. For
-[SecureCRT](https://www.vandyke.com/products/securecrt) you may setup
-mapped keys for these to work. (for
-[Putty](https://www.chiark.greenend.org.uk/~sgtatham/putty/) I don't
-know yet how to implement this)
+F1-F12 keys are shortcuts for various commands. Examples are in example config file or try help 'h' key. Shortcuts for SHIFT+F1-F8 are only working if your terminal supports this. For [SecureCRT](https://www.vandyke.com/products/securecrt) you may setup mapped keys for these to work. (for [Putty](https://www.chiark.greenend.org.uk/~sgtatham/putty/) I don't know yet how to implement this)
 
-*Note: If you installed into virtualenv then you must first activate
-it:*
+*Note: If you installed into virtualenv then you must first activate it:*
 
 **source \~/mypython/bin/activate**
 
 Consider using aliases. A basic template can be found in *doc* folder.
 
-Your terminal software should support ANSI colors.
-[Putty](https://www.chiark.greenend.org.uk/~sgtatham/putty/)/[SecureCRT](https://www.vandyke.com/products/securecrt)
-are tested. I am developing with default colorsets. If you are using
-other software, colors can differ somewhat.
+Your terminal software should support ANSI colors. [Putty](https://www.chiark.greenend.org.uk/~sgtatham/putty/)/[SecureCRT](https://www.vandyke.com/products/securecrt) are tested. I am developing with default colorsets. If you are using other software, colors can differ somewhat.
 
 TESTING
 -------
 
-You can list all supported matchers and see them in action. This is good
-to create a list of matcher and filter on those only. This way one can
-select the preferred matchers if finds all of them disturbing. Run the
-script `clicol-test {regex}`
+You can list all supported matchers and see them in action. This is good to create a list of matcher and filter on those only. This way one can select the preferred matchers if finds all of them disturbing. Run the script `clicol-test {regex}`
 
 Use case examples:
 
@@ -102,19 +78,14 @@ List only certain matchers:
 
 `clicol-test ".*ipv4|cisco_if_stats|juniper_if"`
 
-Then the desired regex can be specified in the clicol.cfg in your \$HOME
-and only these matchers will be used.
+Then the desired regex can be specified in the clicol.cfg in your \$HOME and only these matchers will be used.
 
-Output can be tested by running `clicol-file {filename}` script. This
-will colorize the textfile and dump it. Good for testing.
+Output can be tested by running `clicol-file {filename}` script. This will colorize the textfile and dump it. Good for testing.
 
 CUSTOMIZING
 -----------
 
-You can override or extend the colors and regexes so you can modify
-default behaviour and view. This can be done by creating the customized
-files in the format below. You may find examples in default ini files
-here
+You can override or extend the colors and regexes so you can modify default behaviour and view. This can be done by creating the customized files in the format below. You may find examples in default ini files here
 
 `ls -l $VIRTUAL_ENV/lib/python2*/site-packages/clicol/ini`
 
