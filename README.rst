@@ -1,5 +1,10 @@
 CLI colorizer
 =============
+
+.. image:: http://img.shields.io/badge/license-GPLv3-blue.svg
+   :target: https://www.gnu.org/copyleft/gpl.html
+   :alt: License
+
 This project is to colorize output of command line interface for several devices.
 Goal is to ease troubleshooting and make output more pretty.
 
@@ -118,3 +123,16 @@ Example:
  replacement=%(lowalert)s\1%(default)s
 
 You can test your changes: ``clicol-test common_shut``
+
+License and Copyright
+---------------------
+
+clicol_ is licensed GPLv3_; Copyright `Viktor Kertesz`_, 
+2017-2018.
+
+.. _Author:
+
+Author and Thanks
+-----------------
+
+clicol_ was written by Viktor Kertesz (vkertesz2 [~at~] gmail [/dot\] com).
