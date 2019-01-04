@@ -122,7 +122,7 @@ here
 
 `$HOME/clicol_customcolors.ini`
 
-This file is for overriding extending current colorset. Example: :
+This file is for overriding extending current colorset. Example:
 
     [colors]
     c_blue     :\033[94m
@@ -131,7 +131,7 @@ This file is for overriding extending current colorset. Example: :
 
 `$HOME/clicol_customct.ini`
 
-This file is for overriding or extending keywords for colors. Example: :
+This file is for overriding or extending keywords for colors. Example:
 
     [colortable]
     #add blinking to high alert color:
@@ -142,7 +142,7 @@ This file is for overriding or extending keywords for colors. Example: :
 `$HOME/clicol_customcmap.ini`
 
 This file is for overriding or extending rules for recoloring/matching.
-Example: :
+Example:
 
     #disable ipv6 coloring
     [common_ipv6]
@@ -158,9 +158,7 @@ You can test your changes: `clicol-test common_shut`
 License and Copyright
 ---------------------
 
-[clicol](https://pypi.org/project/clicol) is licensed
-[GPLv3](http://www.gnu.org/licenses/gpl-3.0.html); Copyright
-Viktor Kertesz, 2017-2018.
+[clicol](https://pypi.org/project/clicol) is licensed [GPLv3](http://www.gnu.org/licenses/gpl-3.0.html) Copyright Viktor Kertesz, 2017-2018
 
 Author
 ------
