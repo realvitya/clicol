@@ -1,6 +1,9 @@
 CLI colorizer
 =============
 
+This project is to colorize output of command line interface for devices where CLI is not colored by default.
+Goal is to ease troubleshooting and make output more pretty.
+
 .. image:: http://img.shields.io/badge/license-GPLv3-blue.svg
    :target: https://www.gnu.org/copyleft/gpl.html
    :alt: License
@@ -8,9 +11,6 @@ CLI colorizer
 .. image:: https://static.production.devnetcloud.com/codeexchange/assets/images/devnet-published.svg
    :target: https://developer.cisco.com/codeexchange/github/repo/realvitya/clicol
    :alt: Cisco Devnet Published
-
-This project is to colorize output of command line interface for devices where CLI is not colored by default.
-Goal is to ease troubleshooting and make output more pretty.
 
 .. image:: https://realvitya.files.wordpress.com/2017/02/shint1.png
 
