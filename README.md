@@ -6,7 +6,6 @@ where CLI is not colored by default. Goal is to ease troubleshooting and
 make output more pretty.
 
 [![License](http://img.shields.io/badge/license-GPLv3-blue.svg)](https://www.gnu.org/copyleft/gpl.html)
-
 [![Cisco Devnet Published](https://static.production.devnetcloud.com/codeexchange/assets/images/devnet-published.svg)](https://developer.cisco.com/codeexchange/github/repo/realvitya/clicol)
 
 ![image](https://realvitya.files.wordpress.com/2017/02/shint1.png)
@@ -14,23 +13,23 @@ make output more pretty.
 INSTALL
 -------
 
--   You will need python 2 and pexpect
--   telnet and/or ssh should be installed
--   I recommend installing [virtualenv](https://pypi.org/project/virtualenv) and install [clicol](https://pypi.org/project/clicol) into that virtual environment:
-    :   -   pip install virtualenv
-        -   virtualenv \~/mypython
-        -   source \~/mypython/bin/activate
-        -   pip install clicol
-        -   OR (after pulling git source)
-            -   pip install clicol-xxxx.zip
+ -   You will need python 2 and pexpect
+ -   telnet and/or ssh should be installed
+ -   I recommend installing [virtualenv](https://pypi.org/project/virtualenv) and install [clicol](https://pypi.org/project/clicol) into that virtual environment:
+        *   `pip install virtualenv`
+        *   `virtualenv \~/mypython`
+        *   `source \~/mypython/bin/activate`
+        *   `pip install clicol`
+        *   OR (after pulling git source)
+            *   `pip install clicol-xxxx.zip`
 
--   Get clicol source:
-    :   -   git clone <https://github.com/realvitya/clicol> \~/clicol
-        -   cd \~/clicol
+ -   To get clicol source:
+        *   `git clone https://github.com/realvitya/clicol \~/clicol`
+        *   `cd \~/clicol`
 
--   Copy
-    [clicol.cfg](https://github.com/realvitya/clicol/blob/master/doc/clicol.cfg).
-    to your \$HOME directory
+ -   Copy
+    [clicol.cfg](https://github.com/realvitya/clicol/blob/master/doc/clicol.cfg)
+    to your \$HOME directory and modify to your needs
 
 USAGE
 -----
