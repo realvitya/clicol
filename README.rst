@@ -9,6 +9,9 @@ CLI colorizer
    :target: https://developer.cisco.com/codeexchange/github/repo/realvitya/clicol
    :alt: Cisco Devnet Published
 
+This project is to colorize output of command line interface for devices where CLI is not colored by default.
+Goal is to ease troubleshooting and make output more pretty.
+
 .. image:: https://realvitya.files.wordpress.com/2017/02/shint1.png
 
 INSTALL
