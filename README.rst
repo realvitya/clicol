@@ -131,7 +131,7 @@ You can test your changes: ``clicol-test common_shut``
 License and Copyright
 ---------------------
 
-clicol_ is licensed GPLv3_; Copyright `Viktor Kertesz`_, 
+clicol_ is licensed GPLv3_; Copyright `Viktor Kertesz`, 
 2017-2018.
 
 .. _Author:
@@ -140,3 +140,7 @@ Author and Thanks
 -----------------
 
 clicol_ was written by Viktor Kertesz (vkertesz2 [~at~] gmail [/dot\] com).
+
+.. _clicol: https://pypi.org/project/clicol
+.. _`GPLv3`: http://www.gnu.org/licenses/gpl-3.0.html
+.. _ciscodevnet: https://developer.cisco.com/codeexchange
