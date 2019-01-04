@@ -93,8 +93,10 @@ def timeoutcheck(maxwait=1.0):
                     sys.stdout.flush()
                     buffer = ""
                     timeout = time.time()
-            finally:
                 bufferlock.release()
+            except threading.ThreadError, e:
+                if debug>=1: print "\r\n\033[38;5;208mTERR-%s\033[0m\r\n" % e # DEBUG
+                pass
 
 
 
@@ -208,8 +210,8 @@ def ofilter(input):
     if pause:
         return input
 
-    WORKING = True
     bufferlock.acquire()  # we got input, have to access buffer exclusively
+    WORKING = True
     try:
         # If not ending with linefeed we are interacting or buffering
         if not (input[-1] == "\r" or input[-1] == "\n"):
