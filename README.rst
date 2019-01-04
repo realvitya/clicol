@@ -96,6 +96,7 @@ This can be done by creating the customized files in the format below. You may f
 Custom colors
 -------------
 ``$HOME/clicol_customcolors.ini``
+
 This file is for overriding extending current colorset.
 Example:
 ::
@@ -106,6 +107,7 @@ Example:
 Custom colortable
 -----------------
 ``$HOME/clicol_customct.ini``
+
 This file is for overriding or extending keywords for colors.
 Example:
 ::
@@ -117,6 +119,7 @@ Example:
 Custom colormap
 ---------------
 ``$HOME/clicol_customcmap.ini``
+
 This file is for overriding or extending rules for recoloring/matching.
 Example:
 ::
