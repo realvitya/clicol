@@ -99,8 +99,9 @@ Custom colors
 This file is for overriding extending current colorset.
 Example:
 ::
- [colors]
- c_blue     :\033[94m
+
+        [colors]
+        c_blue     :\033[94m
 
 Custom colortable
 -----------------
@@ -108,9 +109,10 @@ Custom colortable
 This file is for overriding or extending keywords for colors.
 Example:
 ::
- [colortable]
- #add blinking to high alert color:
- highalert              = %(c_blink)s%(c_u_lred)s
+
+        [colortable]
+        #add blinking to high alert color:
+        highalert              = %(c_blink)s%(c_u_lred)s
  
 Custom colormap
 ---------------
@@ -118,14 +120,15 @@ Custom colormap
 This file is for overriding or extending rules for recoloring/matching.
 Example:
 ::
- #disable ipv6 coloring
- [common_ipv6]
- disabled=1
-  
- #alter coloring for 'shutdown'
- [common_shut]
- #replacement=%(alert)s\1%(default)s
- replacement=%(lowalert)s\1%(default)s
+
+        #disable ipv6 coloring
+        [common_ipv6]
+        disabled=1
+        
+        #alter coloring for 'shutdown'
+        [common_shut]
+        #replacement=%(alert)s\1%(default)s
+        replacement=%(lowalert)s\1%(default)s
 
 You can test your changes: ``clicol-test common_shut``
 
@@ -135,8 +138,6 @@ License and Copyright
 clicol_ is licensed GPLv3_; Copyright `Viktor Kertesz`, 
 2017-2018.
 
-.. _Author:
-
 Author
 ======
 
@@ -144,7 +145,6 @@ clicol_ was written by Viktor Kertesz (vkertesz2 [~at~] gmail [/dot\] com).
 
 .. _clicol: https://pypi.org/project/clicol
 .. _`GPLv3`: http://www.gnu.org/licenses/gpl-3.0.html
-.. _ciscodevnet: https://developer.cisco.com/codeexchange
 .. _SecureCRT: https://www.vandyke.com/products/securecrt
 .. _cygwin: https://www.cygwin.com
 .. _virtualenv: https://pypi.org/project/virtualenv
