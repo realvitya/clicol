@@ -11,7 +11,7 @@ This project is to colorize output of command line interface for devices where C
 INSTALL
 -------
 
- -   You will need python 2 and pexpect
+ -   You will need python 2.6+ and pexpect
  -   telnet and/or ssh should be installed
  -   I recommend installing [virtualenv](https://pypi.org/project/virtualenv) and install [clicol](https://pypi.org/project/clicol) into that virtual environment:
         *   `pip install virtualenv`
@@ -129,7 +129,7 @@ You can test your changes: `clicol-test common_shut`
 License and Copyright
 ---------------------
 
-[clicol](https://pypi.org/project/clicol) is licensed [GPLv3](http://www.gnu.org/licenses/gpl-3.0.html) Copyright Viktor Kertesz, 2017-2018
+[clicol](https://pypi.org/project/clicol) is licensed [GPLv3](http://www.gnu.org/licenses/gpl-3.0.html) Copyright Viktor Kertesz, 2017-2019
 
 Author
 ------
