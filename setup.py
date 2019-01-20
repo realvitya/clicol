@@ -26,7 +26,7 @@ AUTHOR = "Viktor Kertesz"
 AUTHOR_EMAIL = "vkertesz2@gmail.com"
 URL = "https://github.com/realvitya/clicol"
 VERSION = __import__(PACKAGE).__version__
-LONGDESCRIPTION=open("README.rst", "rt").read()
+LONGDESCRIPTION=open("README.md", "rt").read()
 
 setup(
     name='clicol',
