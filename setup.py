@@ -2,7 +2,7 @@
 
 """ CLICOL - Colorize CLI and more
 
-    Copyright (C) 2017-2018 Viktor Kertesz
+    Copyright (C) 2017-2019 Viktor Kertesz
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -26,13 +26,14 @@ AUTHOR = "Viktor Kertesz"
 AUTHOR_EMAIL = "vkertesz2@gmail.com"
 URL = "https://github.com/realvitya/clicol"
 VERSION = __import__(PACKAGE).__version__
-LONGDESCRIPTION=open("README.md", "rt").read()
+LONGDESCRIPTION=open("README.md").read()
 
 setup(
     name='clicol',
     version=VERSION,
     description=DESCRIPTION,
     long_description=LONGDESCRIPTION,
+    long_description_content_type='text/markdown',
     author=AUTHOR,
     author_email=AUTHOR_EMAIL,
     url=URL,
