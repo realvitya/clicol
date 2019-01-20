@@ -2,7 +2,7 @@
 
 """ clicol.py - Colorize CLI and more
 
-    Copyright (C) 2017-2018 Viktor Kertesz
+    Copyright (C) 2017-2019 Viktor Kertesz
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -16,27 +16,39 @@
     If you need to contact the author, you can do so by emailing:
     vkertesz2 [~at~] gmail [/dot\] com
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+import pudb
+
+try:
+    #  python2
+    import ConfigParser
+
+except ImportError:
+    #  python3
+    import configparser as ConfigParser
 
 import os
 import sys
 import re
 import string
 import pexpect
-import ConfigParser
 import timeit
 import threading
 import time
 import signal
 from pkg_resources import resource_filename
-from command import getCommand
-from command import getRegex
-from command import getTerminalSize
-from __init__ import __version__
+from . command import getCommand
+from . command import getRegex
+from . command import getTerminalSize
+from . __init__ import __version__
 
 # Global variables
 conn = ''         # connection handler
-buffer = ''       # input buffer
-lastline = ''     # input buffer's last line
+buffer = u''       # input buffer
+lastline = u''     # input buffer's last line
 is_break = False  # is break key pressed?
 effects = set()   # state effects set
 ct = dict()       # color table (contains colors)
@@ -88,14 +100,14 @@ def timeoutcheck(maxwait=1.0):
             try:
                 bufferlock.acquire()
                 if len(buffer) > 0:  # send out buffer
-                    if debug >= 1: print "\r\n\033[38;5;208mTOB-", repr(buffer), "\033[0m\r\n"  # DEBUG
+                    if debug >= 1: print("\r\n\033[38;5;208mTOB-", repr(buffer), "\033[0m\r\n")  # DEBUG
                     sys.stdout.write(colorize(buffer))
                     sys.stdout.flush()
                     buffer = ""
                     timeout = time.time()
                 bufferlock.release()
-            except threading.ThreadError, e:
-                if debug>=1: print "\r\n\033[38;5;208mTERR-%s\033[0m\r\n" % e # DEBUG
+            except threading.ThreadError as e:
+                if debug>=1: print("\r\n\033[38;5;208mTERR-%s\033[0m\r\n" % e)  # DEBUG
                 pass
 
 
@@ -116,17 +128,15 @@ def preventtimeout():
 
 
 def printhelp(shortcuts):
-    print "q: quit program"
-    print "p: pause coloring"
-    print "T: highlight regex (empty turns off)"
-    print
-    print "Shortcuts"
+    print(
+"""q: quit program
+p: pause coloring")
+T: highlight regex (empty turns off)")
+
+Shortcuts""")
     for (key, value) in shortcuts:
-        print "%s: \"%s\"" % (key.upper(), value.strip(r'"'))
-    print r"""
-Copyright (C) 2018 Viktor Kertesz
-This program comes with ABSOLUTELY NO WARRANTY
-This is free software, and you are welcome to redistribute it"""
+        print("%s: \"%s\"" % (key.upper(), value.strip(r'"')))
+
 
 
 def colorize(text, only_effect=[]):
@@ -137,8 +147,8 @@ def colorize(text, only_effect=[]):
     if debug >= 2: start = timeit.default_timer()
     for line in text.splitlines(True):
         cmap_counter = 0
-        if debug >= 2: print "\r\n\033[38;5;208mC-", repr(line), "\033[0m\r\n"  # DEBUG
-        if debug >= 3: print "\r\n\033[38;5;208mCCM-", repr(cmap), "\033[0m\r\n"  # DEBUG
+        if debug >= 2: print("\r\n\033[38;5;208mC-", repr(line), "\033[0m\r\n")  # DEBUG
+        if debug >= 3: print("\r\n\033[38;5;208mCCM-", repr(cmap), "\033[0m\r\n")  # DEBUG
         for i in cmap:
             cmap_counter += 1
             matcher = False
@@ -158,10 +168,10 @@ def colorize(text, only_effect=[]):
             if len(dep) > 0 and dep not in effects:  # we don't meet our dependency
                 continue  # move on to the next regex
             if cdebug > 0:
-                print "\r\n\033[38;5;208mD-", name, repr(origline), repr(line), repr(effects), "\033[0m\r\n"  # debug
+                print("\r\n\033[38;5;208mD-", name, repr(origline), repr(line), repr(effects), "\033[0m\r\n")  # debug
             if matcher:
                 if reg.search(line):
-                    if debug >= 2: print "\r\n\033[38;5;208mCM-", name, "\033[0m\r\n"  # debug
+                    if debug >= 2: print("\r\n\033[38;5;208mCM-", name, "\033[0m\r\n")  # debug
                     effects.add(effect)
                 if 'timeoutwarn' in effects and timeoutact:
                     effects.remove('timeoutwarn')
@@ -172,10 +182,10 @@ def colorize(text, only_effect=[]):
             if option == 2:  # need to cleanup existing coloring (CLEAR)
                 backupline = line
                 origline = re.sub('\x1b[^m]*m', '', line)
-                if debug >= 3: print "\r\n\033[38;5;208mCCL-", origline, "\033[0m\r\n"  # debug
+                if debug >= 3: print("\r\n\033[38;5;208mCCL-", origline, "\033[0m\r\n")  # debug
             line = reg.sub(rep, origline)
             if line != origline:  # we have a match
-                if debug >= 2: print "\r\n\033[38;5;208mCM-", name, "\033[0m\r\n"  # debug
+                if debug >= 2: print("\r\n\033[38;5;208mCM-", name, "\033[0m\r\n")  # debug
                 if len(effect) > 0:  # we have an effect
                     effects.add(effect)
                 if 'prompt' in effects:  # prompt eliminates all effects
@@ -184,16 +194,16 @@ def colorize(text, only_effect=[]):
                     break
             elif option == 2:  # need to restore existing coloring as there was no match (by CLEAR)
                 line = backupline
-        if debug >= 2: print "\033[38;5;208mCC-%d\033[0m" % cmap_counter
+        if debug >= 2: print("\033[38;5;208mCC-%d\033[0m" % cmap_counter)  # DEBUG
         colortext += line
-    if debug >= 2: print "\r\n\033[38;5;208mCT-%f\033[0m\r\n" % (timeit.default_timer() - start)
+    if debug >= 2: print("\r\n\033[38;5;208mCT-%f\033[0m\r\n" % (timeit.default_timer() - start))  # DEBUG
     return colortext
 
 
 def ifilter(input):
     global is_break, timeout, prevents
 
-    is_break = input == '\x1c'
+    is_break = input == b'\x1c'
     if not is_break: timeout = time.time(); prevents = 0
     return input
 
@@ -210,6 +220,7 @@ def ofilter(input):
     if pause:
         return input
 
+    input = input.decode()
     bufferlock.acquire()  # we got input, have to access buffer exclusively
     WORKING = True
     try:
@@ -217,46 +228,46 @@ def ofilter(input):
         if not (input[-1] == "\r" or input[-1] == "\n"):
             # collect the input into buffer
             buffer += input
-            if debug: print "\r\n\033[38;5;208mI-", repr(input), "\033[0m\r\n"  # DEBUG
+            if debug: print("\r\n\033[38;5;208mI-", repr(input), "\033[0m\r\n")  # DEBUG
             lastline = buffer.splitlines(True)[-1]
-            if debug: print "\r\n\033[38;5;208mL-", repr(lastline), "\033[0m\r\n"  # DEBUG
-            if debug: print "\r\n\033[38;5;208mB-", repr(buffer), "\033[0m\r\n"  # DEBUG
+            if debug: print("\r\n\033[38;5;208mL-", repr(lastline), "\033[0m\r\n")  # DEBUG
+            if debug: print("\r\n\033[38;5;208mB-", repr(buffer), "\033[0m\r\n")  # DEBUG
             # special characters. e.g. moving cursor
             # if input not starts with \b then it's sg like more or anything device wants to hide.
             # regular text can follow which we want to colorize
             if ("\a" in lastline or "\b" in lastline) and (lastline[0] != "\a" and lastline[0] != "\b") and input == lastline:
                 bufout = buffer
                 buffer = ""
-                return colorize(bufout, ["prompt"])
+                return colorize(bufout, ["prompt"]).encode()
             if INTERACT.search(lastline):  # prompt or question at the end
                 bufout = buffer
                 buffer = ""
-                return colorize(bufout)
+                return colorize(bufout).encode()
 
             if len(buffer) < 100:  # interactive or end of large chunk
                 bufout = buffer
                 if "\r" in input or "\n" in input:  # multiline input, not interactive
                     bufout = "".join(buffer.splitlines(True)[:-1])  # all buffer except last line
                     buffer = lastline  # delete printed text. last line remains in buffer
-                    return colorize(bufout)
+                    return colorize(bufout).encode()
                 elif buffer == input:  # interactive
                     buffer = ""
-                    return colorize(bufout, ["prompt", "ping"])  # colorize only short stuff (up key,ping)
+                    return colorize(bufout, ["prompt", "ping"]).encode() # colorize only short stuff (up key,ping)
                 else:             # need to collect more output
-                    return ""
+                    return b""
             else:  # large data. we need to print until last line which goes into buffer
                 bufout = "".join(buffer.splitlines(True)[:-1])  # all buffer except last line
                 if bufout == "":  # only one line was in buffer
-                    return ""
+                    return b""
                 else:
                     buffer = lastline  # delete printed text. last line remains in buffer
-                    return colorize(bufout)
+                    return colorize(bufout).encode()
         else:
-            if debug: print "\r\n\033[38;5;208mNI-", repr(input), "\033[0m\r\n"  # DEBUG
+            if debug: print("\r\n\033[38;5;208mNI-", repr(input), "\033[0m\r\n")  # DEBUG
             # Got linefeed, dump buffer
             bufout = buffer + input
             buffer = ""
-            return colorize(bufout)
+            return colorize(bufout).encode()
     finally:
         bufferlock.release()
         WORKING = False
@@ -315,10 +326,10 @@ def main():
     config.read(['/etc/clicol.cfg', 'clicol.cfg', os.path.expanduser('~/clicol.cfg')])
     terminal = config.get('clicol', 'terminal')
 
-    shortcuts = filter(lambda (o, v): re.match(r'[fF][0-9][0-9]?', o) and v, config.items('clicol'))  # read existing shortcuts
-    shortcuts_shift = filter(lambda (o, v): re.match(r'[sS][fF][0-9][0-9]?', o) and v, config.items('clicol'))  # read existing shortcuts+shift
-    shortcuts.sort(key=lambda (o, v): int(o.lstrip("SFsf")))  # sort by function key
-    shortcuts_shift.sort(key=lambda (o, v): int(o.lstrip("SFsf")))  # sort by function key
+    shortcuts = [o_v for o_v in config.items('clicol') if re.match(r'[fF][0-9][0-9]?', o_v[0]) and o_v[1]]  # read existing shortcuts
+    shortcuts_shift = [o_v1 for o_v1 in config.items('clicol') if re.match(r'[sS][fF][0-9][0-9]?', o_v1[0]) and o_v1[1]]  # read existing shortcuts+shift
+    shortcuts.sort(key=lambda o_v2: int(o_v2[0].lstrip("SFsf")))  # sort by function key
+    shortcuts_shift.sort(key=lambda o_v3: int(o_v3[0].lstrip("SFsf")))  # sort by function key
     shortcuts.extend(shortcuts_shift)
 
     cct = config.get('clicol', 'colortable')
@@ -339,7 +350,7 @@ def main():
     if cct == "dbg_net" or cct == "lbg_net":
         ctfile.read([resource_filename(__name__, 'ini/ct_' + cct + '.ini'), os.path.expanduser('~/clicol_customct.ini')])
     else:
-        print "No such colortable: " + cct
+        print("No such colortable: " + cct)
         exit(1)
 
     default_cmap = {
@@ -353,7 +364,7 @@ def main():
              'debug': '0',
              'disabled': '0',
              'BOL': '(^(?: ?<?-+ ?\(?[mM][oO][rR][eE](?: [0-9]{1,2}%%)?\)? ?-+>? ?)?(?:[\b ]+)|^)',
-             'BOS': string.replace("(?:" + dict(ctfile.items('colortable'))['default'] + r'|\b)', r'[', '\['),
+             'BOS': ("(?:" + dict(ctfile.items('colortable'))['default'] + r'|\b)').replace(r'[', '\['),
              'CONTINUE': '0',
              'BREAK': '1',
              'CLEAR': '2',
@@ -375,7 +386,7 @@ def main():
     for cmap_i in cmaps.sections():
         c = dict(cmaps.items(cmap_i))
         if re.match(regex, cmap_i):  # configured rules only
-            if debug >= 3: print repr([c['matcher'], c['priority'], c['effect'], c['dependency'], c['regex'], c['replacement'], c['options'], c['debug']])
+            if debug >= 3: print(repr([c['matcher'], c['priority'], c['effect'], c['dependency'], c['regex'], c['replacement'], c['options'], c['debug']]))
             if bool(int(c['disabled']) < 1):
                 cmap.append([bool(int(c['matcher']) > 0), int(c['priority']), c['effect'], c['dependency'], re.compile(c['regex']), c['replacement'], int(c['options']), int(c['debug']), cmap_i])
     cmap.sort(key=lambda match: match[1])  # sort colormap based on priority
@@ -386,13 +397,13 @@ def main():
 
     if cmd == 'test' and len(sys.argv) > 1:
         # Print starttime:
-        print "Starttime: %s s" % (round(time.time() - starttime, 3))
+        print("Starttime: %s s" % (round(time.time() - starttime, 3)))
         # Sanity check on colormaps
         cmbuf = list()
         for cm in cmap:
             # search for duplicate patterns
             if cm[4] in cmbuf:
-                print "Duplicate pattern:" + repr(cm)
+                print("Duplicate pattern:" + repr(cm))
             else:
                 cmbuf.append(cm[4])
 
@@ -404,13 +415,13 @@ def main():
                     match_in_regex = re.findall(r'(?<!\\)\((?!\?)', test_d['regex'].replace(r'%(BOS)s', ''))
                     match_in_replace = re.findall(r'(?<!\\)\\[0-9](?![0-9])', test_d['replacement'])
 
-                    print test + ":" + ofilter(test_d['example'].replace('\'', '') + '\n')
-                    if len(match_in_regex) <> len(match_in_replace):
-                        print "Warning: match group numbers are not equal! (%s/%s)" % (match_in_regex, match_in_replace)
+                    print(test + ":" + ofilter(test_d['example'].replace('\'', '') + '\n'))
+                    if len(match_in_regex) != len(match_in_replace):
+                        print("Warning: match group numbers are not equal! (%s/%s)" % (match_in_regex, match_in_replace))
                         test_d['debug'] = "1"
                     if test_d['debug'] == "1":
-                        print repr(test_d['regex'])
-                        print repr(test_d['replacement'])
+                        print(repr(test_d['regex']))
+                        print(repr(test_d['replacement']))
 
                 except:
                     pass
@@ -418,10 +429,10 @@ def main():
         try:
             f = open(sys.argv[1], 'r')
         except:
-            print "Error opening " + sys.argv[1]
+            print("Error opening " + sys.argv[1])
             raise
         for line in f:
-            print ofilter(line.replace("\n", "\r\n").decode('string_escape')),  # convert to CRLF to support files created in linux
+            print(ofilter(line.replace("\n", "\r\n").decode('string_escape')), end='')  # convert to CRLF to support files created in linux
         f.close()
     elif cmd == 'telnet' or cmd == 'ssh' or (cmd == 'cmd' and len(sys.argv) > 1):
         try:
@@ -442,7 +453,7 @@ def main():
                         continue
                     m = re.match("(?:\w+@)?([0-9a-zA-Z_.-]+)", arg)
                     # Print caption update code:
-                    print "\033]2;%s\007" % m.group(1)
+                    print("\033]2;%s\007" % m.group(1), end = '')
                     break
             conn = pexpect.spawn(cmd, args, timeout=1)
             # Set signal handler for window resizing
@@ -450,16 +461,16 @@ def main():
             # Set initial terminal size
             rows, cols = getTerminalSize()
             conn.setwinsize(rows, cols)
-        except Exception, e:
+        except Exception as e:
             if cmd != 'telnet' and cmd != 'ssh':
-                print "Error starting %s" % cmd
+                print("Error starting %s" % cmd)
                 return
             else:
-                print "Unknown error %s" % e
+                print("Unknown error %s" % e)
                 # Restore caption
                 if update_caption:
                     # Print caption update code:
-                    print "\033]2;%s\007" % default_caption
+                    print("\033]2;%s\007" % default_caption, end = '')
                 return
         try:
             # Start timeoutcheck to check timeout or string stuck in buffer
@@ -472,7 +483,7 @@ def main():
                 conn.interact(escape_character='\x1c', output_filter=ofilter, input_filter=ifilter)
                 if is_break:
                     is_break = False
-                    print "\r" + " " * 100 + "\rCLICOL: q:quit,p:pause,T:highlight,F1-12,SF1-8:shortcuts,h-help",
+                    print("\r" + " " * 100 + "\rCLICOL: q:quit,p:pause,T:highlight,F1-12,SF1-8:shortcuts,h-help", end = '')
                     command = getCommand()
                     if command == "D":
                         debug += 1
@@ -481,6 +492,7 @@ def main():
                     if command == "p":
                         pause = 1 - pause
                     if command == "q":
+                        print()
                         conn.close()
                         break
                     if command == "T":
@@ -496,40 +508,46 @@ def main():
                     if command == "h":
                         printhelp(shortcuts)
 
-                    print "\r" + " " * 100 + "\r" + colorize(lastline, "prompt"),  # restore last line/prompt
+                    print("\r" + " " * 100 + "\r" + colorize(lastline, "prompt"), end = '')  # restore last line/prompt
 
-                    for (key, value) in shortcuts:
-                        if command.upper() == key.upper():
-                            conn.send(value.decode('string_escape').strip(r'"'))  # decode to have CRLF as it is and remove ""
-                            break
+                    if command is not None:
+                        for (key, value) in shortcuts:
+                            if command.upper() == key.upper():
+                                conn.send(value.encode().decode('unicode_escape').strip(r'"'))  # decode to have CRLF as it is and remove ""
+                                break
         except OSError:
             conn.close()
-        except Exception, e:
+        except Exception as e:
             if debug:
                 import traceback
-                print traceback.format_exc()  # DEBUG
-            print e
-            print "Error while running " + cmd + " " + str.join(' ', args)
+                print(traceback.format_exc())  # DEBUG
+            print(e)
+            print("Error while running " + cmd + " " + " ".join(args))
 
         # Restore caption
         if update_caption and (cmd == 'telnet' or cmd == 'ssh'):
             # Print caption update code:
-            print "\033]2;%s\007" % default_caption
+            print("\033]2;%s\007" % default_caption, end = '')
         # Stop timeoutcheck thread and exit
         RUNNING = False
         tc.join()
-        if len(buffer) > 0: print colorize(buffer),  # print remaining buffer
+        if len(buffer) > 0: print(colorize(buffer), end = '')  # print remaining buffer
     else:
-        print "CLICOL - CLI colorizer and more... Version %s" % __version__
-        print "Usage: clicol-{telnet|ssh} [--c {colormap}] [args]"
-        print "Usage: clicol-file         [--c {colormap}] {inputfile}"
-        print "Usage: clicol-cmd          [--c {colormap}] {command} [args]"
-        print "Usage: clicol-test         {colormap regex name (e.g.: '.*' or 'cisco_if|juniper_if')}"
-        print
-        print "Usage while in session"
-        print "Press break key CTRL-\\"
-        print
+        print("CLICOL - CLI colorizer and more... Version %s" % __version__)
+        print("""
+Usage: clicol-{telnet|ssh} [--c {colormap}] [args]
+Usage: clicol-file         [--c {colormap}] {inputfile}
+Usage: clicol-cmd          [--c {colormap}] {command} [args]
+Usage: clicol-test         {colormap regex name (e.g.: '.*' or 'cisco_if|juniper_if')}
+
+Usage while in session
+Press break key CTRL-\\
+""")
         printhelp(shortcuts)
+        print(r"""
+Copyright (C) 2019 Viktor Kertesz
+This program comes with ABSOLUTELY NO WARRANTY
+This is free software, and you are welcome to redistribute it""")
 
 
 # END OF PROGRAM

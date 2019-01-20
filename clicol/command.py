@@ -1,6 +1,10 @@
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import input
 import re
 import readline
 
+#import pudb
 
 def getChar():
     # figure out which function to use once, and store it in _func
@@ -109,11 +113,11 @@ def getCommand():
 
 
 def getRegex():
-    str = raw_input("\r" + " " * 100 + "\rHighlight regex: ")
+    str = input("\r" + " " * 100 + "\rHighlight regex: ")
     try:
         output = re.compile('(' + str + ')')
-    except Exception, e:
-        print "Wrong regex!"
+    except Exception as e:
+        print("Wrong regex!")
         return ""
     if str == "":
         return ""
