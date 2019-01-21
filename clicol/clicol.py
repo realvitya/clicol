@@ -20,7 +20,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-import pudb
+#import pudb
 
 try:
     #  python2
@@ -415,7 +415,7 @@ def main():
                     match_in_regex = re.findall(r'(?<!\\)\((?!\?)', test_d['regex'].replace(r'%(BOS)s', ''))
                     match_in_replace = re.findall(r'(?<!\\)\\[0-9](?![0-9])', test_d['replacement'])
 
-                    print(test + ":" + ofilter(test_d['example'].replace('\'', '') + '\n'))
+                    print("%s:%s" % (test, ofilter(('%s\n' % test_d['example'].replace('\'', '')).encode()).decode()))
                     if len(match_in_regex) != len(match_in_replace):
                         print("Warning: match group numbers are not equal! (%s/%s)" % (match_in_regex, match_in_replace))
                         test_d['debug'] = "1"
