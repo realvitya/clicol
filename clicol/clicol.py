@@ -20,7 +20,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-#import pudb
+import pudb
 
 try:
     #  python2
@@ -43,6 +43,7 @@ from pkg_resources import resource_filename
 from . command import getCommand
 from . command import getRegex
 from . command import getTerminalSize
+from . plugins import Plugins
 from . __init__ import __version__
 
 # Global variables
@@ -137,14 +138,13 @@ Shortcuts""")
     for (key, value) in shortcuts:
         print("%s: \"%s\"" % (key.upper(), value.strip(r'"')))
 
-
-
 def colorize(text, only_effect=[]):
     # text       : input string to colorize
     # only_effect: select specific regex group(with specified effect) to work with
-    global effects, cmap, conn, timeoutact, debug
+    global effects, cmap, conn, timeoutact, plugins, debug
     colortext = ""
     if debug >= 2: start = timeit.default_timer()
+    text = plugins.preprocess(text)
     for line in text.splitlines(True):
         cmap_counter = 0
         if debug >= 2: print("\r\n\033[38;5;208mC-", repr(line), "\033[0m\r\n")  # DEBUG
@@ -196,6 +196,8 @@ def colorize(text, only_effect=[]):
                 line = backupline
         if debug >= 2: print("\033[38;5;208mCC-%d\033[0m" % cmap_counter)  # DEBUG
         colortext += line
+
+    colortext = plugins.postprocess(colortext)
     if debug >= 2: print("\r\n\033[38;5;208mCT-%f\033[0m\r\n" % (timeit.default_timer() - start))  # DEBUG
     return colortext
 
@@ -215,6 +217,7 @@ def ofilter(input):
     global debug
     global bufferlock
     global WORKING
+    global plugins
 
     # Coloring is paused by escape character
     if pause:
@@ -238,16 +241,19 @@ def ofilter(input):
             if ("\a" in lastline or "\b" in lastline) and (lastline[0] != "\a" and lastline[0] != "\b") and input == lastline:
                 bufout = buffer
                 buffer = ""
+#plugin exec
                 return colorize(bufout, ["prompt"]).encode()
             if INTERACT.search(lastline):  # prompt or question at the end
                 bufout = buffer
                 buffer = ""
+#plugin trigger/listener
                 return colorize(bufout).encode()
 
             if len(buffer) < 100:  # interactive or end of large chunk
                 bufout = buffer
                 if "\r" in input or "\n" in input:  # multiline input, not interactive
                     bufout = "".join(buffer.splitlines(True)[:-1])  # all buffer except last line
+#plugin exec
                     buffer = lastline  # delete printed text. last line remains in buffer
                     return colorize(bufout).encode()
                 elif buffer == input:  # interactive
@@ -284,6 +290,7 @@ def main():
     global is_break
     global maxtimeout, maxprevents
     global RUNNING
+    global plugins
     highlight = ""
 
     default_config = {
@@ -390,6 +397,9 @@ def main():
             if bool(int(c['disabled']) < 1):
                 cmap.append([bool(int(c['matcher']) > 0), int(c['priority']), c['effect'], c['dependency'], re.compile(c['regex']), c['replacement'], int(c['options']), int(c['debug']), cmap_i])
     cmap.sort(key=lambda match: match[1])  # sort colormap based on priority
+
+    # load plugins
+    plugins = Plugins(debug>0)
 
     # Check how we were called
     # valid options: clicol-telnet, clicol-ssh, clicol-test

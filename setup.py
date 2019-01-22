@@ -55,6 +55,10 @@ setup(
                     'clicol-file   = clicol.clicol:main',
                     'clicol-cmd    = clicol.clicol:main',
                 ],
+            'clicol.plugins': [
+                    'ConvertNetmask = clicol.builtinplugins.convertnetmask:ConvertNetmask',
+                    'HumanNumbers = clicol.builtinplugins.humannumbers:HumanNumbers',
+                ],
         },
     classifiers=[
         "Development Status :: 4 - Beta",
