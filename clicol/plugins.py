@@ -14,13 +14,17 @@ class Plugins:
     active = list()
     debug = False
 
-    def __init__(self, debug = False):
+    def __init__(self, debug = False, setup=(dict(),dict())):
         #pudb.set_trace()
         self.debug = debug
+        (pluginsetups, colormap) = setup
         for entrypoint in iter_entry_points('clicol.plugins'):
             plugin = entrypoint.load()
+            pluginsetup = dict()
+            if pluginsetups.has_section(entrypoint.name.lower()):
+                pluginsetup = dict(pluginsetups.items(entrypoint.name.lower()))
             'Register builtin plugins'
-            self.register(plugin())
+            self.register(plugin((pluginsetup, colormap)))
         return
 
 

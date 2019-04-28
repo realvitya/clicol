@@ -296,6 +296,7 @@ def main():
     default_config = {
                     'colortable': r'dbg_net',
                     'terminal': r'securecrt',
+                    'plugincfg': r'~/.clicol/plugins.cfg',
                     'regex': r'all',
                     'timeoutact': r'true',
                     'debug': r'0',
@@ -329,9 +330,12 @@ def main():
     except TypeError:
         config = ConfigParser.SafeConfigParser(default_config)  # keep compatibility with pre2.7
     starttime = time.time()
-    config.add_section('clicol')
-    config.read(['/etc/clicol.cfg', 'clicol.cfg', os.path.expanduser('~/clicol.cfg')])
+    #config.add_section('clicol')
+    config.read(['/etc/clicol.cfg', 'clicol.cfg', os.path.expanduser('~/clicol.cfg'), os.path.expanduser('~/.clicol/clicol.cfg')])
     terminal = config.get('clicol', 'terminal')
+    plugincfgfile = config.get('clicol', 'plugincfg')
+    plugincfg = ConfigParser.SafeConfigParser()
+    plugincfg.read([os.path.expanduser(plugincfgfile)])
 
     shortcuts = [o_v for o_v in config.items('clicol') if re.match(r'[fF][0-9][0-9]?', o_v[0]) and o_v[1]]  # read existing shortcuts
     shortcuts_shift = [o_v1 for o_v1 in config.items('clicol') if re.match(r'[sS][fF][0-9][0-9]?', o_v1[0]) and o_v1[1]]  # read existing shortcuts+shift
@@ -348,12 +352,12 @@ def main():
     debug = config.getint('clicol', 'debug')
 
     colors = ConfigParser.SafeConfigParser()
-    colors.add_section('colors')
+    #colors.add_section('colors')
     colors.read([resource_filename(__name__, 'ini/colors_' + terminal + '.ini'), os.path.expanduser('~/clicol_customcolors.ini')])
 
     ctfile = ConfigParser.SafeConfigParser(dict(colors.items('colors')))
     del colors
-    ctfile.add_section('colortable')
+    #ctfile.add_section('colortable')
     if cct == "dbg_net" or cct == "lbg_net":
         ctfile.read([resource_filename(__name__, 'ini/ct_' + cct + '.ini'), os.path.expanduser('~/clicol_customct.ini')])
     else:
@@ -376,7 +380,10 @@ def main():
              'BREAK': '1',
              'CLEAR': '2',
              }
-    cmaps = ConfigParser.SafeConfigParser(merge_dicts(dict(ctfile.items('colortable')), default_cmap))
+    ct=dict(ctfile.items('colortable'))
+    for key, value in ct.items():
+        ct[key] = value.decode('unicode_escape')
+    cmaps = ConfigParser.SafeConfigParser(merge_dicts(ct, default_cmap))
     regex = config.get('clicol', 'regex')
     if regex == "all":
         regex = '.*'
@@ -399,7 +406,8 @@ def main():
     cmap.sort(key=lambda match: match[1])  # sort colormap based on priority
 
     # load plugins
-    plugins = Plugins(debug>0)
+    # pass plugin cfg file and colortable
+    plugins = Plugins(debug>0, (plugincfg, ct))
 
     # Check how we were called
     # valid options: clicol-telnet, clicol-ssh, clicol-test

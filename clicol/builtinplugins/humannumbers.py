@@ -17,7 +17,7 @@ class HumanNumbers:
     loadonstart = True
     active = False
 
-    def __init__(self):
+    def __init__(self, setup):
         self.regex = re.compile(r"(?<!MTU )(\d{1,3}(?=(?:\d{3})+(?!\d) (?:.*m)?(?:bytes|packets|pkts|bits|broadcasts|multicasts?|overrun|CRC|unknown protocol|(?:in|out)put errors)))", re.M)
 
 #    def preprocess(self, input = "", complete = True):

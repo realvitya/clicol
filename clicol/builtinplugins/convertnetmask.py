@@ -9,7 +9,7 @@ class ConvertNetmask:
     loadonstart = True
     buffer = ""
 
-    def __init__(self):
+    def __init__(self, setup):
         pass
 
     """
