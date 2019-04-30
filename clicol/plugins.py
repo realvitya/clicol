@@ -23,8 +23,11 @@ class Plugins:
             pluginsetup = dict()
             if pluginsetups.has_section(entrypoint.name.lower()):
                 pluginsetup = dict(pluginsetups.items(entrypoint.name.lower()))
-            'Register builtin plugins'
-            self.register(plugin((pluginsetup, colormap)))
+                if 'active' in pluginsetup.keys():
+                    if not pluginsetup['active'] in ['1','True','true','yes','Yes']:
+                        continue
+                'Register plugins'
+                self.register(plugin((pluginsetup, colormap)))
         return
 
 
