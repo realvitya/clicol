@@ -144,7 +144,8 @@ def colorize(text, only_effect=[]):
     global effects, cmap, conn, timeoutact, plugins, debug
     colortext = ""
     if debug >= 2: start = timeit.default_timer()
-    text = plugins.preprocess(text)
+    # Run preprocessors. Ugly workaround to maintain py2_py3
+    text = plugins.preprocess(text).encode().decode('unicode_escape')
     for line in text.splitlines(True):
         cmap_counter = 0
         if debug >= 2: print("\r\n\033[38;5;208mC-", repr(line), "\033[0m\r\n")  # DEBUG
@@ -223,7 +224,11 @@ def ofilter(input):
     if pause:
         return input
 
-    input = input.decode()
+    # Normalize input. py2_py3
+    try:
+        input = input.decode()
+    except AttributeError:
+        pass
     bufferlock.acquire()  # we got input, have to access buffer exclusively
     WORKING = True
     try:
@@ -241,19 +246,16 @@ def ofilter(input):
             if ("\a" in lastline or "\b" in lastline) and (lastline[0] != "\a" and lastline[0] != "\b") and input == lastline:
                 bufout = buffer
                 buffer = ""
-#plugin exec
                 return colorize(bufout, ["prompt"]).encode()
             if INTERACT.search(lastline):  # prompt or question at the end
                 bufout = buffer
                 buffer = ""
-#plugin trigger/listener
                 return colorize(bufout).encode()
 
             if len(buffer) < 100:  # interactive or end of large chunk
                 bufout = buffer
                 if "\r" in input or "\n" in input:  # multiline input, not interactive
                     bufout = "".join(buffer.splitlines(True)[:-1])  # all buffer except last line
-#plugin exec
                     buffer = lastline  # delete printed text. last line remains in buffer
                     return colorize(bufout).encode()
                 elif buffer == input:  # interactive
@@ -330,7 +332,6 @@ def main():
     except TypeError:
         config = ConfigParser.SafeConfigParser(default_config)  # keep compatibility with pre2.7
     starttime = time.time()
-    #config.add_section('clicol')
     config.read(['/etc/clicol.cfg', 'clicol.cfg', os.path.expanduser('~/clicol.cfg'), os.path.expanduser('~/.clicol/clicol.cfg')])
     terminal = config.get('clicol', 'terminal')
     plugincfgfile = config.get('clicol', 'plugincfg')
@@ -352,12 +353,10 @@ def main():
     debug = config.getint('clicol', 'debug')
 
     colors = ConfigParser.SafeConfigParser()
-    #colors.add_section('colors')
     colors.read([resource_filename(__name__, 'ini/colors_' + terminal + '.ini'), os.path.expanduser('~/clicol_customcolors.ini')])
 
     ctfile = ConfigParser.SafeConfigParser(dict(colors.items('colors')))
     del colors
-    #ctfile.add_section('colortable')
     if cct == "dbg_net" or cct == "lbg_net":
         ctfile.read([resource_filename(__name__, 'ini/ct_' + cct + '.ini'), os.path.expanduser('~/clicol_customct.ini')])
     else:
@@ -381,8 +380,11 @@ def main():
              'CLEAR': '2',
              }
     ct=dict(ctfile.items('colortable'))
-    for key, value in ct.items():
-        ct[key] = value.decode('unicode_escape')
+    try:
+        for key, value in ct.items():
+            ct[key] = value.decode('unicode_escape')
+    except AttributeError:
+        pass
     cmaps = ConfigParser.SafeConfigParser(merge_dicts(ct, default_cmap))
     regex = config.get('clicol', 'regex')
     if regex == "all":
@@ -450,7 +452,7 @@ def main():
             print("Error opening " + sys.argv[1])
             raise
         for line in f:
-            print(ofilter(line.replace("\n", "\r\n").decode('string_escape')), end='')  # convert to CRLF to support files created in linux
+            print(ofilter((line.replace("\n", "\r\n"))).decode('unicode_escape'), end='')  # convert to CRLF to support files created in linux
         f.close()
     elif cmd == 'telnet' or cmd == 'ssh' or (cmd == 'cmd' and len(sys.argv) > 1):
         try:
