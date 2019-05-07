@@ -12,6 +12,7 @@ class Plugins:
     registered = list()
     'To process plugins'
     active = list()
+    tests = list()
     debug = False
 
     def __init__(self, debug = False, setup=(dict(),dict())):
@@ -58,5 +59,9 @@ class Plugins:
             if self.debug: print("Plugin %s registered" % plugin)
             if plugin.loadonstart:
                 self.active.append(plugin)
+                try:
+                    self.tests.append(plugin.test)
+                except AttributeError:
+                    pass
         except:
             pass

@@ -445,6 +445,11 @@ def main():
 
                 except:
                     pass
+
+            for test in plugins.tests:
+                (pluginname, testoutput) = test()
+                testoutput = testoutput.encode().decode('unicode_escape')
+                print("%s:%s" % (pluginname, testoutput))
     elif cmd == 'file' and len(sys.argv) > 1:
         try:
             f = open(sys.argv[1], 'r')
