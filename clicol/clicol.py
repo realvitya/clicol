@@ -409,7 +409,7 @@ def main():
 
     # load plugins
     # pass plugin cfg file and colortable
-    plugins = Plugins(debug>0, (plugincfg, ct))
+    plugins = Plugins(debug>0, (plugincfg, merge_dicts(ct, default_cmap)))
 
     # Check how we were called
     # valid options: clicol-telnet, clicol-ssh, clicol-test
