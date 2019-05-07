@@ -21,10 +21,11 @@ class Plugins:
         for entrypoint in iter_entry_points('clicol.plugins'):
             plugin = entrypoint.load()
             pluginsetup = dict()
+            'Plugins have to have a section in plugins.cfg'
             if pluginsetups.has_section(entrypoint.name.lower()):
                 pluginsetup = dict(pluginsetups.items(entrypoint.name.lower()))
                 if 'active' in pluginsetup.keys():
-                    if not pluginsetup['active'] in ['1','True','true','yes','Yes']:
+                    if not pluginsetup['active'] in ['1','True','true','yes','Yes','On','on']:
                         continue
                 'Register plugins'
                 self.register(plugin((pluginsetup, colormap)))
