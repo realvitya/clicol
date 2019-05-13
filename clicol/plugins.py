@@ -4,8 +4,6 @@ from __future__ import unicode_literals
 import re
 from pkg_resources import iter_entry_points
 
-import pudb
-
 class Plugins:
 
     'Registered plugins'
@@ -16,7 +14,6 @@ class Plugins:
     debug = False
 
     def __init__(self, debug = False, setup=(dict(),dict())):
-        #pudb.set_trace()
         self.debug = debug
         (pluginsetups, colormap) = setup
         for entrypoint in iter_entry_points('clicol.plugins'):
@@ -35,7 +32,6 @@ class Plugins:
 
     'Run active plugins'
     def preprocess(self, input):
-        #pudb.set_trace()
         for plugin in self.active:
             try:
                 input = plugin.preprocess(input)
@@ -45,7 +41,6 @@ class Plugins:
 
     'Run active plugins'
     def postprocess(self, input):
-        #pudb.set_trace()
         for plugin in self.active:
             try:
                 input = plugin.postprocess(input)
@@ -65,3 +60,12 @@ class Plugins:
                     pass
         except:
             pass
+
+    def tests(self):
+        input = ""
+        for plugin in self.active:
+            try:
+                input += ": ".join(plugin.test())
+            except AttributeError:
+                pass
+        return input

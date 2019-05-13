@@ -20,7 +20,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-#import pudb
 
 try:
     #  python2
@@ -446,10 +445,7 @@ def main():
                 except:
                     pass
 
-            for test in plugins.tests:
-                (pluginname, testoutput) = test()
-                testoutput = testoutput.encode().decode('unicode_escape')
-                print("%s:%s" % (pluginname, testoutput))
+            print("%s" % plugins.tests().encode().decode('unicode_escape'))
     elif cmd == 'file' and len(sys.argv) > 1:
         try:
             f = open(sys.argv[1], 'r')
