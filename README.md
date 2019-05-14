@@ -126,6 +126,26 @@ Example:
 
 You can test your changes: `clicol-test common_shut`
 
+PLUGINS
+-------
+
+It is possible to extend CLICOL's capabilities with plugins. The main idea is that plugins can have external dependencies and can do external calls to manipulate output. Currently two functions are called from CLICOL to a plugin: `preprocess` and `postprocess`. These are to be called before CLICOL colorization and after so a plugin can have a chance to see the text and manipulate it at these points.
+
+For example implementation you may check the builtin plugin in the `builtinplugins` folder or external projects like [AS path resolver](https://github.com/realvitya/clicol_plugin_aspath)
+
+### Installing plugin
+
+After installing the plugin with pip, it must be activated in ~/.clicol/plugins.cfg configuration file. If that file did not exist or the section does not exist for the plugin, it won't be loaded.
+
+Example `plugins.cfg`:
+      
+      [humannumbers]
+      active=no
+      [aspath]
+      outtype=inline
+
+CLICOL reserved attribute is `active`. Any other can be used by the plugins. If `active` is not present or has positive value, then the plugin will be loaded. If the section is _not_ existing for a given plugin, it is considered as disabled.
+
 License and Copyright
 ---------------------
 
