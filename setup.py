@@ -56,7 +56,6 @@ setup(
                     'clicol-cmd    = clicol.clicol:main',
                 ],
             'clicol.plugins': [
-                    'ConvertNetmask = clicol.builtinplugins.convertnetmask:ConvertNetmask',
                     'HumanNumbers = clicol.builtinplugins.humannumbers:HumanNumbers',
                 ],
         },

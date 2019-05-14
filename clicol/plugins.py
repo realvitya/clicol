@@ -31,19 +31,19 @@ class Plugins:
 
 
     'Run active plugins'
-    def preprocess(self, input):
+    def preprocess(self, input, effects = []):
         for plugin in self.active:
             try:
-                input = plugin.preprocess(input)
+                input = plugin.preprocess(input, effects)
             except AttributeError:
                 pass
         return input
 
     'Run active plugins'
-    def postprocess(self, input):
+    def postprocess(self, input, effects = []):
         for plugin in self.active:
             try:
-                input = plugin.postprocess(input)
+                input = plugin.postprocess(input, effects)
             except AttributeError:
                 pass
         return input
@@ -66,6 +66,7 @@ class Plugins:
         for plugin in self.active:
             try:
                 input += ": ".join(plugin.test())
+                input += "\r\n"
             except AttributeError:
                 pass
         return input
