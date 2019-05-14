@@ -137,14 +137,19 @@ For example implementation you may check the builtin plugin in the `builtinplugi
 
 After installing the plugin with pip, it must be activated in ~/.clicol/plugins.cfg configuration file. If that file did not exist or the section does not exist for the plugin, it won't be loaded.
 
+Section name must be the plugin name in lower case!
+
 Example `plugins.cfg`:
       
       [humannumbers]
+      # Disable HumanNumbers by default:
       active=no
-      [aspath]
-      outtype=inline
 
 CLICOL reserved attribute is `active`. Any other can be used by the plugins. If `active` is not present or has positive value, then the plugin will be loaded. If the section is _not_ existing for a given plugin, it is considered as disabled.
+
+### Develop plugins
+
+There is a documentation about how to develop plugins for CLICOL at [wiki page](https://github.com/realvitya/clicol/wiki/Plugin-development)
 
 License and Copyright
 ---------------------
