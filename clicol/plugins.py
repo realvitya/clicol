@@ -66,7 +66,7 @@ class Plugins:
         for plugin in self.active:
             try:
                 input += ": ".join(plugin.test())
-                input += "\r\n"
+                input += "\r\n" * 2
             except AttributeError:
                 pass
         return input
