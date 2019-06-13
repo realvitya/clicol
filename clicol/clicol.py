@@ -144,7 +144,12 @@ def colorize(text, only_effect=[]):
     colortext = ""
     if debug >= 2: start = timeit.default_timer()
     # Run preprocessors. Ugly workaround to maintain py2_py3
-    text = plugins.preprocess(text, effects).encode().decode('unicode_escape')
+    try:
+        text = plugins.preprocess(text, effects).encode().decode('unicode_escape')
+    except UnicodeDecodeError:
+        pass
+    except:
+        raise
     for line in text.splitlines(True):
         cmap_counter = 0
         if debug >= 2: print("\r\n\033[38;5;208mC-", repr(line), "\033[0m\r\n")  # DEBUG
