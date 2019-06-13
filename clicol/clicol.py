@@ -336,6 +336,7 @@ def main():
     except TypeError:
         config = ConfigParser.SafeConfigParser(default_config)  # keep compatibility with pre2.7
     starttime = time.time()
+    config.add_section('clicol')
     config.read(['/etc/clicol.cfg', 'clicol.cfg', os.path.expanduser('~/clicol.cfg'), os.path.expanduser('~/.clicol/clicol.cfg')])
     terminal = config.get('clicol', 'terminal')
     plugincfgfile = config.get('clicol', 'plugincfg')
