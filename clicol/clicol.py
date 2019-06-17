@@ -337,7 +337,8 @@ def main():
         config = ConfigParser.SafeConfigParser(default_config)  # keep compatibility with pre2.7
     starttime = time.time()
     config.add_section('clicol')
-    config.read(['/etc/clicol.cfg', 'clicol.cfg', os.path.expanduser('~/clicol.cfg'), os.path.expanduser('~/.clicol/clicol.cfg')])
+    #  Read config in this order (last are the lastly read, therefore the stronger)
+    config.read(['/etc/clicol.cfg', 'clicol.cfg', os.path.expanduser('~/.clicol/clicol.cfg'), os.path.expanduser('~/clicol.cfg')])
     terminal = config.get('clicol', 'terminal')
     plugincfgfile = config.get('clicol', 'plugincfg')
     plugincfg = ConfigParser.SafeConfigParser()
