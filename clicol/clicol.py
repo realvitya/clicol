@@ -129,7 +129,8 @@ def preventtimeout():
 
 def printhelp(shortcuts):
     print(
-"""q: quit program
+"""
+q: quit program
 p: pause coloring")
 T: highlight regex (empty turns off)")
 
