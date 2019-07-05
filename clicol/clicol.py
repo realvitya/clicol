@@ -128,13 +128,17 @@ def preventtimeout():
 
 
 def printhelp(shortcuts):
+    global plugins
+
     print(
 """
+commands in BREAK mode:
 q: quit program
-p: pause coloring")
-T: highlight regex (empty turns off)")
-
-Shortcuts""")
+p: pause coloring
+T: highlight regex (empty turns off)""")
+    for key in plugins.keybinds.keys():
+        print("%s:%s" % (key, plugins.keybinds[key].plugin_help(key)))
+    print("Shortcuts")
     for (key, value) in shortcuts:
         print("%s: \"%s\"" % (key.upper(), value.strip(r'"')))
 
@@ -526,13 +530,13 @@ def main():
                         debug += 1
                         if debug > 2:
                             debug = 0
-                    if command == "p":
+                    elif command == "p":
                         pause = 1 - pause
-                    if command == "q":
+                    elif command == "q":
                         print()
                         conn.close()
                         break
-                    if command == "T":
+                    elif command == "T":
                         highlight = getRegex()
                         cmap_highlight = [False, 0, "", "", highlight, dict(ctfile.items('colortable'))['highlight'] + r"\1" + dict(ctfile.items('colortable'))['default'], 0, 0, 'user_highlight']
                         if highlight == "":
@@ -542,8 +546,10 @@ def main():
                             cmap[0] = cmap_highlight
                         else:
                             cmap.insert(0, cmap_highlight)
-                    if command == "h":
+                    elif command == "h":
                         printhelp(shortcuts)
+                    elif command in plugins.keybinds.keys():
+                        plugins.keybinds[command].plugin_command(command)
 
                     print("\r" + " " * 100 + "\r" + colorize(lastline, "prompt"), end = '')  # restore last line/prompt
 
@@ -578,8 +584,7 @@ Usage: clicol-cmd          [--c {colormap}] {command} [args]
 Usage: clicol-test         {colormap regex name (e.g.: '.*' or 'cisco_if|juniper_if')}
 
 Usage while in session
-Press break key CTRL-\\
-""")
+Press break key CTRL-\\""")
         printhelp(shortcuts)
         print(r"""
 Copyright (C) 2019 Viktor Kertesz

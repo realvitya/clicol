@@ -12,6 +12,7 @@ class Plugins:
     active = list()
     tests = list()
     debug = False
+    keybinds = dict()
 
     def __init__(self, debug = False, setup=(dict(),dict())):
         self.debug = debug
@@ -34,7 +35,7 @@ class Plugins:
     def preprocess(self, input, effects = []):
         for plugin in self.active:
             try:
-                input = plugin.preprocess(input, effects)
+                input = plugin.plugin_preprocess(input, effects)
             except AttributeError:
                 pass
         return input
@@ -43,7 +44,7 @@ class Plugins:
     def postprocess(self, input, effects = []):
         for plugin in self.active:
             try:
-                input = plugin.postprocess(input, effects)
+                input = plugin.plugin_postprocess(input, effects)
             except AttributeError:
                 pass
         return input
@@ -55,7 +56,9 @@ class Plugins:
             if plugin.loadonstart:
                 self.active.append(plugin)
                 try:
-                    self.tests.append(plugin.test)
+                    for key in plugin.keybinds:
+                        self.keybinds[key] = plugin
+                    self.tests.append(plugin.plugin_test)
                 except AttributeError:
                     pass
         except:
@@ -65,7 +68,7 @@ class Plugins:
         input = ""
         for plugin in self.active:
             try:
-                input += ": ".join(plugin.test())
+                input += ": ".join(plugin.plugin_test())
                 input += "\r\n" * 2
             except AttributeError:
                 pass

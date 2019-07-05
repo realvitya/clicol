@@ -10,12 +10,12 @@ class HumanNumbers:
     def __init__(self, setup):
         self.regex = re.compile(r"(?<!MTU )(\d{1,3}(?=(?:\d{3})+(?!\d) (?:.*m)?(?:bytes|packets|pkts|bits|broadcasts|multicasts?|overrun|CRC|unknown protocol|(?:in|out)put errors)))", re.M)
 
-    def postprocess(self, input = "", effects = []):
+    def plugin_postprocess(self, input = "", effects = []):
         if "cisco_interface" in effects or "test" in effects:
             return self.regex.sub(r"\1,", input)
         else:
             return input
 
-    def test(self):
-        return ("plugin.humannumbers", "\n postprocess:\n%s" % self.postprocess("     853297735 packets input, 545445115336 bytes, 0 no buffer","test"))
+    def plugin_test(self):
+        return ("plugin.humannumbers", "\n postprocess:\n%s" % self.plugin_postprocess("     853297735 packets input, 545445115336 bytes, 0 no buffer","test"))
 
