@@ -299,11 +299,25 @@ def main():
     global RUNNING
     global plugins
     highlight = ""
+    regex = ""
+
+    cfgdir = "~/.clicol"
+    try:
+        if len(sys.argv) > 1 and sys.argv[1] == '--c':  # called with specified colormap regex
+            regex = sys.argv[2]
+            del sys.argv[1]  # remove --c from args
+            del sys.argv[1]  # remove colormap regex string from args
+        if len(sys.argv) > 1 and sys.argv[1] == '--cfg':  # called with specified config directory
+            cfgdir = sys.argv[2]
+            del sys.argv[1]  # remove --cfg from args
+            del sys.argv[1]  # remove cfgdir string from args
+    except:  # index error, wrong call
+        cmd = 'error'
 
     default_config = {
                     'colortable': r'dbg_net',
                     'terminal': r'securecrt',
-                    'plugincfg': r'~/.clicol/plugins.cfg',
+                    'plugincfg': cfgdir + r'/plugins.cfg',
                     'regex': r'all',
                     'timeoutact': r'true',
                     'debug': r'0',
@@ -338,8 +352,8 @@ def main():
         config = ConfigParser.SafeConfigParser(default_config)  # keep compatibility with pre2.7
     starttime = time.time()
     config.add_section('clicol')
-    #  Read config in this order (last are the lastly read, therefore the stronger)
-    config.read(['/etc/clicol.cfg', 'clicol.cfg', os.path.expanduser('~/.clicol/clicol.cfg'), os.path.expanduser('~/clicol.cfg')])
+    #  Read config in this order (last are the lastly read, therefore it overrides everything set before)
+    config.read(['/etc/clicol.cfg', 'clicol.cfg', os.path.expanduser(cfgdir + '/clicol.cfg'), os.path.expanduser('~/clicol.cfg')])
     terminal = config.get('clicol', 'terminal')
     plugincfgfile = config.get('clicol', 'plugincfg')
     plugincfg = ConfigParser.SafeConfigParser()
@@ -360,12 +374,12 @@ def main():
     debug = config.getint('clicol', 'debug')
 
     colors = ConfigParser.SafeConfigParser()
-    colors.read([resource_filename(__name__, 'ini/colors_' + terminal + '.ini'), os.path.expanduser('~/clicol_customcolors.ini')])
+    colors.read([resource_filename(__name__, 'ini/colors_' + terminal + '.ini'), os.path.expanduser(cfgdir + '/clicol_customcolors.ini'), os.path.expanduser('~/clicol_customcolors.ini')])
 
     ctfile = ConfigParser.SafeConfigParser(dict(colors.items('colors')))
     del colors
     if cct == "dbg_net" or cct == "lbg_net":
-        ctfile.read([resource_filename(__name__, 'ini/ct_' + cct + '.ini'), os.path.expanduser('~/clicol_customct.ini')])
+        ctfile.read([resource_filename(__name__, 'ini/ct_' + cct + '.ini'), os.path.expanduser(cfgdir + '/clicol_customct.ini'), os.path.expanduser('~/clicol_customct.ini')])
     else:
         print("No such colortable: " + cct)
         exit(1)
@@ -393,19 +407,13 @@ def main():
     except AttributeError:
         pass
     cmaps = ConfigParser.SafeConfigParser(merge_dicts(ct, default_cmap))
-    regex = config.get('clicol', 'regex')
+    if len(regex) == 0:
+        regex = config.get('clicol', 'regex')
     if regex == "all":
         regex = '.*'
-    try:
-        if len(sys.argv) > 1 and sys.argv[1] == '--c':  # called with specified colormap regex
-            regex = sys.argv[2]
-            del sys.argv[1]  # remove --c from args
-            del sys.argv[1]  # remove colormap regex string from args
-    except:  # index error, wrong call
-        cmd = 'error'
     for cm in ["common", "cisco", "juniper"]:
         cmaps.read(resource_filename(__name__, 'ini/cm_' + cm + '.ini'))
-    cmaps.read([os.path.expanduser('~/clicol_customcmap.ini')])
+    cmaps.read([os.path.expanduser(cfgdir + '/clicol_customcmap.ini'), os.path.expanduser('~/clicol_customcmap.ini')])
     for cmap_i in cmaps.sections():
         c = dict(cmaps.items(cmap_i))
         if re.match(regex, cmap_i):  # configured rules only
