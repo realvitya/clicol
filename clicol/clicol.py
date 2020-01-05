@@ -315,39 +315,43 @@ def main():
             del sys.argv[1]  # remove cfgdir string from args
     except:  # index error, wrong call
         cmd = 'error'
+    try:
+        hostname = os.environ['HOSTNAME']
+    except KeyError:
+        hostname = os.environ.get('COMPUTERNAME', '-----------')
 
     default_config = {
-                    'colortable': r'dbg_net',
-                    'terminal': r'securecrt',
-                    'plugincfg': cfgdir + r'/plugins.cfg',
-                    'regex': r'all',
-                    'timeoutact': r'true',
-                    'debug': r'0',
-                    'maxtimeout': r'0',
-                    'maxprevents': r'0',
-                    'maxwait': r'1.0',
-                    'update_caption': r'false',
-                    'default_caption': os.environ['HOSTNAME'],
-                    'F1': r'show ip interface brief | e unassign\r',
-                    'F2': r'show ip bgp sum\r',
-                    'F3': r'show ip bgp vpnv4 all sum\r',
-                    'F4': r'"ping "',  # space requires quoting
-                    'F5': r'',
-                    'F6': r'',
-                    'F7': r'',
-                    'F8': r'',
-                    'F9': r'',
-                    'F10': r'',
-                    'F11': r'',
-                    'F12': r'',
-                    'SF1': r'show interface terse | match inet\r',
-                    'SF2': r'show bgp summary\r',
-                    'SF3': r'',
-                    'SF4': r'',
-                    'SF5': r'',
-                    'SF6': r'',
-                    'SF7': r'',
-                    'SF8': r'', }
+        'colortable': r'dbg_net',
+        'terminal': r'securecrt',
+        'plugincfg': cfgdir + r'/plugins.cfg',
+        'regex': r'all',
+        'timeoutact': r'true',
+        'debug': r'0',
+        'maxtimeout': r'0',
+        'maxprevents': r'0',
+        'maxwait': r'1.0',
+        'update_caption': r'false',
+        'default_caption': hostname,
+        'F1': r'show ip interface brief | e unassign\r',
+        'F2': r'show ip bgp sum\r',
+        'F3': r'show ip bgp vpnv4 all sum\r',
+        'F4': r'"ping "',  # space requires quoting
+        'F5': r'',
+        'F6': r'',
+        'F7': r'',
+        'F8': r'',
+        'F9': r'',
+        'F10': r'',
+        'F11': r'',
+        'F12': r'',
+        'SF1': r'show interface terse | match inet\r',
+        'SF2': r'show bgp summary\r',
+        'SF3': r'',
+        'SF4': r'',
+        'SF5': r'',
+        'SF6': r'',
+        'SF7': r'',
+        'SF8': r'', }
     try:
         config = ConfigParser.SafeConfigParser(default_config, allow_no_value=True)
     except TypeError:
