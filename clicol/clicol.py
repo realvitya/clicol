@@ -138,9 +138,12 @@ T: highlight regex (empty turns off)""")
     for (key, value) in shortcuts:
         print("%s: \"%s\"" % (key.upper(), value.strip(r'"')))
 
-def colorize(text, only_effect=[]):
+
+def colorize(text, only_effect=None):
     # text       : input string to colorize
     # only_effect: select specific regex group(with specified effect) to work with
+    if only_effect is None:
+        only_effect = []
     global effects, cmap, conn, timeoutact, plugins, debug
     colortext = ""
     if debug >= 2: start = timeit.default_timer()

@@ -13,7 +13,7 @@ class Plugins:
     debug = False
     keybinds = dict()
 
-    def __init__(self, debug = False, setup=(dict(),dict())):
+    def __init__(self, debug=False, setup=(None, None)):
         self.debug = debug
         (pluginsetups, colormap) = setup
         for entrypoint in iter_entry_points('clicol.plugins'):
