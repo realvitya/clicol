@@ -35,43 +35,44 @@ def getChar():
     output = getChar._func()
     return output
 
-#key[F1]        = '^[[[A' or '^[[11~'
-#key[F2]        = '^[[[B' or '^[[12~'
-#key[F3]        = '^[[[C' or '^[[13~'
-#key[F4]        = '^[[[D' or '^[[14~'
-#key[F5]        = '^[[[E' or '^[[15~'
-#key[F6]        = '^[[17~'
-#key[F7]        = '^[[18~'
-#key[F8]        = '^[[19~'
-#key[F9]        = '^[[20~'
-#key[F10]       = '^[[21~'
-#key[F11]       = '^[[23~'
-#key[F12]       = '^[[24~'
-#
-#key[Shift-F1]  = '^[[25~'
-#key[Shift-F2]  = '^[[26~'
-#key[Shift-F3]  = '^[[28~'
-#key[Shift-F4]  = '^[[29~'
-#key[Shift-F5]  = '^[[31~'
-#key[Shift-F6]  = '^[[32~'
-#key[Shift-F7]  = '^[[33~'
-#key[Shift-F8]  = '^[[34~'
-#---------------- implemented the above only
-#
-#key[Insert]    = '^[[2~'
-#key[Delete]    = '^[[3~'
-#key[Home]      = '^[[1~'
-#key[End]       = '^[[4~'
-#key[PageUp]    = '^[[5~'
-#key[PageDown]  = '^[[6~'
-#key[Up]        = '^[[A'
-#key[Down]      = '^[[B'
-#key[Right]     = '^[[C'
-#key[Left]      = '^[[D'
 
-#key[Bksp]      = '^?'
-#key[Bksp-Alt]  = '^[^?'
-#key[Bksp-Ctrl] = '^H'
+# key[F1]        = '^[[[A' or '^[[11~'
+# key[F2]        = '^[[[B' or '^[[12~'
+# key[F3]        = '^[[[C' or '^[[13~'
+# key[F4]        = '^[[[D' or '^[[14~'
+# key[F5]        = '^[[[E' or '^[[15~'
+# key[F6]        = '^[[17~'
+# key[F7]        = '^[[18~'
+# key[F8]        = '^[[19~'
+# key[F9]        = '^[[20~'
+# key[F10]       = '^[[21~'
+# key[F11]       = '^[[23~'
+# key[F12]       = '^[[24~'
+#
+# key[Shift-F1]  = '^[[25~'
+# key[Shift-F2]  = '^[[26~'
+# key[Shift-F3]  = '^[[28~'
+# key[Shift-F4]  = '^[[29~'
+# key[Shift-F5]  = '^[[31~'
+# key[Shift-F6]  = '^[[32~'
+# key[Shift-F7]  = '^[[33~'
+# key[Shift-F8]  = '^[[34~'
+# ---------------- implemented the above only
+#
+# key[Insert]    = '^[[2~'
+# key[Delete]    = '^[[3~'
+# key[Home]      = '^[[1~'
+# key[End]       = '^[[4~'
+# key[PageUp]    = '^[[5~'
+# key[PageDown]  = '^[[6~'
+# key[Up]        = '^[[A'
+# key[Down]      = '^[[B'
+# key[Right]     = '^[[C'
+# key[Left]      = '^[[D'
+
+# key[Bksp]      = '^?'
+# key[Bksp-Alt]  = '^[^?'
+# key[Bksp-Ctrl] = '^H'
 
 
 def getCommand():
@@ -84,22 +85,22 @@ def getCommand():
                 if cmd == '[':  # ^[[[ A-E : F1-F5
                     cmd = getChar()
                     cmd = 'F' + str(ord(cmd) - ord('A') + 1)
-                elif int(cmd) >= 1 and int(cmd) <= 3:  # ^[[ 1-3 F6-SHIFT-F8
+                elif 1 <= int(cmd) <= 3:  # ^[[ 1-3 F6-SHIFT-F8
                     code = cmd
                     cmd = getChar()
                     getChar()  # last ~
                     code = int(code + cmd)
-                    if int(code) >= 11 and int(code) <= 15:  # F1-F5
+                    if 11 <= int(code) <= 15:  # F1-F5
                         cmd = 'F' + str(code - 10)
-                    elif int(code) >= 17 and int(code) <= 21:
+                    elif 17 <= int(code) <= 21:
                         cmd = 'F' + str(code - 11)  # F6-F10
-                    elif int(code) >= 23 and int(code) <= 24:
+                    elif 23 <= int(code) <= 24:
                         cmd = 'F' + str(code - 12)  # F11-F12
-                    elif int(code) >= 25 and int(code) <= 26:
+                    elif 25 <= int(code) <= 26:
                         cmd = 'SF' + str(code - 24)  # SHIFT + F1-F2
-                    elif int(code) >= 28 and int(code) <= 29:
+                    elif 28 <= int(code) <= 29:
                         cmd = 'SF' + str(code - 25)  # SHIFT + F3-F4
-                    elif int(code) >= 31 and int(code) <= 34:
+                    elif 31 <= int(code) <= 34:
                         cmd = 'SF' + str(code - 26)  # SHIFT + F5-F8
                     else:
                         cmd = ""
@@ -123,6 +124,7 @@ def getRegex():
         return ""
     return output
 
+
 # Source: http://stackoverflow.com/a/566752/2646228
 
 
@@ -138,6 +140,7 @@ def getTerminalSize():
         except:
             return
         return cr
+
     cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
     if not cr:
         try:

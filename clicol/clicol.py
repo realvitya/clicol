@@ -2,7 +2,7 @@
 
 """ clicol.py - Colorize CLI and more
 
-    Copyright (C) 2017-2019 Viktor Kertesz
+    Copyright (C) 2017-2020 Viktor Kertesz
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -39,29 +39,28 @@ import threading
 import time
 import signal
 from pkg_resources import resource_filename
-from . command import getCommand
-from . command import getRegex
-from . command import getTerminalSize
-from . plugins import Plugins
-from . __init__ import __version__
+from .command import getCommand
+from .command import getRegex
+from .command import getTerminalSize
+from .plugins import Plugins
+from .__init__ import __version__
 
 # Global variables
-conn = ''         # connection handler
+conn = ''          # connection handler
 buffer = u''       # input buffer
 lastline = u''     # input buffer's last line
-is_break = False  # is break key pressed?
-effects = set()   # state effects set
-ct = dict()       # color table (contains colors)
-cmap = list()     # color map (contains coloring rules)
-pause = 0         # if true, then coloring is paused
-# match for interactive input (prompt,eof)
-debug = 0         # global debug (D: hidden command)
-timeout = 0       # counts timeout
-maxtimeout = 0    # maximum timeout (0 turns off this feature)
-prevents = 0      # counts timeout prevention
-maxprevents = 0   # maximum number of timeout prevention (0 turns this off)
-RUNNING = True    # signal to timeoutcheck
-WORKING = True    # signal to timeoutcheck
+is_break = False   # is break key pressed?
+effects = set()    # state effects set
+ct = dict()        # color table (contains colors)
+cmap = list()      # color map (contains coloring rules)
+pause = 0          # if true, then coloring is paused
+debug = 0          # global debug (D: hidden command)
+timeout = 0        # counts timeout
+maxtimeout = 0     # maximum timeout (0 turns off this feature)
+prevents = 0       # counts timeout prevention
+maxprevents = 0    # maximum number of timeout prevention (0 turns this off)
+RUNNING = True     # signal to timeoutcheck
+WORKING = True     # signal to timeoutcheck
 bufferlock = threading.Lock()
 # Interactive regex matches for
 # - prompt (asd# ) (all)
@@ -70,14 +69,14 @@ bufferlock = threading.Lock()
 # - restore coloring (\x1b[m) (linux)
 # possible chars: "\):>#$/- "
 INTERACT = re.compile(r"(?i)^("  # START of whole line matches
-                    "[^* ]+([\]\>\#\$][: ]?)(.*)"  # prompt
-                    "| ?<?-+ ?\(?more(?: [0-9]{1,2}%)?\)? ?-+>? ?([\b ]+)?"  # more (\b can be at the end when excessive enters are pressed
-                    "|\x1b\[m"                     # color escape sequence
-                    "|username: ?"
-                    "|password: ?"
-                    ")$"                           # END of whole line match
-                    "|\]:? ?$"                     # probably question (reload? [yes])
-                    , flags=re.S)
+                      "[^* ]+([\]>#$[: ]?)(.*)"  # prompt
+                      "| ?<?-+ ?\(?more(?: [0-9]{1,2}%)?\)? ?-+>? ?([\b ]+)?"  # more (\b can be at the end when excessive enters are pressed
+                      "|\x1b\[m"                                               # color escape sequence
+                      "|username: ?"
+                      "|password: ?"
+                      ")$"                                                     # END of whole line match
+                      "|\]:? ?$",                                              # probably question (reload? [yes])
+                      flags=re.S)
 
 
 def timeoutcheck(maxwait=1.0):
@@ -91,9 +90,9 @@ def timeoutcheck(maxwait=1.0):
             continue
         now = time.time()
         # Check if there was user input in the specified time range
-        if maxtimeout > 0 and (now - timeout) >= maxtimeout:
-            preventtimeout()       # send something to prevent timeout on device
-            timeout = time.time()    # reset timeout
+        if 0 < maxtimeout <= (now - timeout):
+            preventtimeout()  # send something to prevent timeout on device
+            timeout = time.time()  # reset timeout
         # Check if there is some output stuck at buffer we should print out
         # (to mitigate unresponsiveness)
         if (now - timeout) > maxwait:
@@ -107,7 +106,7 @@ def timeoutcheck(maxwait=1.0):
                     timeout = time.time()
                 bufferlock.release()
             except threading.ThreadError as e:
-                if debug>=1: print("\r\n\033[38;5;208mTERR-%s\033[0m\r\n" % e)  # DEBUG
+                if debug >= 1: print("\r\n\033[38;5;208mTERR-%s\033[0m\r\n" % e)  # DEBUG
                 pass
 
 
@@ -131,7 +130,7 @@ def printhelp(shortcuts):
     global plugins
 
     print(
-"""
+        """
 commands in BREAK mode:
 q: quit program
 p: pause coloring
@@ -252,7 +251,8 @@ def ofilter(input):
             # special characters. e.g. moving cursor
             # if input not starts with \b then it's sg like more or anything device wants to hide.
             # regular text can follow which we want to colorize
-            if ("\a" in lastline or "\b" in lastline) and (lastline[0] != "\a" and lastline[0] != "\b") and input == lastline:
+            if ("\a" in lastline or "\b" in lastline) and (
+                    lastline[0] != "\a" and lastline[0] != "\b") and input == lastline:
                 bufout = buffer
                 buffer = ""
                 return colorize(bufout, ["prompt"]).encode()
@@ -269,8 +269,8 @@ def ofilter(input):
                     return colorize(bufout).encode()
                 elif buffer == input:  # interactive
                     buffer = ""
-                    return colorize(bufout, ["prompt", "ping"]).encode() # colorize only short stuff (up key,ping)
-                else:             # need to collect more output
+                    return colorize(bufout, ["prompt", "ping"]).encode()  # colorize only short stuff (up key,ping)
+                else:  # need to collect more output
                     return b""
             else:  # large data. we need to print until last line which goes into buffer
                 bufout = "".join(buffer.splitlines(True)[:-1])  # all buffer except last line
@@ -291,8 +291,8 @@ def ofilter(input):
 
 
 def merge_dicts(x, y):
-    z = x.copy()   # start with x's keys and values
-    z.update(y)    # modifies z with y's keys and values & returns None
+    z = x.copy()  # start with x's keys and values
+    z.update(y)   # modifies z with y's keys and values & returns None
     return z
 
 
@@ -304,7 +304,6 @@ def main():
     global plugins
     highlight = ""
     regex = ""
-
     cfgdir = "~/.clicol"
     try:
         if len(sys.argv) > 1 and sys.argv[1] == '--c':  # called with specified colormap regex
@@ -357,14 +356,17 @@ def main():
     starttime = time.time()
     config.add_section('clicol')
     #  Read config in this order (last are the lastly read, therefore it overrides everything set before)
-    config.read(['/etc/clicol.cfg', 'clicol.cfg', os.path.expanduser(cfgdir + '/clicol.cfg'), os.path.expanduser('~/clicol.cfg')])
+    config.read(['/etc/clicol.cfg', 'clicol.cfg', os.path.expanduser(cfgdir + '/clicol.cfg'),
+                 os.path.expanduser('~/clicol.cfg')])
     terminal = config.get('clicol', 'terminal')
     plugincfgfile = config.get('clicol', 'plugincfg')
     plugincfg = ConfigParser.SafeConfigParser()
     plugincfg.read([os.path.expanduser(plugincfgfile)])
 
-    shortcuts = [o_v for o_v in config.items('clicol') if re.match(r'[fF][0-9][0-9]?', o_v[0]) and o_v[1]]  # read existing shortcuts
-    shortcuts_shift = [o_v1 for o_v1 in config.items('clicol') if re.match(r'[sS][fF][0-9][0-9]?', o_v1[0]) and o_v1[1]]  # read existing shortcuts+shift
+    shortcuts = [o_v for o_v in config.items('clicol') if
+                 re.match(r'[fF][0-9][0-9]?', o_v[0]) and o_v[1]]  # read existing shortcuts
+    shortcuts_shift = [o_v1 for o_v1 in config.items('clicol') if
+                       re.match(r'[sS][fF][0-9][0-9]?', o_v1[0]) and o_v1[1]]  # read existing shortcuts+shift
     shortcuts.sort(key=lambda o_v2: int(o_v2[0].lstrip("SFsf")))  # sort by function key
     shortcuts_shift.sort(key=lambda o_v3: int(o_v3[0].lstrip("SFsf")))  # sort by function key
     shortcuts.extend(shortcuts_shift)
@@ -378,33 +380,37 @@ def main():
     debug = config.getint('clicol', 'debug')
 
     colors = ConfigParser.SafeConfigParser()
-    colors.read([resource_filename(__name__, 'ini/colors_' + terminal + '.ini'), os.path.expanduser(cfgdir + '/clicol_customcolors.ini'), os.path.expanduser('~/clicol_customcolors.ini')])
+    colors.read([resource_filename(__name__, 'ini/colors_' + terminal + '.ini'),
+                 os.path.expanduser(cfgdir + '/clicol_customcolors.ini'),
+                 os.path.expanduser('~/clicol_customcolors.ini')])
 
     ctfile = ConfigParser.SafeConfigParser(dict(colors.items('colors')))
     del colors
     if cct == "dbg_net" or cct == "lbg_net":
-        ctfile.read([resource_filename(__name__, 'ini/ct_' + cct + '.ini'), os.path.expanduser(cfgdir + '/clicol_customct.ini'), os.path.expanduser('~/clicol_customct.ini')])
+        ctfile.read(
+            [resource_filename(__name__, 'ini/ct_' + cct + '.ini'), os.path.expanduser(cfgdir + '/clicol_customct.ini'),
+             os.path.expanduser('~/clicol_customct.ini')])
     else:
         print("No such colortable: " + cct)
         exit(1)
 
     default_cmap = {
-             'matcher': '0',
-             'priority': '100',
-             'effect': '',
-             'dependency': '',
-             'regex': '',
-             'replacement': '',
-             'options': '1',  # CONTINUE=0,BREAK=1,CLEAR=2 as below
-             'debug': '0',
-             'disabled': '0',
-             'BOL': '(^(?: ?<?-+ ?\(?[mM][oO][rR][eE](?: [0-9]{1,2}%%)?\)? ?-+>? ?)?(?:[\b ]+)|^)',
-             'BOS': ("(?:" + dict(ctfile.items('colortable'))['default'] + r'|\b)').replace(r'[', '\['),
-             'CONTINUE': '0',
-             'BREAK': '1',
-             'CLEAR': '2',
-             }
-    ct=dict(ctfile.items('colortable'))
+        'matcher': '0',
+        'priority': '100',
+        'effect': '',
+        'dependency': '',
+        'regex': '',
+        'replacement': '',
+        'options': '1',  # CONTINUE=0,BREAK=1,CLEAR=2 as below
+        'debug': '0',
+        'disabled': '0',
+        'BOL': '(^(?: ?<?-+ ?\(?[mM][oO][rR][eE](?: [0-9]{1,2}%%)?\)? ?-+>? ?)?(?:[\b ]+)|^)',
+        'BOS': ("(?:" + dict(ctfile.items('colortable'))['default'] + r'|\b)').replace(r'[', '\['),
+        'CONTINUE': '0',
+        'BREAK': '1',
+        'CLEAR': '2',
+    }
+    ct = dict(ctfile.items('colortable'))
     try:
         for key, value in ct.items():
             ct[key] = value.decode('unicode_escape')
@@ -421,14 +427,17 @@ def main():
     for cmap_i in cmaps.sections():
         c = dict(cmaps.items(cmap_i))
         if re.match(regex, cmap_i):  # configured rules only
-            if debug >= 3: print(repr([c['matcher'], c['priority'], c['effect'], c['dependency'], c['regex'], c['replacement'], c['options'], c['debug']]))
+            if debug >= 3: print(repr(
+                [c['matcher'], c['priority'], c['effect'], c['dependency'], c['regex'], c['replacement'], c['options'],
+                 c['debug']]))
             if bool(int(c['disabled']) < 1):
-                cmap.append([bool(int(c['matcher']) > 0), int(c['priority']), c['effect'], c['dependency'], re.compile(c['regex']), c['replacement'], int(c['options']), int(c['debug']), cmap_i])
+                cmap.append([bool(int(c['matcher']) > 0), int(c['priority']), c['effect'], c['dependency'],
+                             re.compile(c['regex']), c['replacement'], int(c['options']), int(c['debug']), cmap_i])
     cmap.sort(key=lambda match: match[1])  # sort colormap based on priority
 
     # load plugins
     # pass plugin cfg file and colortable
-    plugins = Plugins(debug>0, (plugincfg, merge_dicts(ct, default_cmap)))
+    plugins = Plugins(debug > 0, (plugincfg, merge_dicts(ct, default_cmap)))
 
     # Check how we were called
     # valid options: clicol-telnet, clicol-ssh, clicol-test
@@ -456,7 +465,8 @@ def main():
 
                     print("%s:%s" % (test, ofilter(('%s\n' % test_d['example'].replace('\'', '')).encode()).decode()))
                     if len(match_in_regex) != len(match_in_replace):
-                        print("Warning: match group numbers are not equal! (%s/%s)" % (match_in_regex, match_in_replace))
+                        print(
+                            "Warning: match group numbers are not equal! (%s/%s)" % (match_in_regex, match_in_replace))
                         test_d['debug'] = "1"
                     if test_d['debug'] == "1":
                         print(repr(test_d['regex']))
@@ -473,7 +483,8 @@ def main():
             print("Error opening " + sys.argv[1])
             raise
         for line in f:
-            print(ofilter((line.replace("\n", "\r\n"))).decode('unicode_escape'), end='')  # convert to CRLF to support files created in linux
+            print(ofilter((line.replace("\n", "\r\n"))).decode('unicode_escape'),
+                  end='')  # convert to CRLF to support files created in linux
         f.close()
     elif cmd == 'telnet' or cmd == 'ssh' or (cmd == 'cmd' and len(sys.argv) > 1):
         try:
@@ -494,7 +505,7 @@ def main():
                         continue
                     m = re.match("(?:\w+@)?([0-9a-zA-Z_.-]+)", arg)
                     # Print caption update code:
-                    print("\033]2;%s\007" % m.group(1), end = '')
+                    print("\033]2;%s\007" % m.group(1), end='')
                     break
             conn = pexpect.spawn(cmd, args, timeout=1)
             # Set signal handler for window resizing
@@ -511,7 +522,7 @@ def main():
                 # Restore caption
                 if update_caption:
                     # Print caption update code:
-                    print("\033]2;%s\007" % default_caption, end = '')
+                    print("\033]2;%s\007" % default_caption, end='')
                 return
         try:
             # Start timeoutcheck to check timeout or string stuck in buffer
@@ -520,11 +531,12 @@ def main():
             tc.start()
             while conn.isalive():
                 # esc code table: http://jkorpela.fi/chars/c0.html
-                #\x1c = CTRL-\
+                # \x1c = CTRL-\
                 conn.interact(escape_character='\x1c', output_filter=ofilter, input_filter=ifilter)
                 if is_break:
                     is_break = False
-                    print("\r" + " " * 100 + "\rCLICOL: q:quit,p:pause,T:highlight,F1-12,SF1-8:shortcuts,h-help", end = '')
+                    print("\r" + " " * 100 + "\rCLICOL: q:quit,p:pause,T:highlight,F1-12,SF1-8:shortcuts,h-help",
+                          end='')
                     command = getCommand()
                     if command == "D":
                         debug += 1
@@ -538,9 +550,12 @@ def main():
                         break
                     elif command == "T":
                         highlight = getRegex()
-                        cmap_highlight = [False, 0, "", "", highlight, dict(ctfile.items('colortable'))['highlight'] + r"\1" + dict(ctfile.items('colortable'))['default'], 0, 0, 'user_highlight']
+                        cmap_highlight = [False, 0, "", "", highlight,
+                                          dict(ctfile.items('colortable'))['highlight'] + r"\1" +
+                                          dict(ctfile.items('colortable'))['default'], 0, 0, 'user_highlight']
                         if highlight == "":
-                            if cmap[0][8] == 'user_highlight':  # If we have highlight regex, we remove it on user request
+                            #  If we have highlight regex, we remove it on user request
+                            if cmap[0][8] == 'user_highlight':
                                 del cmap[0]
                         elif cmap[0][8] == 'user_highlight':
                             cmap[0] = cmap_highlight
@@ -551,12 +566,13 @@ def main():
                     elif command in plugins.keybinds.keys():
                         plugins.keybinds[command].plugin_command(command)
 
-                    print("\r" + " " * 100 + "\r" + colorize(lastline, "prompt"), end = '')  # restore last line/prompt
+                    print("\r" + " " * 100 + "\r" + colorize(lastline, ["prompt"]), end='')  # restore last line/prompt
 
                     if command is not None:
                         for (key, value) in shortcuts:
                             if command.upper() == key.upper():
-                                conn.send(value.encode().decode('unicode_escape').strip(r'"'))  # decode to have CRLF as it is and remove ""
+                                # decode to have CRLF as it is and remove ""
+                                conn.send(value.encode().decode('unicode_escape').strip(r'"'))
                                 break
         except OSError:
             conn.close()
@@ -570,11 +586,11 @@ def main():
         # Restore caption
         if update_caption and (cmd == 'telnet' or cmd == 'ssh'):
             # Print caption update code:
-            print("\033]2;%s\007" % default_caption, end = '')
+            print("\033]2;%s\007" % default_caption, end='')
         # Stop timeoutcheck thread and exit
         RUNNING = False
         tc.join()
-        if len(buffer) > 0: print(colorize(buffer), end = '')  # print remaining buffer
+        if len(buffer) > 0: print(colorize(buffer), end='')  # print remaining buffer
     else:
         print("CLICOL - CLI colorizer and more... Version %s" % __version__)
         print("""
@@ -587,7 +603,7 @@ Usage while in session
 Press break key CTRL-\\""")
         printhelp(shortcuts)
         print(r"""
-Copyright (C) 2019 Viktor Kertesz
+Copyright (C) 2020 Viktor Kertesz
 This program comes with ABSOLUTELY NO WARRANTY
 This is free software, and you are welcome to redistribute it""")
 

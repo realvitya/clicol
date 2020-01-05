@@ -4,11 +4,11 @@ from __future__ import unicode_literals
 import re
 from pkg_resources import iter_entry_points
 
-class Plugins:
 
-    'Registered plugins'
+class Plugins:
+    #  Registered plugins
     registered = list()
-    'To process plugins'
+    #  To process plugins
     active = list()
     tests = list()
     debug = False
@@ -20,13 +20,13 @@ class Plugins:
         for entrypoint in iter_entry_points('clicol.plugins'):
             plugin = entrypoint.load()
             pluginsetup = dict()
-            'Plugins have to have a section in plugins.cfg'
+            #  Plugins have to have a section in plugins.cfg
             if pluginsetups.has_section(entrypoint.name.lower()):
                 pluginsetup = dict(pluginsetups.items(entrypoint.name.lower()))
                 if 'active' in pluginsetup.keys():
-                    if not pluginsetup['active'] in ['1','True','true','yes','Yes','On','on']:
+                    if not pluginsetup['active'] in ['1', 'True', 'true', 'yes', 'Yes', 'On', 'on']:
                         continue
-                'Register plugins'
+                #  Register plugins
                 self.register(plugin((pluginsetup, colormap)))
         return
 

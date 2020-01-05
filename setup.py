@@ -38,7 +38,7 @@ setup(
     author_email=AUTHOR_EMAIL,
     url=URL,
     license="GPLv3",
-    packages=find_packages(exclude=('tests')),
+    packages=find_packages(exclude='tests'),
     package_data={'clicol': ['ini/*.ini']},
 
     data_files=[
