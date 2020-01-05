@@ -10,7 +10,6 @@ class Plugins:
     registered = list()
     #  To process plugins
     active = list()
-    tests = list()
     debug = False
     keybinds = dict()
 

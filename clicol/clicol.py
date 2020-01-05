@@ -24,7 +24,6 @@ from __future__ import unicode_literals
 try:
     #  python2
     import ConfigParser
-
 except ImportError:
     #  python3
     import configparser as ConfigParser
@@ -32,7 +31,6 @@ except ImportError:
 import os
 import sys
 import re
-import string
 import pexpect
 import timeit
 import threading
@@ -110,7 +108,6 @@ def timeoutcheck(maxwait=1.0):
                 pass
 
 
-
 def sigwinch_passthrough(sig, data):
     global conn
 
@@ -177,7 +174,7 @@ def colorize(text, only_effect=[]):
             if len(dep) > 0 and dep not in effects:  # we don't meet our dependency
                 continue  # move on to the next regex
             if cdebug > 0:
-                print("\r\n\033[38;5;208mD-", name, repr(origline), repr(line), repr(effects), "\033[0m\r\n")  # debug
+                print("\r\n\033[38;5;208mD-", name, repr(line), repr(effects), "\033[0m\r\n")  # debug
             if matcher:
                 if reg.search(line):
                     if debug >= 2: print("\r\n\033[38;5;208mCM-", name, "\033[0m\r\n")  # debug
@@ -217,7 +214,6 @@ def ifilter(input):
     is_break = input == b'\x1c'
     if not is_break: timeout = time.time(); prevents = 0
     return input
-
 
 def ofilter(input):
     global buffer

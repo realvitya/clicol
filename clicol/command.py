@@ -2,9 +2,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import input
 import re
-import readline
+try:
+    import readline
+except:
+    pass
 
-#import pudb
 
 def getChar():
     # figure out which function to use once, and store it in _func
@@ -117,7 +119,7 @@ def getRegex():
     str = input("\r" + " " * 100 + "\rHighlight regex: ")
     try:
         output = re.compile('(' + str + ')')
-    except Exception as e:
+    except:
         print("Wrong regex!")
         return ""
     if str == "":
