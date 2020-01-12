@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from builtins import input
 import re
 
+
 class HumanNumbers:
     loadonstart = True
     active = False
@@ -12,7 +13,7 @@ class HumanNumbers:
                                 r"(?:bytes|packets|pkts|bits|broadcasts|multicasts?|overrun|CRC|unknown protocol|"
                                 r"(?:in|out)put errors)))", re.M)
 
-    def plugin_postprocess(self, input = "", effects=None):
+    def plugin_postprocess(self, input="", effects=None):
         if effects is None:
             effects = []
         if "cisco_interface" in effects or "test" in effects:
@@ -23,4 +24,3 @@ class HumanNumbers:
     def plugin_test(self):
         return "plugin.humannumbers", "\n postprocess:\n%s" % \
                self.plugin_postprocess("     853297735 packets input, 545445115336 bytes, 0 no buffer", ["test"])
-

@@ -60,6 +60,7 @@ maxprevents = 0    # maximum number of timeout prevention (0 turns this off)
 RUNNING = True     # signal to timeoutcheck
 WORKING = True     # signal to timeoutcheck
 bufferlock = threading.Lock()
+plugins = None     # all active plugins
 # Interactive regex matches for
 # - prompt (asd# ) (all)
 # - question ([yes]) (cisco)
@@ -67,13 +68,14 @@ bufferlock = threading.Lock()
 # - restore coloring (\x1b[m) (linux)
 # possible chars: "\):>#$/- "
 INTERACT = re.compile(r"(?i)^("  # START of whole line matches
-                      "[^* ]+([\]>#$[: ]?)(.*)"  # prompt
-                      "| ?<?-+ ?\(?more(?: [0-9]{1,2}%)?\)? ?-+>? ?([\b ]+)?"  # more (\b can be at the end when excessive enters are pressed
-                      "|\x1b\[m"                                               # color escape sequence
-                      "|username: ?"
-                      "|password: ?"
-                      ")$"                                                     # END of whole line match
-                      "|\]:? ?$",                                              # probably question (reload? [yes])
+                      r"[^* ]+([\]>#$[: ]?)(.*)"  # prompt
+                      # more (\b can be at the end when excessive enters are pressed
+                      r"| ?<?-+ ?\(?more(?: [0-9]{1,2}%)?\)? ?-+>? ?([\b ]+)?"
+                      r"|\x1b\[m"                                               # color escape sequence
+                      r"|username: ?"
+                      r"|password: ?"
+                      r")$"                                                     # END of whole line match
+                      r"|\]:? ?$",                                              # probably question (reload? [yes])
                       flags=re.S)
 
 
@@ -146,7 +148,8 @@ def colorize(text, only_effect=None):
         only_effect = []
     global effects, cmap, conn, timeoutact, plugins, debug
     colortext = ""
-    if debug >= 2: start = timeit.default_timer()
+    backupline = ""
+    start = timeit.default_timer()
     # Run preprocessors. Ugly workaround to maintain py2_py3
     try:
         text = plugins.preprocess(text, effects).encode().decode('unicode_escape')
@@ -215,8 +218,11 @@ def ifilter(input):
     global is_break, timeout, prevents
 
     is_break = input == b'\x1c'
-    if not is_break: timeout = time.time(); prevents = 0
+    if not is_break:
+        timeout = time.time()
+        prevents = 0
     return input
+
 
 def ofilter(input):
     global buffer
@@ -304,6 +310,7 @@ def main():
     highlight = ""
     regex = ""
     cfgdir = "~/.clicol"
+    tc: threading = None
     try:
         if len(sys.argv) > 1 and sys.argv[1] == '--c':  # called with specified colormap regex
             regex = sys.argv[2]
@@ -407,8 +414,8 @@ def main():
         'options': '1',  # CONTINUE=0,BREAK=1,CLEAR=2 as below
         'debug': '0',
         'disabled': '0',
-        'BOL': '(^(?: ?<?-+ ?\(?[mM][oO][rR][eE](?: [0-9]{1,2}%%)?\)? ?-+>? ?)?(?:[\b ]+)|^)',
-        'BOS': ("(?:" + dict(ctfile.items('colortable'))['default'] + r'|\b)').replace(r'[', '\['),
+        'BOL': r'(^(?: ?<?-+ ?\(?[mM][oO][rR][eE](?: [0-9]{1,2}%%)?\)? ?-+>? ?)?(?:[\b ]+)|^)',
+        'BOS': ("(?:" + dict(ctfile.items('colortable'))['default'] + r'|\b)').replace(r'[', r'\['),
         'CONTINUE': '0',
         'BREAK': '1',
         'CLEAR': '2',
@@ -430,9 +437,11 @@ def main():
     for cmap_i in cmaps.sections():
         c = dict(cmaps.items(cmap_i))
         if re.match(regex, cmap_i):  # configured rules only
-            if debug >= 3: print(repr(
-                [c['matcher'], c['priority'], c['effect'], c['dependency'], c['regex'], c['replacement'], c['options'],
-                 c['debug']]))
+            if debug >= 3:
+                print(repr(
+                    [c['matcher'], c['priority'], c['effect'], c['dependency'], c['regex'], c['replacement'],
+                     c['options'],
+                     c['debug']]))
             if bool(int(c['disabled']) < 1):
                 cmap.append([bool(int(c['matcher']) > 0), int(c['priority']), c['effect'], c['dependency'],
                              re.compile(c['regex']), c['replacement'], int(c['options']), int(c['debug']), cmap_i])
@@ -501,12 +510,12 @@ def main():
                     if skip:
                         skip = False
                         continue
-                    if re.match("-[46AaCfGgKkMNnqsTtVvXxYy]", arg):
+                    if re.match(r"-[46AaCfGgKkMNnqsTtVvXxYy]", arg):
                         continue
-                    if re.match("-\w+", arg):
+                    if re.match(r"-\w+", arg):
                         skip = True
                         continue
-                    m = re.match("(?:\w+@)?([0-9a-zA-Z_.-]+)", arg)
+                    m = re.match(r"(?:\w+@)?([0-9a-zA-Z_.-]+)", arg)
                     # Print caption update code:
                     print("\033]2;%s\007" % m.group(1), end='')
                     break
