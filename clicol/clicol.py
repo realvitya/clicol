@@ -233,7 +233,7 @@ def ofilter(input):
 
     # Normalize input. py2_py3
     try:
-        input = input.decode()
+        input = input.decode('cp437')
     except AttributeError:
         pass
     bufferlock.acquire()  # we got input, have to access buffer exclusively
