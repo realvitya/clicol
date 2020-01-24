@@ -149,7 +149,7 @@ def colorize(text, only_effect=None):
     if debug >= 2: start = timeit.default_timer()
     # Run preprocessors. Ugly workaround to maintain py2_py3
     try:
-        text = plugins.preprocess(text, effects).encode().decode('unicode_escape')
+        text = plugins.preprocess(text, effects).encode('utf-8').decode('unicode_escape')
     except UnicodeDecodeError:
         pass
     except:
@@ -254,21 +254,21 @@ def ofilter(input):
                     lastline[0] != "\a" and lastline[0] != "\b") and input == lastline:
                 bufout = buffer
                 buffer = ""
-                return colorize(bufout, ["prompt"]).encode()
+                return colorize(bufout, ["prompt"]).encode('utf-8')
             if INTERACT.search(lastline):  # prompt or question at the end
                 bufout = buffer
                 buffer = ""
-                return colorize(bufout).encode()
+                return colorize(bufout).encode('utf-8')
 
             if len(buffer) < 100:  # interactive or end of large chunk
                 bufout = buffer
                 if "\r" in input or "\n" in input:  # multiline input, not interactive
                     bufout = "".join(buffer.splitlines(True)[:-1])  # all buffer except last line
                     buffer = lastline  # delete printed text. last line remains in buffer
-                    return colorize(bufout).encode()
+                    return colorize(bufout).encode('utf-8')
                 elif buffer == input:  # interactive
                     buffer = ""
-                    return colorize(bufout, ["prompt", "ping"]).encode()  # colorize only short stuff (up key,ping)
+                    return colorize(bufout, ["prompt", "ping"]).encode('utf-8')  # colorize only short stuff (up key,ping)
                 else:  # need to collect more output
                     return b""
             else:  # large data. we need to print until last line which goes into buffer
@@ -277,13 +277,13 @@ def ofilter(input):
                     return b""
                 else:
                     buffer = lastline  # delete printed text. last line remains in buffer
-                    return colorize(bufout).encode()
+                    return colorize(bufout).encode('utf-8')
         else:
             if debug: print("\r\n\033[38;5;208mNI-", repr(input), "\033[0m\r\n")  # DEBUG
             # Got linefeed, dump buffer
             bufout = buffer + input
             buffer = ""
-            return colorize(bufout).encode()
+            return colorize(bufout).encode('utf-8')
     finally:
         bufferlock.release()
         WORKING = False
@@ -466,7 +466,7 @@ def main():
                     match_in_regex = re.findall(r'(?<!\\)\((?!\?)', test_d['regex'].replace(r'%(BOS)s', ''))
                     match_in_replace = re.findall(r'(?<!\\)\\[0-9](?![0-9])', test_d['replacement'])
 
-                    print("%s:%s" % (test, ofilter(('%s\n' % test_d['example'].replace('\'', '')).encode()).decode()))
+                    print("%s:%s" % (test, ofilter(('%s\n' % test_d['example'].replace('\'', '')).encode('utf-8')).decode()))
                     if len(match_in_regex) != len(match_in_replace):
                         print(
                             "Warning: match group numbers are not equal! (%s/%s)" % (match_in_regex, match_in_replace))
@@ -478,7 +478,7 @@ def main():
                 except:
                     pass
 
-            print("%s" % plugins.tests().encode().decode('unicode_escape'))
+            print("%s" % plugins.tests().encode('utf-8').decode('unicode_escape'))
     elif cmd == 'file' and len(sys.argv) > 1:
         try:
             f = open(sys.argv[1], 'r')
@@ -575,7 +575,7 @@ def main():
                         for (key, value) in shortcuts:
                             if command.upper() == key.upper():
                                 # decode to have CRLF as it is and remove ""
-                                conn.send(value.encode().decode('unicode_escape').strip(r'"'))
+                                conn.send(value.encode('utf-8').decode('unicode_escape').strip(r'"'))
                                 break
         except OSError:
             conn.close()
