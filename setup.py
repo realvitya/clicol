@@ -47,6 +47,11 @@ setup(
     install_requires=[
         'pexpect',
     ],
+    extras_require={
+        ':python_version < "3"': [
+            'future',
+        ],
+    },
     entry_points={
             'console_scripts': [
                     'clicol-telnet = clicol.clicol:main',
