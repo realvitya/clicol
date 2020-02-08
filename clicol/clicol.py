@@ -310,7 +310,7 @@ def main():
     highlight = ""
     regex = ""
     cfgdir = "~/.clicol"
-    tc: threading = None
+    tc = None
     try:
         if not argv:
             argv = sys.argv
