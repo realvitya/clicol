@@ -54,6 +54,7 @@ cmap = list()      # color map (contains coloring rules)
 pause = 0          # if true, then coloring is paused
 debug = 0          # global debug (D: hidden command)
 timeout = 0        # counts timeout
+timeoutact = True  # act on timeout warning
 maxtimeout = 0     # maximum timeout (0 turns off this feature)
 prevents = 0       # counts timeout prevention
 maxprevents = 0    # maximum number of timeout prevention (0 turns this off)
