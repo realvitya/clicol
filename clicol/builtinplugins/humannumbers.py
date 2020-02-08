@@ -13,13 +13,13 @@ class HumanNumbers:
                                 r"(?:bytes|packets|pkts|bits|broadcasts|multicasts?|overrun|CRC|unknown protocol|"
                                 r"(?:in|out)put errors)))", re.M)
 
-    def plugin_postprocess(self, input="", effects=None):
+    def plugin_postprocess(self, textinput="", effects=None):
         if effects is None:
             effects = []
         if "cisco_interface" in effects or "test" in effects:
-            return self.regex.sub(r"\1,", input)
+            return self.regex.sub(r"\1,", textinput)
         else:
-            return input
+            return textinput
 
     def plugin_test(self):
         return "plugin.humannumbers", "\n postprocess:\n%s" % \

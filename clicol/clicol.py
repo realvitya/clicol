@@ -45,7 +45,7 @@ from .__init__ import __version__
 
 # Global variables
 conn = ''          # connection handler
-buffer = u''       # input buffer
+charbuffer = u''   # input buffer
 lastline = u''     # input buffer's last line
 is_break = False   # is break key pressed?
 effects = set()    # state effects set
@@ -80,7 +80,7 @@ INTERACT = re.compile(r"(?i)^("  # START of whole line matches
 
 
 def timeoutcheck(maxwait=1.0):
-    global bufferlock, debug, timeout, maxtimeout, buffer
+    global bufferlock, debug, timeout, maxtimeout, charbuffer
     global RUNNING, WORKING
 
     timeout = time.time()
@@ -98,11 +98,11 @@ def timeoutcheck(maxwait=1.0):
         if (now - timeout) > maxwait:
             try:
                 bufferlock.acquire()
-                if len(buffer) > 0:  # send out buffer
-                    if debug >= 1: print("\r\n\033[38;5;208mTOB-", repr(buffer), "\033[0m\r\n")  # DEBUG
-                    sys.stdout.write(colorize(buffer))
+                if len(charbuffer) > 0:  # send out buffer
+                    if debug >= 1: print("\r\n\033[38;5;208mTOB-", repr(charbuffer), "\033[0m\r\n")  # DEBUG
+                    sys.stdout.write(colorize(charbuffer))
                     sys.stdout.flush()
-                    buffer = ""
+                    charbuffer = ""
                     timeout = time.time()
                 bufferlock.release()
             except threading.ThreadError as e:
@@ -224,8 +224,8 @@ def ifilter(input):
     return input
 
 
-def ofilter(input):
-    global buffer
+def ofilter(inputtext):
+    global charbuffer
     global pause  # coloring must be paused
     global lastline
     global debug
@@ -235,60 +235,60 @@ def ofilter(input):
 
     # Coloring is paused by escape character
     if pause:
-        return input
+        return inputtext
 
     # Normalize input. py2_py3
     try:
-        input = input.decode('cp437')
+        inputtext = inputtext.decode('cp437')
     except AttributeError:
         pass
     bufferlock.acquire()  # we got input, have to access buffer exclusively
     WORKING = True
     try:
         # If not ending with linefeed we are interacting or buffering
-        if not (input[-1] == "\r" or input[-1] == "\n"):
+        if not (inputtext[-1] == "\r" or inputtext[-1] == "\n"):
             # collect the input into buffer
-            buffer += input
-            if debug: print("\r\n\033[38;5;208mI-", repr(input), "\033[0m\r\n")  # DEBUG
-            lastline = buffer.splitlines(True)[-1]
+            charbuffer += inputtext
+            if debug: print("\r\n\033[38;5;208mI-", repr(inputtext), "\033[0m\r\n")  # DEBUG
+            lastline = charbuffer.splitlines(True)[-1]
             if debug: print("\r\n\033[38;5;208mL-", repr(lastline), "\033[0m\r\n")  # DEBUG
-            if debug: print("\r\n\033[38;5;208mB-", repr(buffer), "\033[0m\r\n")  # DEBUG
+            if debug: print("\r\n\033[38;5;208mB-", repr(charbuffer), "\033[0m\r\n")  # DEBUG
             # special characters. e.g. moving cursor
             # if input not starts with \b then it's sg like more or anything device wants to hide.
             # regular text can follow which we want to colorize
             if ("\a" in lastline or "\b" in lastline) and (
-                    lastline[0] != "\a" and lastline[0] != "\b") and input == lastline:
-                bufout = buffer
-                buffer = ""
+                    lastline[0] != "\a" and lastline[0] != "\b") and inputtext == lastline:
+                bufout = charbuffer
+                charbuffer = ""
                 return colorize(bufout, ["prompt"]).encode('utf-8')
             if INTERACT.search(lastline):  # prompt or question at the end
-                bufout = buffer
-                buffer = ""
+                bufout = charbuffer
+                charbuffer = ""
                 return colorize(bufout).encode('utf-8')
 
-            if len(buffer) < 100:  # interactive or end of large chunk
-                bufout = buffer
-                if "\r" in input or "\n" in input:  # multiline input, not interactive
-                    bufout = "".join(buffer.splitlines(True)[:-1])  # all buffer except last line
-                    buffer = lastline  # delete printed text. last line remains in buffer
+            if len(charbuffer) < 100:  # interactive or end of large chunk
+                bufout = charbuffer
+                if "\r" in inputtext or "\n" in inputtext:  # multiline input, not interactive
+                    bufout = "".join(charbuffer.splitlines(True)[:-1])  # all buffer except last line
+                    charbuffer = lastline  # delete printed text. last line remains in buffer
                     return colorize(bufout).encode('utf-8')
-                elif buffer == input:  # interactive
-                    buffer = ""
+                elif charbuffer == inputtext:  # interactive
+                    charbuffer = ""
                     return colorize(bufout, ["prompt", "ping"]).encode('utf-8')  # colorize only short stuff (up key,ping)
                 else:  # need to collect more output
                     return b""
             else:  # large data. we need to print until last line which goes into buffer
-                bufout = "".join(buffer.splitlines(True)[:-1])  # all buffer except last line
+                bufout = "".join(charbuffer.splitlines(True)[:-1])  # all buffer except last line
                 if bufout == "":  # only one line was in buffer
                     return b""
                 else:
-                    buffer = lastline  # delete printed text. last line remains in buffer
+                    charbuffer = lastline  # delete printed text. last line remains in buffer
                     return colorize(bufout).encode('utf-8')
         else:
-            if debug: print("\r\n\033[38;5;208mNI-", repr(input), "\033[0m\r\n")  # DEBUG
+            if debug: print("\r\n\033[38;5;208mNI-", repr(inputtext), "\033[0m\r\n")  # DEBUG
             # Got linefeed, dump buffer
-            bufout = buffer + input
-            buffer = ""
+            bufout = charbuffer + inputtext
+            charbuffer = ""
             return colorize(bufout).encode('utf-8')
     finally:
         bufferlock.release()
@@ -301,8 +301,8 @@ def merge_dicts(x, y):
     return z
 
 
-def main():
-    global conn, ct, cmap, pause, timeoutact, terminal, buffer, lastline, debug
+def main(argv=None):
+    global conn, ct, cmap, pause, timeoutact, terminal, charbuffer, lastline, debug
     global is_break
     global maxtimeout, maxprevents
     global RUNNING
@@ -604,7 +604,7 @@ def main():
         # Stop timeoutcheck thread and exit
         RUNNING = False
         tc.join()
-        if len(buffer) > 0: print(colorize(buffer), end='')  # print remaining buffer
+        if len(charbuffer) > 0: print(colorize(charbuffer), end='')  # print remaining buffer
     else:
         print("CLICOL - CLI colorizer and more... Version %s" % __version__)
         print("""
