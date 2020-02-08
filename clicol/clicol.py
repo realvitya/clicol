@@ -312,14 +312,16 @@ def main():
     cfgdir = "~/.clicol"
     tc: threading = None
     try:
-        if len(sys.argv) > 1 and sys.argv[1] == '--c':  # called with specified colormap regex
-            regex = sys.argv[2]
-            del sys.argv[1]  # remove --c from args
-            del sys.argv[1]  # remove colormap regex string from args
-        if len(sys.argv) > 1 and sys.argv[1] == '--cfg':  # called with specified config directory
-            cfgdir = sys.argv[2]
-            del sys.argv[1]  # remove --cfg from args
-            del sys.argv[1]  # remove cfgdir string from args
+        if not argv:
+            argv = sys.argv
+        if len(argv) > 1 and argv[1] == '--c':  # called with specified colormap regex
+            regex = argv[2]
+            del argv[1]  # remove --c from args
+            del argv[1]  # remove colormap regex string from args
+        if len(argv) > 1 and argv[1] == '--cfg':  # called with specified config directory
+            cfgdir = argv[2]
+            del argv[1]  # remove --cfg from args
+            del argv[1]  # remove cfgdir string from args
     except:  # index error, wrong call
         cmd = 'error'
     try:
@@ -453,9 +455,9 @@ def main():
 
     # Check how we were called
     # valid options: clicol-telnet, clicol-ssh, clicol-test
-    cmd = str(os.path.basename(sys.argv[0])).replace('clicol-', '');
+    cmd = str(os.path.basename(argv[0])).replace('clicol-', '')
 
-    if cmd == 'test' and len(sys.argv) > 1:
+    if cmd == 'test' and len(argv) > 1:
         # Print starttime:
         print("Starttime: %s s" % (round(time.time() - starttime, 3)))
         # Sanity check on colormaps
@@ -467,8 +469,8 @@ def main():
             else:
                 cmbuf.append(cm[4])
 
-        if len(sys.argv) > 1:
-            for test in filter(lambda x: re.match(sys.argv[1], x) and re.match(regex, x), cmaps.sections()):
+        if len(argv) > 1:
+            for test in filter(lambda x: re.match(argv[1], x) and re.match(regex, x), cmaps.sections()):
                 test_d = dict(cmaps.items(test))
                 try:
                     # search for dirty patterns
@@ -487,23 +489,23 @@ def main():
                 except:
                     pass
 
-            print("%s" % plugins.tests().encode('utf-8').decode('unicode_escape'))
-    elif cmd == 'file' and len(sys.argv) > 1:
+            print("%s" % plugins.tests().encode('utf-8').decode('utf-8'))
+    elif cmd == 'file' and len(argv) > 1:
         try:
-            f = open(sys.argv[1], 'r')
+            f = open(argv[1], 'r')
         except:
-            print("Error opening " + sys.argv[1])
+            print("Error opening " + argv[1])
             raise
         for line in f:
             print(ofilter((line.replace("\n", "\r\n"))).decode('unicode_escape'),
                   end='')  # convert to CRLF to support files created in linux
         f.close()
-    elif cmd == 'telnet' or cmd == 'ssh' or (cmd == 'cmd' and len(sys.argv) > 1):
+    elif cmd == 'telnet' or cmd == 'ssh' or (cmd == 'cmd' and len(argv) > 1):
         try:
-            args = sys.argv[1:]
+            args = argv[1:]
             if cmd == 'cmd':
-                cmd = sys.argv[1]
-                args = sys.argv[2:]
+                cmd = argv[1]
+                args = argv[2:]
             skip = False
             if update_caption and (cmd == 'telnet' or cmd == 'ssh'):  # only update on telnet/ssh
                 for arg in args:
