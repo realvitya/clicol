@@ -44,6 +44,7 @@ from .plugins import Plugins
 from .__init__ import __version__
 
 # Global variables
+PY3 = sys.version_info.major == 3
 conn = ''          # connection handler
 charbuffer = u''   # input buffer
 lastline = u''     # input buffer's last line
@@ -555,7 +556,7 @@ def main(argv=None):
             while conn.isalive():
                 # esc code table: http://jkorpela.fi/chars/c0.html
                 # \x1c = CTRL-\
-                conn.interact(escape_character='\x1c', output_filter=ofilter, input_filter=ifilter)
+                conn.interact(escape_character='\x1c' if PY3 else b'\x1c', output_filter=ofilter, input_filter=ifilter)
                 if is_break:
                     is_break = False
                     print("\r" + " " * 100 + "\rCLICOL: q:quit,p:pause,T:highlight,F1-12,SF1-8:shortcuts,h-help",
