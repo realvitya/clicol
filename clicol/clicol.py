@@ -153,7 +153,7 @@ def colorize(text, only_effect=None):
     start = timeit.default_timer()
     # Run preprocessors. Ugly workaround to maintain py2_py3
     try:
-        text = plugins.preprocess(text, effects).encode('utf-8').decode('unicode_escape')
+        text = plugins.preprocess(text, effects)
     except UnicodeDecodeError:
         pass
     except:
@@ -240,7 +240,7 @@ def ofilter(inputtext):
 
     # Normalize input. py2_py3
     try:
-        inputtext = inputtext.decode('cp437')
+        inputtext = inputtext.decode('utf-8')
     except AttributeError:
         pass
     bufferlock.acquire()  # we got input, have to access buffer exclusively
@@ -478,7 +478,10 @@ def main(argv=None):
                     match_in_regex = re.findall(r'(?<!\\)\((?!\?)', test_d['regex'].replace(r'%(BOS)s', ''))
                     match_in_replace = re.findall(r'(?<!\\)\\[0-9](?![0-9])', test_d['replacement'])
 
-                    print("%s:%s" % (test, ofilter(('%s\n' % test_d['example'].replace('\'', '')).encode('utf-8')).decode()))
+                    outtext = ofilter(('%s\n' % test_d['example'].replace('\'', '')).encode('utf-8'))
+                    if PY3:
+                        outtext = outtext.decode()
+                    print("%s:%s" % (test, outtext))
                     if len(match_in_regex) != len(match_in_replace):
                         print(
                             "Warning: match group numbers are not equal! (%s/%s)" % (match_in_regex, match_in_replace))
@@ -490,7 +493,7 @@ def main(argv=None):
                 except:
                     pass
 
-            print("%s" % plugins.tests().encode('utf-8').decode('utf-8'))
+            print("%s" % plugins.tests())
     elif cmd == 'file' and len(argv) > 1:
         try:
             f = open(argv[1], 'r')
@@ -498,8 +501,8 @@ def main(argv=None):
             print("Error opening " + argv[1])
             raise
         for line in f:
-            print(ofilter((line.replace("\n", "\r\n"))).decode('unicode_escape'),
-                  end='')  # convert to CRLF to support files created in linux
+            # convert to CRLF to support files created in linux
+            print(ofilter(line).decode() if PY3 else ofilter(line), end='')
         f.close()
     elif cmd == 'telnet' or cmd == 'ssh' or (cmd == 'cmd' and len(argv) > 1):
         try:
