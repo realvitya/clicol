@@ -12,31 +12,30 @@ PY3 = sys.version_info.major == 3
 
 def getChar():
     # figure out which function to use once, and store it in _func
-    if "_func" not in getChar.__dict__:
+    if "_func" not in getchar.__dict__:
         try:
             # for Windows-based systems
             import msvcrt  # If successful, we are on Windows
-            getChar._func = msvcrt.getch
-
+            getchar._func = msvcrt.getch
         except ImportError:
             # for POSIX-based systems (with termios & tty support)
             import tty, sys, termios  # raises ImportError if unsupported
 
-            def _ttyRead():
+            def _ttyread():
                 fd = sys.stdin.fileno()
-                oldSettings = termios.tcgetattr(fd)
+                oldsettings = termios.tcgetattr(fd)
 
                 try:
                     tty.setcbreak(fd)
                     answer = sys.stdin.read(1)
                 finally:
-                    termios.tcsetattr(fd, termios.TCSADRAIN, oldSettings)
+                    termios.tcsetattr(fd, termios.TCSADRAIN, oldsettings)
 
                 return answer
 
-            getChar._func = _ttyRead
+            getchar._func = _ttyread
 
-    output = getChar._func()
+    output = getchar._func()
     return output
 
 
@@ -83,16 +82,16 @@ def getCommand():
     cmd = getChar()
     try:
         if cmd == '\x1b':  # special function key, need get more
-            cmd = getChar()
+            cmd = getchar()
             if cmd == '[':
-                cmd = getChar()
+                cmd = getchar()
                 if cmd == '[':  # ^[[[ A-E : F1-F5
-                    cmd = getChar()
+                    cmd = getchar()
                     cmd = 'F' + str(ord(cmd) - ord('A') + 1)
                 elif 1 <= int(cmd) <= 3:  # ^[[ 1-3 F6-SHIFT-F8
                     code = cmd
-                    cmd = getChar()
-                    getChar()  # last ~
+                    cmd = getchar()
+                    getchar()  # last ~
                     code = int(code + cmd)
                     if 11 <= int(code) <= 15:  # F1-F5
                         cmd = 'F' + str(code - 10)
@@ -117,14 +116,16 @@ def getCommand():
     return cmd
 
 
-def getRegex():
-    str = input("\r" + " " * 100 + "\rHighlight regex: ")
+def getregex():
+    regexstr = input("\r" + " " * 100 + "\rHighlight regex: ")
+    if not PY3:
+        regexstr = regexstr.decode('utf-8')
     try:
         output = re.compile('(' + regexstr + ')')
     except re.error:
         print("Wrong regex!")
         return ""
-    if str == "":
+    if regexstr == "":
         return ""
     return output
 

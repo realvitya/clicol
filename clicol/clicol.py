@@ -37,9 +37,9 @@ import threading
 import time
 import signal
 from pkg_resources import resource_filename
-from .command import getCommand
-from .command import getRegex
-from .command import getTerminalSize
+from .command import getcommand
+from .command import getregex
+from .command import getterminalsize
 from .plugins import Plugins
 from .__init__ import __version__
 
@@ -115,7 +115,7 @@ def timeoutcheck(maxwait=1.0):
 def sigwinch_passthrough(sig, data):
     global conn
 
-    rows, cols = getTerminalSize()
+    rows, cols = getterminalsize()
     conn.setwinsize(rows, cols)
 
 
@@ -535,7 +535,7 @@ def main(argv=None):
             # Set signal handler for window resizing
             signal.signal(signal.SIGWINCH, sigwinch_passthrough)
             # Set initial terminal size
-            rows, cols = getTerminalSize()
+            rows, cols = getterminalsize()
             conn.setwinsize(rows, cols)
         except Exception as e:
             if cmd != 'telnet' and cmd != 'ssh':
@@ -561,7 +561,7 @@ def main(argv=None):
                     is_break = False
                     print("\r" + " " * 100 + "\rCLICOL: q:quit,p:pause,T:highlight,F1-12,SF1-8:shortcuts,h-help",
                           end='')
-                    command = getCommand()
+                    command = getcommand()
                     if command == "D":
                         debug += 1
                         if debug > 2:
@@ -573,7 +573,7 @@ def main(argv=None):
                         conn.close()
                         break
                     elif command == "T":
-                        highlight = getRegex()
+                        highlight = getregex()
                         cmap_highlight = [False, 0, "", "", highlight,
                                           dict(ctfile.items('colortable'))['highlight'] + r"\1" +
                                           dict(ctfile.items('colortable'))['default'], 0, 0, 'user_highlight']
