@@ -10,7 +10,12 @@ except ImportError:
 
 PY3 = sys.version_info.major == 3
 
-def getChar():
+
+def getchar():
+    """
+    Read a single character from terminal
+    :return: read character as unicode string
+    """
     # figure out which function to use once, and store it in _func
     if "_func" not in getchar.__dict__:
         try:
@@ -19,7 +24,8 @@ def getChar():
             getchar._func = msvcrt.getch
         except ImportError:
             # for POSIX-based systems (with termios & tty support)
-            import tty, sys, termios  # raises ImportError if unsupported
+            import tty
+            import termios  # raises ImportError if unsupported
 
             def _ttyread():
                 fd = sys.stdin.fileno()
@@ -38,7 +44,7 @@ def getChar():
     output = getchar._func()
     return output
 
-
+# Key codes:
 # key[F1]        = '^[[[A' or '^[[11~'
 # key[F2]        = '^[[[B' or '^[[12~'
 # key[F3]        = '^[[[C' or '^[[13~'
@@ -78,8 +84,17 @@ def getChar():
 # key[Bksp-Ctrl] = '^H'
 
 
-def getCommand():
-    cmd = getChar()
+def getcommand():
+    """
+    Returns key command read in the following formats:
+        F1 for hitting first function key
+        F2
+        ..
+        F12
+        SF1..SF8 for SHIFT + function key
+    :return: hit command key in string format
+    """
+    cmd = getchar()
     try:
         if cmd == '\x1b':  # special function key, need get more
             cmd = getchar()
@@ -133,7 +148,12 @@ def getregex():
 # Source: http://stackoverflow.com/a/566752/2646228
 
 
-def getTerminalSize():
+def getterminalsize():
+    """
+    Get terminal size in rows and columns
+    Source: http://stackoverflow.com/a/566752/2646228
+    :return: if feature is supported, a tuple of (lines,columns)
+    """
     import os
     env = os.environ
 

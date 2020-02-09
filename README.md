@@ -39,14 +39,10 @@ By default clicol will colorize with all colorsets and this behaviour can be tun
 
 Default break key is CTRL-\\
 
-After hitting the break key you have some options:
-
-p - pausing coloring
-
-q - quit from session
-
-h - print help
-
+After hitting the break key you have some options:<BR>
+p - pausing coloring<BR>
+q - quit from session<BR>
+h - print help<BR>
 T - highlight regex (set regex in runtime to highligh something important)
 
 F1-F12 keys are shortcuts for various commands. Examples are in example config file or try help 'h' key. Shortcuts for SHIFT+F1-F8 are only working if your terminal supports this. For [SecureCRT](https://www.vandyke.com/products/securecrt) you may setup mapped keys for these to work. (for [Putty](https://www.chiark.greenend.org.uk/~sgtatham/putty/) I don't know yet how to implement this)
@@ -89,9 +85,11 @@ You can override or extend the colors and regexes so you can modify default beha
 
 `ls -l $VIRTUAL_ENV/lib/python2*/site-packages/clicol/ini`
 
+Default configuration directory is `$HOME/.clicol`. All configuration or plugin file should be in that directory!
+
 ### Custom colors
 
-`$HOME/clicol_customcolors.ini`
+`clicol_customcolors.ini`
 
 This file is for overriding extending current colorset. Example:
 
@@ -100,7 +98,7 @@ This file is for overriding extending current colorset. Example:
 
 ### Custom colortable
 
-`$HOME/clicol_customct.ini`
+`clicol_customct.ini`
 
 This file is for overriding or extending keywords for colors. Example:
 
@@ -110,7 +108,7 @@ This file is for overriding or extending keywords for colors. Example:
 
 ### Custom colormap
 
-`$HOME/clicol_customcmap.ini`
+`clicol_customcmap.ini`
 
 This file is for overriding or extending rules for recoloring/matching.
 Example:
@@ -131,11 +129,13 @@ PLUGINS
 
 It is possible to extend CLICOL's capabilities with plugins. The main idea is that plugins can have external dependencies and can do external calls to manipulate output. Currently two functions are called from CLICOL to a plugin: `preprocess` and `postprocess`. These are to be called before CLICOL colorization and after so a plugin can have a chance to see the text and manipulate it at these points.
 
-For example implementation you may check the builtin plugin in the `builtinplugins` folder or external projects like [AS path resolver](https://github.com/realvitya/clicol_plugin_aspath)
+For example implementation you may check the builtin plugin in the `builtinplugins` folder or external projects like the followings: 
+1. [AS path resolver](https://github.com/realvitya/clicol_plugin_aspath)
+2. [Extra plugins](https://github.com/realvitya/clicol_plugin_extra)
 
 ### Installing plugin
 
-After installing the plugin with pip, it must be activated in ~/.clicol/plugins.cfg configuration file. If that file did not exist or the section does not exist for the plugin, it won't be loaded.
+After installing the plugin with pip, it must be activated in `$HOME/.clicol/plugins.cfg` configuration file. If that file did not exist or the section does not exist for the plugin, it won't be loaded.
 
 Section name must be the plugin name in lower case!
 
@@ -154,7 +154,7 @@ There is a documentation about how to develop plugins for CLICOL at [wiki page](
 License and Copyright
 ---------------------
 
-[clicol](https://pypi.org/project/clicol) is licensed [GPLv3](http://www.gnu.org/licenses/gpl-3.0.html) Copyright Viktor Kertesz, 2017-2019
+[clicol](https://pypi.org/project/clicol) is licensed [GPLv3](http://www.gnu.org/licenses/gpl-3.0.html) Copyright Viktor Kertesz, 2017-2020
 
 Author
 ------

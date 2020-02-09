@@ -82,6 +82,14 @@ INTERACT = re.compile(r"(?i)^("  # START of whole line matches
 
 
 def timeoutcheck(maxwait=1.0):
+    """
+    This thread is responsible for outputting the buffer if the predefined timeout is overlapped.
+    pexpect.interact does lock the main thread, this thread will dump the buffer if we experience unexpected input
+    and wait for inifinity.
+    Example situation is when device is waiting for an input but we don't know if the question is partial output or
+    the end of the output. In that case this thread will write that output.
+    :param maxwait: float timeout value in seconds what we wait for end of output from device.
+    """
     global bufferlock, debug, timeout, maxtimeout, charbuffer
     global RUNNING, WORKING
 
@@ -113,6 +121,12 @@ def timeoutcheck(maxwait=1.0):
 
 
 def sigwinch_passthrough(sig, data):
+    """
+    Update known window size for proper text wrapping
+    parameters are not used but signal handler passes them!
+    :param sig: getting this signal from terminal
+    :param data: getting this data from signal handling
+    """
     global conn
 
     rows, cols = getterminalsize()
@@ -120,6 +134,9 @@ def sigwinch_passthrough(sig, data):
 
 
 def preventtimeout():
+    """
+    Action taken in case we need to prevent device timeout
+    """
     global conn, prevents, maxprevents
 
     prevents += 1
@@ -128,6 +145,10 @@ def preventtimeout():
 
 
 def printhelp(shortcuts):
+    """
+    Printing help
+    :param shortcuts: shortcut key list
+    """
     global plugins
 
     print(
@@ -144,8 +165,12 @@ T: highlight regex (empty turns off)""")
 
 
 def colorize(text, only_effect=None):
-    # text       : input string to colorize
-    # only_effect: select specific regex group(with specified effect) to work with
+    """
+    This function is manipulating input text
+    :param text: input string to colorize
+    :param only_effect: select specific regex group(with specified effect) to work with
+    :return: manipulated text
+    """
     if only_effect is None:
         only_effect = []
     global effects, cmap, conn, timeoutact, plugins, debug
@@ -232,6 +257,11 @@ def ifilter(inputtext):
 
 
 def ofilter(inputtext):
+    """
+    This function manipulate output text.
+    :param inputtext: UTF-8 encoded text to manipulate
+    :return: byte array of manipulated input. Type is expected by pexpect!
+    """
     global charbuffer
     global pause  # coloring must be paused
     global lastline
@@ -303,6 +333,12 @@ def ofilter(inputtext):
 
 
 def merge_dicts(x, y):
+    """
+    Merge two dicts. Needed only because of compatibility
+    :param x: dict1
+    :param y: dict2
+    :return: dict1 and dict2 merged together
+    """
     z = x.copy()  # start with x's keys and values
     z.update(y)   # modifies z with y's keys and values & returns None
     return z
