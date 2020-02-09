@@ -2,11 +2,13 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import input
 import re
+import sys
 try:
     import readline
-except:
+except ImportError:
     pass
 
+PY3 = sys.version_info.major == 3
 
 def getChar():
     # figure out which function to use once, and store it in _func
@@ -118,8 +120,8 @@ def getCommand():
 def getRegex():
     str = input("\r" + " " * 100 + "\rHighlight regex: ")
     try:
-        output = re.compile('(' + str + ')')
-    except:
+        output = re.compile('(' + regexstr + ')')
+    except re.error:
         print("Wrong regex!")
         return ""
     if str == "":
