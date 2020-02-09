@@ -215,14 +215,19 @@ def colorize(text, only_effect=None):
     return colortext
 
 
-def ifilter(input):
+def ifilter(inputtext):
+    """
+    This function manipulate input text.
+    :param inputtext: UTF-8 encoded text to manipulate
+    :return: byte array of manipulated input. Type is expected by pexpect!
+    """
     global is_break, timeout, prevents
 
-    is_break = input == b'\x1c'
+    is_break = inputtext == b'\x1c'
     if not is_break:
         timeout = time.time()
         prevents = 0
-    return input
+    return inputtext
 
 
 def ofilter(inputtext):
