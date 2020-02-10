@@ -190,10 +190,9 @@ def colorize(text, only_effect=None):
         if debug >= 3: print("\r\n\033[38;5;208mCCM-", repr(cmap), "\033[0m\r\n")  # DEBUG
         for i in cmap:
             cmap_counter += 1
-            matcher = False
             # try:
             matcher = i[0]  # is matcher?
-            prio = i[1]     # priority
+            # prio = i[1]   # priority (not used here)
             effect = i[2]   # invokes other rules
             dep = i[3]      # dependency on effect
             reg = i[4]      # regexp match string
@@ -220,7 +219,7 @@ def colorize(text, only_effect=None):
             origline = line
             if option == 2:  # need to cleanup existing coloring (CLEAR)
                 backupline = line
-                origline = re.sub('\x1b[^m]*m', '', line)
+                origline = re.sub(r'\x1b[^m]*m', '', line)
                 if debug >= 3: print("\r\n\033[38;5;208mCCL-", origline, "\033[0m\r\n")  # debug
             line = reg.sub(rep, origline)
             if line != origline:  # we have a match
