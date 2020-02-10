@@ -1,8 +1,9 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import re
+import sys
 from pkg_resources import iter_entry_points
+PY3 = sys.version_info.major == 3
 
 
 class Plugins:
@@ -12,6 +13,7 @@ class Plugins:
     active = list()
     debug = False
     keybinds = dict()
+    tests = list()
 
     def __init__(self, debug=False, setup=(None, None)):
         self.debug = debug
@@ -70,4 +72,4 @@ class Plugins:
                 input += "\r\n" * 2
             except AttributeError:
                 pass
-        return input
+        return inputtext.encode('utf-8').decode('unicode_escape') if PY3 else inputtext
