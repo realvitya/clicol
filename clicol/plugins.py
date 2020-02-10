@@ -33,9 +33,9 @@ class Plugins:
     def preprocess(self, inputtext, effects=None):
         """
         Run active plugins
-        :param inputtext:
-        :param effects:
-        :return:
+        :param inputtext: Text to process
+        :param effects: effects can be used to filter inside the plugin
+        :return: processed text
         """
         if effects is None:
             effects = []
@@ -49,9 +49,9 @@ class Plugins:
     def postprocess(self, inputtext, effects=None):
         """
         Run active plugins
-        :param inputtext:
-        :param effects:
-        :return:
+        :param inputtext: text to preprocess
+        :param effects: effects can be used to filter inside the plugin
+        :return: processed text
         """
         if effects is None:
             effects = []
@@ -63,6 +63,10 @@ class Plugins:
         return inputtext
 
     def register(self, plugin):
+        """
+        Add plugin to registration list
+        :param plugin: plugin reference to be added
+        """
         try:
             self.registered.append(plugin)
             if self.debug: print("Plugin %s registered" % plugin)
@@ -78,6 +82,10 @@ class Plugins:
             pass
 
     def runtests(self):
+        """
+        Selftest for the plugin
+        :return: test output
+        """
         inputtext = ""
         for plugin in self.active:
             try:
