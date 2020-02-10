@@ -30,24 +30,37 @@ class Plugins:
                 self.register(plugin((pluginsetup, colormap)))
         return
 
-
-    'Run active plugins'
-    def preprocess(self, input, effects = []):
+    def preprocess(self, inputtext, effects=None):
+        """
+        Run active plugins
+        :param inputtext:
+        :param effects:
+        :return:
+        """
+        if effects is None:
+            effects = []
         for plugin in self.active:
             try:
-                input = plugin.plugin_preprocess(input, effects)
+                inputtext = plugin.plugin_preprocess(inputtext, effects)
             except AttributeError:
                 pass
-        return input
+        return inputtext
 
-    'Run active plugins'
-    def postprocess(self, input, effects = []):
+    def postprocess(self, inputtext, effects=None):
+        """
+        Run active plugins
+        :param inputtext:
+        :param effects:
+        :return:
+        """
+        if effects is None:
+            effects = []
         for plugin in self.active:
             try:
-                input = plugin.plugin_postprocess(input, effects)
+                inputtext = plugin.plugin_postprocess(inputtext, effects)
             except AttributeError:
                 pass
-        return input
+        return inputtext
 
     def register(self, plugin):
         try:
@@ -64,12 +77,12 @@ class Plugins:
         except:
             pass
 
-    def tests(self):
-        input = ""
+    def runtests(self):
+        inputtext = ""
         for plugin in self.active:
             try:
-                input += ": ".join(plugin.plugin_test())
-                input += "\r\n" * 2
+                inputtext += ": ".join(plugin.plugin_test())
+                inputtext += "\r\n" * 2
             except AttributeError:
                 pass
         return inputtext.encode('utf-8').decode('unicode_escape') if PY3 else inputtext

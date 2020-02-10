@@ -535,7 +535,7 @@ def main(argv=None):
                 except:
                     pass
 
-            print("%s" % plugins.tests())
+            print("%s" % plugins.runtests())
     elif cmd == 'file' and len(argv) > 1:
         try:
             f = open(argv[1], 'r')
