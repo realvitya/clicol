@@ -310,7 +310,8 @@ def ofilter(inputtext):
                     return colorize(bufout).encode('utf-8')
                 elif charbuffer == inputtext:  # interactive
                     charbuffer = ""
-                    return colorize(bufout, ["prompt", "ping"]).encode('utf-8')  # colorize only short stuff (up key,ping)
+                    # colorize only short stuff (up key,ping)
+                    return colorize(bufout, ["prompt", "ping"]).encode('utf-8')
                 else:  # need to collect more output
                     return b""
             else:  # large data. we need to print until last line which goes into buffer
