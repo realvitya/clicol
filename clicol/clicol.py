@@ -70,7 +70,7 @@ plugins = None     # all active plugins
 # - restore coloring (\x1b[m) (linux)
 # possible chars: "\):>#$/- "
 INTERACT = re.compile(r"(?i)^("  # START of whole line matches
-                      r"[^* ]+([\]>#$[: ]?)(.*)"  # prompt
+                      r"[^* ]+([\]>#$][: ]?)(.*)"  # prompt
                       # more (\b can be at the end when excessive enters are pressed
                       r"| ?<?-+ ?\(?more(?: [0-9]{1,2}%)?\)? ?-+>? ?([\b ]+)?"
                       r"|\x1b\[m"                                               # color escape sequence
