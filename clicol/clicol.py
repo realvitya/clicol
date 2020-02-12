@@ -45,7 +45,7 @@ from .__init__ import __version__
 
 # Global variables
 PY3 = sys.version_info.major == 3
-conn = ''          # connection handler
+conn = None        # connection handler
 charbuffer = u''   # input buffer
 lastline = u''     # input buffer's last line
 is_break = False   # is break key pressed?
@@ -79,6 +79,23 @@ INTERACT = re.compile(r"(?i)^("  # START of whole line matches
                       r")$"                                                     # END of whole line match
                       r"|\]:? ?$",                                              # probably question (reload? [yes])
                       flags=re.S)
+
+
+def sigint_handler(sig, data):
+    """
+    Handle SIGINT (CTRL-C) inside clicol. If spawned connection is alive, do not exit.
+    Then spawned process will exit which pull clicol with it.
+    """
+    global conn
+    try:
+        if conn.isalive():
+            pass
+    except (AttributeError, KeyboardInterrupt):
+        print("Exiting...")
+        sys.exit(0)
+
+
+signal.signal(signal.SIGINT, sigint_handler)
 
 
 def timeoutcheck(maxwait=1.0):
