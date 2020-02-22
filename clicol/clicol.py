@@ -292,7 +292,7 @@ def ofilter(inputtext):
 
     # Normalize input. py2_py3
     try:
-        inputtext = inputtext.decode('utf-8')
+        inputtext = inputtext.decode('utf-8', errors='ignore')
     except AttributeError:
         pass
     bufferlock.acquire()  # we got input, have to access buffer exclusively
