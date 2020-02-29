@@ -11,33 +11,34 @@ This project is to colorize output of command line interface for devices where C
 INSTALL
 -------
 
- -   You will need python 2.6+ and pexpect
+ -   You will need python 2.6+/3 and pexpect
  -   telnet and/or ssh should be installed
  -   I recommend installing [virtualenv](https://pypi.org/project/virtualenv) and install [clicol](https://pypi.org/project/clicol) into that virtual environment:
         *   `pip install virtualenv`
-        *   `virtualenv \~/mypython`
-        *   `source \~/mypython/bin/activate`
+        *   `virtualenv ~/mypython`
+        *   `source ~/mypython/bin/activate`
         *   `pip install clicol`
         *   OR (after pulling git source)
             *   `pip install clicol-xxxx.zip`
 
  -   To get clicol source:
-        *   `git clone https://github.com/realvitya/clicol \~/clicol`
-        *   `cd \~/clicol`
+        *   `git clone https://github.com/realvitya/clicol ~/clicol`
+        *   `cd ~/clicol`
 
  -   Copy
-    [clicol.cfg](https://github.com/realvitya/clicol/blob/master/doc/clicol.cfg) to your \$HOME directory and modify to your needs
+    [clicol.cfg](https://github.com/realvitya/clicol/blob/master/doc/clicol.cfg) to your $HOME directory and modify to your needs
 
 USAGE
 -----
 
-Run the script `clicol-telnet` or `clicol-ssh` and specify arguments as for the telnet/ssh.
+Run the script `clicol-telnet` or `clicol-ssh` and specify arguments as for the telnet/ssh.<BR>
+Run the script `clicol-cmd` and any command with arguments to pimp up any non-colored cli command.
 
-clicol can be run on Windows in [cygwin](https://www.cygwin.com). If you want to use [SecureCRT](https://www.vandyke.com/products/securecrt), you must enable sshd in [cygwin](https://www.cygwin.com) and connect to localhost. It is not necessary to be administrator on the desktop for this to work. You must bind to localhost and use port number \>1024.
+clicol can be run on Windows in [cygwin](https://www.cygwin.com). If you want to use [SecureCRT](https://www.vandyke.com/products/securecrt), you must enable sshd in [cygwin](https://www.cygwin.com) and connect to localhost. It is not necessary to be administrator on the desktop for this to work. You must bind to localhost and use port number >1024.
 
 By default clicol will colorize with all colorsets and this behaviour can be tuned in config file. The config file can be saved in user directory and it will take preference over defaults.
 
-Default break key is CTRL-\\
+Default break key is CTRL-\
 
 After hitting the break key you have some options:<BR>
 p - pausing coloring<BR>
@@ -49,7 +50,7 @@ F1-F12 keys are shortcuts for various commands. Examples are in example config f
 
 *Note: If you installed into virtualenv then you must first activate it:*
 
-**source \~/mypython/bin/activate**
+**source ~/mypython/bin/activate**
 
 Consider using aliases. A basic template can be found in *doc* folder.
 
@@ -74,7 +75,7 @@ List only certain matchers:
 
 `clicol-test ".*ipv4|cisco_if_stats|juniper_if"`
 
-Then the desired regex can be specified in the clicol.cfg in your \$HOME and only these matchers will be used.
+Then the desired regex can be specified in the clicol.cfg in your $HOME and only these matchers will be used.
 
 Output can be tested by running `clicol-file {filename}` script. This will colorize the textfile and dump it. Good for testing.
 
@@ -85,7 +86,7 @@ You can override or extend the colors and regexes so you can modify default beha
 
 `ls -l $VIRTUAL_ENV/lib/python2*/site-packages/clicol/ini`
 
-Default configuration directory is `$HOME/.clicol`. All configuration or plugin file should be in that directory!
+Default configuration directory is `$HOME/.clicol`. All configuration or plugin file should be in that directory! Configuration files in the user directory will override the .clicol directory files!
 
 ### Custom colors
 
@@ -160,4 +161,4 @@ Author
 ------
 
 [clicol](https://pypi.org/project/clicol) was written by Viktor Kertesz
-(vkertesz2 [\~at\~] gmail [/dot] com).
+(vkertesz2 [~at~] gmail [/dot] com).
