@@ -114,6 +114,7 @@ def timeoutcheck(maxwait=1.0):
     while RUNNING:
         time.sleep(0.33)  # time clicks we run checks
         if WORKING:  # ifilter is working, do not send anything
+            timeout = time.time()
             continue
         now = time.time()
         # Check if there was user input in the specified time range
@@ -130,8 +131,8 @@ def timeoutcheck(maxwait=1.0):
                     sys.stdout.write(colorize(charbuffer))
                     sys.stdout.flush()
                     charbuffer = ""
-                    timeout = time.time()
                 bufferlock.release()
+                timeout = time.time()
             except threading.ThreadError as e:
                 if debug >= 1: print("\r\n\033[38;5;208mTERR-%s\033[0m\r\n" % e)  # DEBUG
                 pass
