@@ -57,6 +57,7 @@ debug = 0          # global debug (D: hidden command)
 timeout = 0        # counts timeout
 timeoutact = True  # act on timeout warning
 maxtimeout = 0     # maximum timeout (0 turns off this feature)
+maxwait = 1.0      # maximum amount of time between input chunks
 prevents = 0       # counts timeout prevention
 maxprevents = 0    # maximum number of timeout prevention (0 turns this off)
 RUNNING = True     # signal to timeoutcheck
@@ -98,16 +99,15 @@ def sigint_handler(sig, data):
 signal.signal(signal.SIGINT, sigint_handler)
 
 
-def timeoutcheck(maxwait=1.0):
+def timeoutcheck():
     """
     This thread is responsible for outputting the buffer if the predefined timeout is overlapped.
     pexpect.interact does lock the main thread, this thread will dump the buffer if we experience unexpected input
     and wait for inifinity.
     Example situation is when device is waiting for an input but we don't know if the question is partial output or
     the end of the output. In that case this thread will write that output.
-    :param maxwait: float timeout value in seconds what we wait for end of output from device.
     """
-    global bufferlock, debug, timeout, maxtimeout, charbuffer
+    global bufferlock, debug, timeout, maxtimeout, charbuffer, maxwait
     global RUNNING, WORKING
 
     timeout = time.time()
@@ -286,6 +286,8 @@ def ofilter(inputtext):
     global bufferlock
     global WORKING
     global plugins
+    global timeout
+    global maxwait
 
     # Coloring is paused by escape character
     if pause:
@@ -298,6 +300,8 @@ def ofilter(inputtext):
         pass
     bufferlock.acquire()  # we got input, have to access buffer exclusively
     WORKING = True
+    now = time.time()
+    interactive = (now - timeout) < maxwait
     try:
         # If not ending with linefeed we are interacting or buffering
         if not (inputtext[-1] == "\r" or inputtext[-1] == "\n"):
@@ -326,7 +330,7 @@ def ofilter(inputtext):
                     bufout = "".join(charbuffer.splitlines(True)[:-1])  # all buffer except last line
                     charbuffer = lastline  # delete printed text. last line remains in buffer
                     return colorize(bufout).encode('utf-8')
-                elif charbuffer == inputtext:  # interactive
+                elif (charbuffer == inputtext) and interactive:  # interactive
                     charbuffer = ""
                     # colorize only short stuff (up key,ping)
                     return colorize(bufout, ["prompt", "ping"]).encode('utf-8')
@@ -365,7 +369,7 @@ def merge_dicts(x, y):
 def main(argv=None):
     global conn, ct, cmap, pause, timeoutact, terminal, charbuffer, lastline, debug
     global is_break
-    global maxtimeout, maxprevents
+    global maxwait, maxtimeout, maxprevents
     global RUNNING
     global plugins
     highlight = ""
@@ -604,7 +608,8 @@ def main(argv=None):
                 return
         try:
             # Start timeoutcheck to check timeout or string stuck in buffer
-            tc = threading.Thread(target=timeoutcheck, args=(config.getfloat("clicol", "maxwait"),))
+            maxwait = config.getfloat("clicol", "maxwait")
+            tc = threading.Thread(target=timeoutcheck)
             tc.daemon = True
             tc.start()
             while conn.isalive():
