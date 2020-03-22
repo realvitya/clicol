@@ -45,25 +45,25 @@ from .__init__ import __version__
 
 # Global variables
 PY3 = sys.version_info.major == 3
-conn = None        # connection handler
-charbuffer = u''   # input buffer
-lastline = u''     # input buffer's last line
-is_break = False   # is break key pressed?
-effects = set()    # state effects set
-ct = dict()        # color table (contains colors)
-cmap = list()      # color map (contains coloring rules)
-pause = 0          # if true, then coloring is paused
-debug = 0          # global debug (D: hidden command)
-timeout = 0        # counts timeout
-timeoutact = True  # act on timeout warning
-maxtimeout = 0     # maximum timeout (0 turns off this feature)
-maxwait = 1.0      # maximum amount of time between input chunks
-prevents = 0       # counts timeout prevention
-maxprevents = 0    # maximum number of timeout prevention (0 turns this off)
-RUNNING = True     # signal to timeoutcheck
-WORKING = True     # signal to timeoutcheck
+conn = None          # connection handler
+charbuffer = u''     # input buffer
+lastline = u''       # input buffer's last line
+is_break = False     # is break key pressed?
+effects = set()      # state effects set
+ct = dict()          # color table (contains colors)
+cmap = list()        # color map (contains coloring rules)
+pause = 0            # if true, then coloring is paused
+debug = 0            # global debug (D: hidden command)
+timeout = 0          # counts timeout
+timeoutact = True    # act on timeout warning
+maxtimeout = 0       # maximum timeout (0 turns off this feature)
+interactive = False  # signal to buffering
+prevents = 0         # counts timeout prevention
+maxprevents = 0      # maximum number of timeout prevention (0 turns this off)
+RUNNING = True       # signal to timeoutcheck
+WORKING = True       # signal to timeoutcheck
 bufferlock = threading.Lock()
-plugins = None     # all active plugins
+plugins = None       # all active plugins
 # Interactive regex matches for
 # - prompt (asd# ) (all)
 # - question ([yes]) (cisco)
@@ -99,22 +99,22 @@ def sigint_handler(sig, data):
 signal.signal(signal.SIGINT, sigint_handler)
 
 
-def timeoutcheck():
+def timeoutcheck(maxwait=1.0):
     """
     This thread is responsible for outputting the buffer if the predefined timeout is overlapped.
     pexpect.interact does lock the main thread, this thread will dump the buffer if we experience unexpected input
     and wait for inifinity.
     Example situation is when device is waiting for an input but we don't know if the question is partial output or
     the end of the output. In that case this thread will write that output.
+    :param maxwait: float timeout value in seconds what we wait for end of output from device.
     """
-    global bufferlock, debug, timeout, maxtimeout, charbuffer, maxwait
+    global bufferlock, debug, timeout, maxtimeout, charbuffer
     global RUNNING, WORKING
 
     timeout = time.time()
     while RUNNING:
         time.sleep(0.33)  # time clicks we run checks
-        if WORKING:  # ifilter is working, do not send anything
-            timeout = time.time()
+        if WORKING:  # ofilter is working, do not send anything
             continue
         now = time.time()
         # Check if there was user input in the specified time range
@@ -132,7 +132,6 @@ def timeoutcheck():
                     sys.stdout.flush()
                     charbuffer = ""
                 bufferlock.release()
-                timeout = time.time()
             except threading.ThreadError as e:
                 if debug >= 1: print("\r\n\033[38;5;208mTERR-%s\033[0m\r\n" % e)  # DEBUG
                 pass
@@ -264,12 +263,13 @@ def ifilter(inputtext):
     :param inputtext: UTF-8 encoded text to manipulate
     :return: byte array of manipulated input. Type is expected by pexpect!
     """
-    global is_break, timeout, prevents
+    global is_break, timeout, prevents, interactive
 
     is_break = inputtext == b'\x1c'
     if not is_break:
         timeout = time.time()
         prevents = 0
+        interactive = inputtext != b'\r'
     return inputtext
 
 
@@ -286,8 +286,7 @@ def ofilter(inputtext):
     global bufferlock
     global WORKING
     global plugins
-    global timeout
-    global maxwait
+    global interactive
 
     # Coloring is paused by escape character
     if pause:
@@ -300,8 +299,6 @@ def ofilter(inputtext):
         pass
     bufferlock.acquire()  # we got input, have to access buffer exclusively
     WORKING = True
-    now = time.time()
-    interactive = (now - timeout) < maxwait
     try:
         # If not ending with linefeed we are interacting or buffering
         if not (inputtext[-1] == "\r" or inputtext[-1] == "\n"):
@@ -369,7 +366,7 @@ def merge_dicts(x, y):
 def main(argv=None):
     global conn, ct, cmap, pause, timeoutact, terminal, charbuffer, lastline, debug
     global is_break
-    global maxwait, maxtimeout, maxprevents
+    global maxtimeout, maxprevents
     global RUNNING
     global plugins
     highlight = ""
@@ -608,8 +605,7 @@ def main(argv=None):
                 return
         try:
             # Start timeoutcheck to check timeout or string stuck in buffer
-            maxwait = config.getfloat("clicol", "maxwait")
-            tc = threading.Thread(target=timeoutcheck)
+            tc = threading.Thread(target=timeoutcheck, args=(config.getfloat("clicol", "maxwait"),))
             tc.daemon = True
             tc.start()
             while conn.isalive():
