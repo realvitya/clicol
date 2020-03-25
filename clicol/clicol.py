@@ -263,13 +263,15 @@ def ifilter(inputtext):
     :param inputtext: UTF-8 encoded text to manipulate
     :return: byte array of manipulated input. Type is expected by pexpect!
     """
-    global is_break, timeout, prevents, interactive
+    global is_break, timeout, prevents, interactive, effects
 
     is_break = inputtext == b'\x1c'
     if not is_break:
         timeout = time.time()
         prevents = 0
-        interactive = inputtext != b'\r'
+        interactive = not (inputtext == b'\r' or
+                           (inputtext == b' ' and 'pager' in effects)
+                           )
     return inputtext
 
 
@@ -287,6 +289,7 @@ def ofilter(inputtext):
     global WORKING
     global plugins
     global interactive
+    global timeout
 
     # Coloring is paused by escape character
     if pause:
@@ -348,6 +351,7 @@ def ofilter(inputtext):
             return colorize(bufout).encode('utf-8')
     finally:
         bufferlock.release()
+        timeout = time.time()
         WORKING = False
 
 
