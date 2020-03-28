@@ -53,6 +53,7 @@ effects = set()      # state effects set
 ct = dict()          # color table (contains colors)
 cmap = list()        # color map (contains coloring rules)
 pause = 0            # if true, then coloring is paused
+pastepause = False   # While pasting, turn off coloring
 debug = 0            # global debug (D: hidden command)
 timeout = 0          # counts timeout
 timeoutact = True    # act on timeout warning
@@ -73,7 +74,7 @@ plugins = None       # all active plugins
 INTERACT = re.compile(r"(?i)^("  # START of whole line matches
                       r"[^* ]+([\]>#$][: ]?)(.*)"  # prompt
                       # more (\b can be at the end when excessive enters are pressed
-                      r"| ?<?-+ ?\(?more(?: [0-9]{1,2}%)?\)? ?-+>? ?([\b ]+)?"
+                      r"|( ?)<?(-+) ?\(?more(?: [0-9]{1,2}%)?\)? ?\5>?\4([\b ]+)?"
                       r"|\x1b\[m"                                               # color escape sequence
                       r"|username: ?"
                       r"|password: ?"
@@ -243,8 +244,8 @@ def colorize(text, only_effect=None):
                 if debug >= 2: print("\r\n\033[38;5;208mCM-", name, "\033[0m\r\n")  # debug
                 if len(effect) > 0:  # we have an effect
                     effects.add(effect)
-                if 'prompt' in effects:  # prompt eliminates all effects
-                    effects = set()
+                if 'prompt' in effects:  # prompt eliminates all other effects
+                    effects = {'prompt'}
                 if option > 0:  # non-zero means non-final match
                     break
             elif option == 2:  # need to restore existing coloring as there was no match (by CLEAR)
@@ -263,15 +264,33 @@ def ifilter(inputtext):
     :param inputtext: UTF-8 encoded text to manipulate
     :return: byte array of manipulated input. Type is expected by pexpect!
     """
-    global is_break, timeout, prevents, interactive, effects
+    global is_break, timeout, prevents, interactive, effects, pastepause
 
     is_break = inputtext == b'\x1c'
     if not is_break:
         timeout = time.time()
         prevents = 0
-        interactive = not (inputtext == b'\r' or
+        if debug: print("\r\n\033[38;5;208mINPUT-", repr(inputtext), "\033[0m\r\n")  # DEBUG
+        # Don't buffer for interactive run (user is typing)
+        interactive = not (inputtext in b'\t\r' or
                            (inputtext == b' ' and 'pager' in effects)
                            )
+        # Fix prompt line when user hit enter or tab
+        if inputtext in b'\r\t':
+            effects.discard('prompt')
+        # Fix pager handling when user hit space or enter
+        if 'pager' in effects and inputtext not in b' \r':
+            effects.discard('pager')
+            interactive = False
+        # Fix prompt when user hit special character like CTRL-Z
+        if inputtext[0] < 32:
+            interactive = False
+            effects.clear()
+        # Handle pasting (turn off coloring)
+        if len(inputtext) > 2:
+            pastepause = True
+        else:
+            pastepause = False
     return inputtext
 
 
@@ -283,6 +302,7 @@ def ofilter(inputtext):
     """
     global charbuffer
     global pause  # coloring must be paused
+    global pastepause
     global lastline
     global debug
     global bufferlock
@@ -290,9 +310,10 @@ def ofilter(inputtext):
     global plugins
     global interactive
     global timeout
+    global effects
 
-    # Coloring is paused by escape character
-    if pause:
+    # Coloring is paused by escape character or pasting
+    if pause or pastepause:
         return inputtext
 
     # Normalize input. py2_py3
@@ -320,17 +341,19 @@ def ofilter(inputtext):
                 charbuffer = ""
                 return colorize(bufout, ["prompt"]).encode('utf-8')
             if INTERACT.search(lastline):  # prompt or question at the end
+                if debug: print("\r\n\033[38;5;208mINTERACT/effects:", repr(effects), "\033[0m\r\n")  # DEBUG
                 bufout = charbuffer
                 charbuffer = ""
                 return colorize(bufout).encode('utf-8')
-
+            if debug: print("\r\n\033[38;5;208mEFFECTS-interactive:", repr(interactive), "/", repr(effects),
+                            "\033[0m\r\n")  # DEBUG
             if len(charbuffer) < 100:  # interactive or end of large chunk
                 bufout = charbuffer
                 if "\r" in inputtext or "\n" in inputtext:  # multiline input, not interactive
                     bufout = "".join(charbuffer.splitlines(True)[:-1])  # all buffer except last line
                     charbuffer = lastline  # delete printed text. last line remains in buffer
                     return colorize(bufout).encode('utf-8')
-                elif (charbuffer == inputtext) and interactive:  # interactive
+                elif interactive or 'prompt' in effects or 'ping' in effects:
                     charbuffer = ""
                     # colorize only short stuff (up key,ping)
                     return colorize(bufout, ["prompt", "ping"]).encode('utf-8')
@@ -342,12 +365,14 @@ def ofilter(inputtext):
                     return b""
                 else:
                     charbuffer = lastline  # delete printed text. last line remains in buffer
+                    effects.discard('pager')
                     return colorize(bufout).encode('utf-8')
         else:
             if debug: print("\r\n\033[38;5;208mNI-", repr(inputtext), "\033[0m\r\n")  # DEBUG
             # Got linefeed, dump buffer
             bufout = charbuffer + inputtext
             charbuffer = ""
+            effects.discard('pager')
             return colorize(bufout).encode('utf-8')
     finally:
         bufferlock.release()
