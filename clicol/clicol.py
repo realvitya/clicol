@@ -271,21 +271,20 @@ def ifilter(inputtext):
         timeout = time.time()
         prevents = 0
         if debug: print("\r\n\033[38;5;208mINPUT-", repr(inputtext), "\033[0m\r\n")  # DEBUG
-        # Don't buffer for interactive run (user is typing)
-        interactive = not (inputtext in b'\t\r' or
-                           (inputtext == b' ' and 'pager' in effects)
-                           )
+
+        interactive = False
+        # Set unbuffering when hitting keys other than CTRL-ZLC, ENTER, TAB
+        if inputtext not in b'\x1a\x0c\x03\r\t' and 'pager' not in effects:
+            interactive = True
+
         # Fix prompt line when user hit enter or tab
         if inputtext in b'\r\t':
             effects.discard('prompt')
-        # Fix pager handling when user hit space or enter
+
+        # Reset pager when user hit other than SPACE or ENTER while paging
         if 'pager' in effects and inputtext not in b' \r':
             effects.discard('pager')
-            interactive = False
-        # Fix prompt when user hit special character like CTRL-Z
-        if inputtext[0] < 32:
-            interactive = False
-            effects.clear()
+
         # Handle pasting (turn off coloring)
         if len(inputtext) > 2:
             pastepause = True
@@ -344,6 +343,7 @@ def ofilter(inputtext):
                 if debug: print("\r\n\033[38;5;208mINTERACT/effects:", repr(effects), "\033[0m\r\n")  # DEBUG
                 bufout = charbuffer
                 charbuffer = ""
+                effects.discard('prompt')
                 return colorize(bufout).encode('utf-8')
             if debug: print("\r\n\033[38;5;208mEFFECTS-interactive:", repr(interactive), "/", repr(effects),
                             "\033[0m\r\n")  # DEBUG
@@ -352,6 +352,7 @@ def ofilter(inputtext):
                 if "\r" in inputtext or "\n" in inputtext:  # multiline input, not interactive
                     bufout = "".join(charbuffer.splitlines(True)[:-1])  # all buffer except last line
                     charbuffer = lastline  # delete printed text. last line remains in buffer
+                    effects.discard('prompt')
                     return colorize(bufout).encode('utf-8')
                 elif interactive or 'prompt' in effects or 'ping' in effects:
                     charbuffer = ""
@@ -366,14 +367,17 @@ def ofilter(inputtext):
                 else:
                     charbuffer = lastline  # delete printed text. last line remains in buffer
                     effects.discard('pager')
+                    effects.discard('prompt')
                     return colorize(bufout).encode('utf-8')
         else:
             if debug: print("\r\n\033[38;5;208mNI-", repr(inputtext), "\033[0m\r\n")  # DEBUG
             # Got linefeed, dump buffer
             bufout = charbuffer + inputtext
             charbuffer = ""
+            bufout = colorize(bufout).encode('utf-8')
             effects.discard('pager')
-            return colorize(bufout).encode('utf-8')
+            effects.discard('prompt')
+            return bufout
     finally:
         bufferlock.release()
         timeout = time.time()
