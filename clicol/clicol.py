@@ -284,6 +284,7 @@ def ifilter(inputtext):
         # Reset pager when user hit other than SPACE or ENTER while paging
         if 'pager' in effects and inputtext not in b' \r':
             effects.discard('pager')
+            effects.add('prompt')
 
         # Handle pasting (turn off coloring)
         if len(inputtext) > 2:
@@ -343,8 +344,11 @@ def ofilter(inputtext):
                 if debug: print("\r\n\033[38;5;208mINTERACT/effects:", repr(effects), "\033[0m\r\n")  # DEBUG
                 bufout = charbuffer
                 charbuffer = ""
-                effects.discard('prompt')
-                return colorize(bufout).encode('utf-8')
+                bufout = colorize(bufout).encode('utf-8')
+                if 'prompt' in effects:
+                    effects.discard('prompt')
+                    interactive = True
+                return bufout
             if debug: print("\r\n\033[38;5;208mEFFECTS-interactive:", repr(interactive), "/", repr(effects),
                             "\033[0m\r\n")  # DEBUG
             if len(charbuffer) < 100:  # interactive or end of large chunk
@@ -352,8 +356,11 @@ def ofilter(inputtext):
                 if "\r" in inputtext or "\n" in inputtext:  # multiline input, not interactive
                     bufout = "".join(charbuffer.splitlines(True)[:-1])  # all buffer except last line
                     charbuffer = lastline  # delete printed text. last line remains in buffer
+                    bufout = colorize(bufout).encode('utf-8')
+                    # Ignore prompt in input
                     effects.discard('prompt')
-                    return colorize(bufout).encode('utf-8')
+                    interactive = False
+                    return bufout
                 elif interactive or 'prompt' in effects or 'ping' in effects:
                     charbuffer = ""
                     # colorize only short stuff (up key,ping)
@@ -366,17 +373,19 @@ def ofilter(inputtext):
                     return b""
                 else:
                     charbuffer = lastline  # delete printed text. last line remains in buffer
-                    effects.discard('pager')
+                    bufout = colorize(bufout).encode('utf-8')
+                    # Ignore prompt in input
                     effects.discard('prompt')
-                    return colorize(bufout).encode('utf-8')
+                    return bufout
         else:
             if debug: print("\r\n\033[38;5;208mNI-", repr(inputtext), "\033[0m\r\n")  # DEBUG
             # Got linefeed, dump buffer
             bufout = charbuffer + inputtext
             charbuffer = ""
             bufout = colorize(bufout).encode('utf-8')
-            effects.discard('pager')
+            # Ignore prompt in input
             effects.discard('prompt')
+            interactive = False
             return bufout
     finally:
         bufferlock.release()
