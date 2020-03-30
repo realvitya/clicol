@@ -286,8 +286,8 @@ def ifilter(inputtext):
             effects.discard('pager')
             effects.add('prompt')
 
-        # Handle pasting (turn off coloring)
-        if len(inputtext) > 2:
+        # Handle pasting (turn off coloring) when more than 1 lines are pasted
+        if len(inputtext) > 2 and inputtext.count(b'\r') > 1:
             pastepause = True
         else:
             pastepause = False
