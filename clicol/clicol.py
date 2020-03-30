@@ -45,26 +45,27 @@ from .__init__ import __version__
 
 # Global variables
 PY3 = sys.version_info.major == 3
-conn = None          # connection handler
-charbuffer = u''     # input buffer
-lastline = u''       # input buffer's last line
-is_break = False     # is break key pressed?
-effects = set()      # state effects set
-ct = dict()          # color table (contains colors)
-cmap = list()        # color map (contains coloring rules)
-pause = 0            # if true, then coloring is paused
-pastepause = False   # While pasting, turn off coloring
-debug = 0            # global debug (D: hidden command)
-timeout = 0          # counts timeout
-timeoutact = True    # act on timeout warning
-maxtimeout = 0       # maximum timeout (0 turns off this feature)
-interactive = False  # signal to buffering
-prevents = 0         # counts timeout prevention
-maxprevents = 0      # maximum number of timeout prevention (0 turns this off)
-RUNNING = True       # signal to timeoutcheck
-WORKING = True       # signal to timeoutcheck
+conn = None                # connection handler
+charbuffer = u''           # input buffer
+lastline = u''             # input buffer's last line
+is_break = False           # is break key pressed?
+effects = set()            # state effects set
+ct = dict()                # color table (contains colors)
+cmap = list()              # color map (contains coloring rules)
+pause = 0                  # if true, then coloring is paused
+pastepause_needed = False  # switch for turning off coloring while pasting multiple lines
+pastepause = False         # while pasting multiple lines, turn off coloring
+debug = 0                  # global debug (D: hidden command)
+timeout = 0                # counts timeout
+timeoutact = True          # act on timeout warning
+maxtimeout = 0             # maximum timeout (0 turns off this feature)
+interactive = False        # signal to buffering
+prevents = 0               # counts timeout prevention
+maxprevents = 0            # maximum number of timeout prevention (0 turns this off)
+RUNNING = True             # signal to timeoutcheck
+WORKING = True             # signal to timeoutcheck
 bufferlock = threading.Lock()
-plugins = None       # all active plugins
+plugins = None             # all active plugins
 # Interactive regex matches for
 # - prompt (asd# ) (all)
 # - question ([yes]) (cisco)
@@ -264,7 +265,8 @@ def ifilter(inputtext):
     :param inputtext: UTF-8 encoded text to manipulate
     :return: byte array of manipulated input. Type is expected by pexpect!
     """
-    global is_break, timeout, prevents, interactive, effects, pastepause
+    global is_break, timeout, prevents, interactive, effects
+    global pastepause_needed, pastepause
 
     is_break = inputtext == b'\x1c'
     if not is_break:
@@ -287,7 +289,7 @@ def ifilter(inputtext):
             effects.add('prompt')
 
         # Handle pasting (turn off coloring) when more than 1 lines are pasted
-        if len(inputtext) > 2 and inputtext.count(b'\r') > 1:
+        if pastepause_needed and len(inputtext) > 2 and inputtext.count(b'\r') > 1:
             pastepause = True
         else:
             pastepause = False
@@ -409,6 +411,7 @@ def main(argv=None):
     global conn, ct, cmap, pause, timeoutact, terminal, charbuffer, lastline, debug
     global is_break
     global maxtimeout, maxprevents
+    global pastepause_needed
     global RUNNING
     global plugins
     highlight = ""
@@ -443,6 +446,7 @@ def main(argv=None):
         'maxtimeout': r'0',
         'maxprevents': r'0',
         'maxwait': r'1.0',
+        'pastepause_needed': r'false',
         'update_caption': r'false',
         'default_caption': hostname,
         'F1': r'show ip interface brief | e unassign\r',
@@ -493,6 +497,7 @@ def main(argv=None):
     default_caption = config.get('clicol', 'default_caption')
     maxtimeout = config.getint('clicol', 'maxtimeout')
     maxprevents = config.getint('clicol', 'maxprevents')
+    pastepause_needed = config.getboolean('clicol', 'pastepause_needed')
     debug = config.getint('clicol', 'debug')
 
     colors = ConfigParser.SafeConfigParser()
