@@ -36,6 +36,7 @@ import timeit
 import threading
 import time
 import signal
+from socket import gethostname
 from pkg_resources import resource_filename
 from .command import getcommand
 from .command import getregex
@@ -418,6 +419,7 @@ def main(argv=None):
     regex = ""
     cfgdir = "~/.clicol"
     tc = None
+    caption = ""
     try:
         if not argv:
             argv = sys.argv
@@ -429,14 +431,20 @@ def main(argv=None):
             cfgdir = argv[2]
             del argv[1]  # remove --cfg from args
             del argv[1]  # remove cfgdir string from args
-    except:  # index error, wrong call
+        if len(argv) > 1 and argv[1] == '--caption':  # called with specified config directory
+            caption = argv[2]
+            del argv[1]  # remove --cfg from args
+            del argv[1]  # remove cfgdir string from args
+    except IndexError:  # index error, wrong call
         cmd = 'error'
-    try:
-        hostname = os.environ['HOSTNAME']
-    except KeyError:
-        hostname = os.environ.get('COMPUTERNAME', '-----------')
+    hostname = gethostname()
 
     default_config = {
+        # to be referenced varaibles - do not configure anything
+        'hostname': hostname,
+        'host': r'',
+        # configuration variables
+        'caption': r'%(host)s' if len(caption) == 0 else caption,
         'colortable': r'dbg_net',
         'terminal': r'securecrt',
         'plugincfg': cfgdir + r'/plugins.cfg',
@@ -448,7 +456,7 @@ def main(argv=None):
         'maxwait': r'1.0',
         'pastepause': r'false',
         'update_caption': r'false',
-        'default_caption': hostname,
+        'default_caption': r'%(hostname)s',
         'F1': r'show ip interface brief | e unassign\r',
         'F2': r'show ip bgp sum\r',
         'F3': r'show ip bgp vpnv4 all sum\r',
@@ -493,7 +501,7 @@ def main(argv=None):
 
     cct = config.get('clicol', 'colortable')
     timeoutact = config.getboolean('clicol', 'timeoutact')
-    update_caption = config.getboolean('clicol', 'update_caption')
+    update_caption = config.getboolean('clicol', 'update_caption') or len(caption) > 0
     default_caption = config.get('clicol', 'default_caption')
     maxtimeout = config.getint('clicol', 'maxtimeout')
     maxprevents = config.getint('clicol', 'maxprevents')
@@ -630,8 +638,10 @@ def main(argv=None):
                         skip = True
                         continue
                     m = re.match(r"(?:\w+@)?([0-9a-zA-Z_.-]+)", arg)
+                    config.set('clicol', 'host', m.group(1))
+                    caption = config.get('clicol', 'caption')
                     # Print caption update code:
-                    print("\033]2;%s\007" % m.group(1), end='')
+                    print("\033]2;%s\007" % caption, end='')
                     break
             conn = pexpect.spawn(cmd, args, timeout=1)
             # Set signal handler for window resizing
