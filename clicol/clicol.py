@@ -446,7 +446,7 @@ def main(argv=None):
         'maxtimeout': r'0',
         'maxprevents': r'0',
         'maxwait': r'1.0',
-        'pastepause_needed': r'false',
+        'pastepause': r'false',
         'update_caption': r'false',
         'default_caption': hostname,
         'F1': r'show ip interface brief | e unassign\r',
@@ -497,7 +497,7 @@ def main(argv=None):
     default_caption = config.get('clicol', 'default_caption')
     maxtimeout = config.getint('clicol', 'maxtimeout')
     maxprevents = config.getint('clicol', 'maxprevents')
-    pastepause_needed = config.getboolean('clicol', 'pastepause_needed')
+    pastepause_needed = config.getboolean('clicol', 'pastepause')
     debug = config.getint('clicol', 'debug')
 
     colors = ConfigParser.SafeConfigParser()
