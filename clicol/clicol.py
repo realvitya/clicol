@@ -730,10 +730,10 @@ def main(argv=None):
     else:
         print("CLICOL - CLI colorizer and more... Version %s" % __version__)
         print("""
-Usage: clicol-{telnet|ssh} [--c {colormap}] [args]
-Usage: clicol-file         [--c {colormap}] {inputfile}
-Usage: clicol-cmd          [--c {colormap}] {command} [args]
-Usage: clicol-test         {colormap regex name (e.g.: '.*' or 'cisco_if|juniper_if')}
+Usage: clicol-{telnet|ssh} [--c {colormap}] [--cfgdir {dir}] [--caption {caption}] [args]
+Usage: clicol-file         [--c {colormap}] [--cfgdir {dir}] {inputfile}
+Usage: clicol-cmd          [--c {colormap}] [--cfgdir {dir}] {command} [args]
+Usage: clicol-test         [--c {colormap}] [--cfgdir {dir}] {colormap regex name (e.g.: '.*' or 'cisco_if|juniper_if')}
 
 Usage while in session
 Press break key CTRL-\\""")
