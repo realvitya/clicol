@@ -36,6 +36,7 @@ import timeit
 import threading
 import time
 import signal
+from socket import gethostname
 from pkg_resources import resource_filename
 from .command import getcommand
 from .command import getregex
@@ -45,24 +46,27 @@ from .__init__ import __version__
 
 # Global variables
 PY3 = sys.version_info.major == 3
-conn = None        # connection handler
-charbuffer = u''   # input buffer
-lastline = u''     # input buffer's last line
-is_break = False   # is break key pressed?
-effects = set()    # state effects set
-ct = dict()        # color table (contains colors)
-cmap = list()      # color map (contains coloring rules)
-pause = 0          # if true, then coloring is paused
-debug = 0          # global debug (D: hidden command)
-timeout = 0        # counts timeout
-timeoutact = True  # act on timeout warning
-maxtimeout = 0     # maximum timeout (0 turns off this feature)
-prevents = 0       # counts timeout prevention
-maxprevents = 0    # maximum number of timeout prevention (0 turns this off)
-RUNNING = True     # signal to timeoutcheck
-WORKING = True     # signal to timeoutcheck
+conn = None                # connection handler
+charbuffer = u''           # input buffer
+lastline = u''             # input buffer's last line
+is_break = False           # is break key pressed?
+effects = set()            # state effects set
+ct = dict()                # color table (contains colors)
+cmap = list()              # color map (contains coloring rules)
+pause = 0                  # if true, then coloring is paused
+pastepause_needed = False  # switch for turning off coloring while pasting multiple lines
+pastepause = False         # while pasting multiple lines, turn off coloring
+debug = 0                  # global debug (D: hidden command)
+timeout = 0                # counts timeout
+timeoutact = True          # act on timeout warning
+maxtimeout = 0             # maximum timeout (0 turns off this feature)
+interactive = False        # signal to buffering
+prevents = 0               # counts timeout prevention
+maxprevents = 0            # maximum number of timeout prevention (0 turns this off)
+RUNNING = True             # signal to timeoutcheck
+WORKING = True             # signal to timeoutcheck
 bufferlock = threading.Lock()
-plugins = None     # all active plugins
+plugins = None             # all active plugins
 # Interactive regex matches for
 # - prompt (asd# ) (all)
 # - question ([yes]) (cisco)
@@ -72,7 +76,7 @@ plugins = None     # all active plugins
 INTERACT = re.compile(r"(?i)^("  # START of whole line matches
                       r"[^* ]+([\]>#$][: ]?)(.*)"  # prompt
                       # more (\b can be at the end when excessive enters are pressed
-                      r"| ?<?-+ ?\(?more(?: [0-9]{1,2}%)?\)? ?-+>? ?([\b ]+)?"
+                      r"|( ?)<?(-+) ?\(?more(?: [0-9]{1,2}%)?\)? ?\5>?\4([\b ]+)?"
                       r"|\x1b\[m"                                               # color escape sequence
                       r"|username: ?"
                       r"|password: ?"
@@ -113,8 +117,7 @@ def timeoutcheck(maxwait=1.0):
     timeout = time.time()
     while RUNNING:
         time.sleep(0.33)  # time clicks we run checks
-        if WORKING:  # ifilter is working, do not send anything
-            timeout = time.time()
+        if WORKING:  # ofilter is working, do not send anything
             continue
         now = time.time()
         # Check if there was user input in the specified time range
@@ -132,7 +135,6 @@ def timeoutcheck(maxwait=1.0):
                     sys.stdout.flush()
                     charbuffer = ""
                 bufferlock.release()
-                timeout = time.time()
             except threading.ThreadError as e:
                 if debug >= 1: print("\r\n\033[38;5;208mTERR-%s\033[0m\r\n" % e)  # DEBUG
                 pass
@@ -244,8 +246,8 @@ def colorize(text, only_effect=None):
                 if debug >= 2: print("\r\n\033[38;5;208mCM-", name, "\033[0m\r\n")  # debug
                 if len(effect) > 0:  # we have an effect
                     effects.add(effect)
-                if 'prompt' in effects:  # prompt eliminates all effects
-                    effects = set()
+                if 'prompt' in effects:  # prompt eliminates all other effects
+                    effects = {'prompt'}
                 if option > 0:  # non-zero means non-final match
                     break
             elif option == 2:  # need to restore existing coloring as there was no match (by CLEAR)
@@ -264,12 +266,34 @@ def ifilter(inputtext):
     :param inputtext: UTF-8 encoded text to manipulate
     :return: byte array of manipulated input. Type is expected by pexpect!
     """
-    global is_break, timeout, prevents
+    global is_break, timeout, prevents, interactive, effects
+    global pastepause_needed, pastepause
 
     is_break = inputtext == b'\x1c'
     if not is_break:
         timeout = time.time()
         prevents = 0
+        if debug: print("\r\n\033[38;5;208mINPUT-", repr(inputtext), "\033[0m\r\n")  # DEBUG
+
+        interactive = False
+        # Set unbuffering when hitting keys other than CTRL-ZLC, ENTER, TAB
+        if inputtext not in b'\x1a\x0c\x03\r\t' and 'pager' not in effects:
+            interactive = True
+
+        # Fix prompt line when user hit enter or tab
+        if inputtext in b'\r\t':
+            effects.discard('prompt')
+
+        # Reset pager when user hit other than SPACE or ENTER while paging
+        if 'pager' in effects and inputtext not in b' \r':
+            effects.discard('pager')
+            effects.add('prompt')
+
+        # Handle pasting (turn off coloring) when more than 1 lines are pasted
+        if pastepause_needed and len(inputtext) > 2 and inputtext.count(b'\r') > 1:
+            pastepause = True
+        else:
+            pastepause = False
     return inputtext
 
 
@@ -281,14 +305,18 @@ def ofilter(inputtext):
     """
     global charbuffer
     global pause  # coloring must be paused
+    global pastepause
     global lastline
     global debug
     global bufferlock
     global WORKING
     global plugins
+    global interactive
+    global timeout
+    global effects
 
-    # Coloring is paused by escape character
-    if pause:
+    # Coloring is paused by escape character or pasting
+    if pause or pastepause:
         return inputtext
 
     # Normalize input. py2_py3
@@ -316,17 +344,27 @@ def ofilter(inputtext):
                 charbuffer = ""
                 return colorize(bufout, ["prompt"]).encode('utf-8')
             if INTERACT.search(lastline):  # prompt or question at the end
+                if debug: print("\r\n\033[38;5;208mINTERACT/effects:", repr(effects), "\033[0m\r\n")  # DEBUG
                 bufout = charbuffer
                 charbuffer = ""
-                return colorize(bufout).encode('utf-8')
-
+                bufout = colorize(bufout).encode('utf-8')
+                if 'prompt' in effects:
+                    effects.discard('prompt')
+                    interactive = True
+                return bufout
+            if debug: print("\r\n\033[38;5;208mEFFECTS-interactive:", repr(interactive), "/", repr(effects),
+                            "\033[0m\r\n")  # DEBUG
             if len(charbuffer) < 100:  # interactive or end of large chunk
                 bufout = charbuffer
                 if "\r" in inputtext or "\n" in inputtext:  # multiline input, not interactive
                     bufout = "".join(charbuffer.splitlines(True)[:-1])  # all buffer except last line
                     charbuffer = lastline  # delete printed text. last line remains in buffer
-                    return colorize(bufout).encode('utf-8')
-                elif charbuffer == inputtext:  # interactive
+                    bufout = colorize(bufout).encode('utf-8')
+                    # Ignore prompt in input
+                    effects.discard('prompt')
+                    interactive = False
+                    return bufout
+                elif interactive or 'prompt' in effects or 'ping' in effects:
                     charbuffer = ""
                     # colorize only short stuff (up key,ping)
                     return colorize(bufout, ["prompt", "ping"]).encode('utf-8')
@@ -338,15 +376,23 @@ def ofilter(inputtext):
                     return b""
                 else:
                     charbuffer = lastline  # delete printed text. last line remains in buffer
-                    return colorize(bufout).encode('utf-8')
+                    bufout = colorize(bufout).encode('utf-8')
+                    # Ignore prompt in input
+                    effects.discard('prompt')
+                    return bufout
         else:
             if debug: print("\r\n\033[38;5;208mNI-", repr(inputtext), "\033[0m\r\n")  # DEBUG
             # Got linefeed, dump buffer
             bufout = charbuffer + inputtext
             charbuffer = ""
-            return colorize(bufout).encode('utf-8')
+            bufout = colorize(bufout).encode('utf-8')
+            # Ignore prompt in input
+            effects.discard('prompt')
+            interactive = False
+            return bufout
     finally:
         bufferlock.release()
+        timeout = time.time()
         WORKING = False
 
 
@@ -366,12 +412,14 @@ def main(argv=None):
     global conn, ct, cmap, pause, timeoutact, terminal, charbuffer, lastline, debug
     global is_break
     global maxtimeout, maxprevents
+    global pastepause_needed
     global RUNNING
     global plugins
     highlight = ""
     regex = ""
     cfgdir = "~/.clicol"
     tc = None
+    caption = ""
     try:
         if not argv:
             argv = sys.argv
@@ -383,14 +431,20 @@ def main(argv=None):
             cfgdir = argv[2]
             del argv[1]  # remove --cfg from args
             del argv[1]  # remove cfgdir string from args
-    except:  # index error, wrong call
+        if len(argv) > 1 and argv[1] == '--caption':  # called with specified config directory
+            caption = argv[2]
+            del argv[1]  # remove --cfg from args
+            del argv[1]  # remove cfgdir string from args
+    except IndexError:  # index error, wrong call
         cmd = 'error'
-    try:
-        hostname = os.environ['HOSTNAME']
-    except KeyError:
-        hostname = os.environ.get('COMPUTERNAME', '-----------')
+    hostname = gethostname()
 
     default_config = {
+        # to be referenced varaibles - do not configure anything
+        'hostname': hostname,
+        'host': r'',
+        # configuration variables
+        'caption': r'%(host)s' if len(caption) == 0 else caption,
         'colortable': r'dbg_net',
         'terminal': r'securecrt',
         'plugincfg': cfgdir + r'/plugins.cfg',
@@ -400,8 +454,9 @@ def main(argv=None):
         'maxtimeout': r'0',
         'maxprevents': r'0',
         'maxwait': r'1.0',
+        'pastepause': r'false',
         'update_caption': r'false',
-        'default_caption': hostname,
+        'default_caption': r'%(hostname)s',
         'F1': r'show ip interface brief | e unassign\r',
         'F2': r'show ip bgp sum\r',
         'F3': r'show ip bgp vpnv4 all sum\r',
@@ -446,10 +501,11 @@ def main(argv=None):
 
     cct = config.get('clicol', 'colortable')
     timeoutact = config.getboolean('clicol', 'timeoutact')
-    update_caption = config.getboolean('clicol', 'update_caption')
+    update_caption = config.getboolean('clicol', 'update_caption') or len(caption) > 0
     default_caption = config.get('clicol', 'default_caption')
     maxtimeout = config.getint('clicol', 'maxtimeout')
     maxprevents = config.getint('clicol', 'maxprevents')
+    pastepause_needed = config.getboolean('clicol', 'pastepause')
     debug = config.getint('clicol', 'debug')
 
     colors = ConfigParser.SafeConfigParser()
@@ -582,8 +638,10 @@ def main(argv=None):
                         skip = True
                         continue
                     m = re.match(r"(?:\w+@)?([0-9a-zA-Z_.-]+)", arg)
+                    config.set('clicol', 'host', m.group(1))
+                    caption = config.get('clicol', 'caption')
                     # Print caption update code:
-                    print("\033]2;%s\007" % m.group(1), end='')
+                    print("\033]2;%s\007" % caption, end='')
                     break
             conn = pexpect.spawn(cmd, args, timeout=1)
             # Set signal handler for window resizing
@@ -672,10 +730,10 @@ def main(argv=None):
     else:
         print("CLICOL - CLI colorizer and more... Version %s" % __version__)
         print("""
-Usage: clicol-{telnet|ssh} [--c {colormap}] [args]
-Usage: clicol-file         [--c {colormap}] {inputfile}
-Usage: clicol-cmd          [--c {colormap}] {command} [args]
-Usage: clicol-test         {colormap regex name (e.g.: '.*' or 'cisco_if|juniper_if')}
+Usage: clicol-{telnet|ssh} [--c {colormap}] [--cfgdir {dir}] [--caption {caption}] [args]
+Usage: clicol-file         [--c {colormap}] [--cfgdir {dir}] {inputfile}
+Usage: clicol-cmd          [--c {colormap}] [--cfgdir {dir}] {command} [args]
+Usage: clicol-test         [--c {colormap}] [--cfgdir {dir}] {colormap regex name (e.g.: '.*' or 'cisco_if|juniper_if')}
 
 Usage while in session
 Press break key CTRL-\\""")

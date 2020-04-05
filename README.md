@@ -34,6 +34,17 @@ USAGE
 Run the script `clicol-telnet` or `clicol-ssh` and specify arguments as for the telnet/ssh.<BR>
 Run the script `clicol-cmd` and any command with arguments to pimp up any non-colored cli command.
 
+Available command line option for clicol:<BR>
+`clicol-{telnet|ssh} [--c {colormap}] [--cfgdir {dir}] [--caption {caption}] [args]`<BR>
+`clicol-file         [--c {colormap}] [--cfgdir {dir}] {inputfile}`<BR>
+`clicol-cmd          [--c {colormap}] [--cfgdir {dir}] {command} [args]`<BR>
+`clicol-test         [--c {colormap}] [--cfgdir {dir}] {colormap regex name (e.g.: '.*' or 'cisco_if|juniper_if')}`
+
+Explanation for arguments:<BR>
+`--c {colormap}` : use only specified colormap (`all`, `common`, `cisco`, `juniper`) Defaulted to `all`<BR>
+`--cfgdir {dir}` : use specified config directory. Defaulted to `~/.clicol`<BR>
+`--caption {caption}`: use this caption template (you can use `%(host)s` for connected device and `%(hostname)s` for actual host name) Defaulted to `%(host)s`
+
 clicol can be run on Windows in [cygwin](https://www.cygwin.com). If you want to use [SecureCRT](https://www.vandyke.com/products/securecrt), you must enable sshd in [cygwin](https://www.cygwin.com) and connect to localhost. It is not necessary to be administrator on the desktop for this to work. You must bind to localhost and use port number >1024.
 
 By default clicol will colorize with all colorsets and this behaviour can be tuned in config file. The config file can be saved in user directory and it will take preference over defaults.
