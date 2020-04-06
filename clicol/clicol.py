@@ -431,10 +431,10 @@ def main(argv=None):
             cfgdir = argv[2]
             del argv[1]  # remove --cfg from args
             del argv[1]  # remove cfgdir string from args
-        if len(argv) > 1 and argv[1] == '--caption':  # called with specified config directory
+        if len(argv) > 1 and argv[1] == '--caption':  # use this caption than in config file
             caption = argv[2]
-            del argv[1]  # remove --cfg from args
-            del argv[1]  # remove cfgdir string from args
+            del argv[1]  # remove --caption from args
+            del argv[1]  # remove caption string from args
     except IndexError:  # index error, wrong call
         cmd = 'error'
     hostname = gethostname()
@@ -444,7 +444,7 @@ def main(argv=None):
         'hostname': hostname,
         'host': r'',
         # configuration variables
-        'caption': r'%(host)s' if len(caption) == 0 else caption,
+        'caption': r'%(host)s' if not caption else caption,
         'colortable': r'dbg_net',
         'terminal': r'securecrt',
         'plugincfg': cfgdir + r'/plugins.cfg',
@@ -501,8 +501,11 @@ def main(argv=None):
 
     cct = config.get('clicol', 'colortable')
     timeoutact = config.getboolean('clicol', 'timeoutact')
-    update_caption = config.getboolean('clicol', 'update_caption') or len(caption) > 0
+    update_caption = config.getboolean('clicol', 'update_caption') or caption
     default_caption = config.get('clicol', 'default_caption')
+    if caption:  # specified on cmdline args
+        config.set('clicol', 'caption', caption)
+
     maxtimeout = config.getint('clicol', 'maxtimeout')
     maxprevents = config.getint('clicol', 'maxprevents')
     pastepause_needed = config.getboolean('clicol', 'pastepause')
