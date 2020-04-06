@@ -56,9 +56,9 @@ elif [ "$1" == "-pt" ]; then
     python setup.py sdist
     twine upload -r pypi dist/* $CACERTS
 elif [ "$1" == "-it" ]; then
-        pip install -i https://test.pypi.org/simple clicol
+        pip install -U -i https://test.pypi.org/simple clicol
 elif [ "$1" == "-i" ]; then
-        pip install -i https://pypi.pypi.org/simple clicol
+        pip install -U -i https://pypi.pypi.org/simple clicol
 else
 	help
 fi
