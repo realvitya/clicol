@@ -56,6 +56,8 @@ cmap = list()              # color map (contains coloring rules)
 pause = 0                  # if true, then coloring is paused
 pastepause_needed = False  # switch for turning off coloring while pasting multiple lines
 pastepause = False         # while pasting multiple lines, turn off coloring
+pasteguard = False         # While pasting, catch errors and stop pasting
+pastebuffer = list()       # Buffer containing remaining lines to paste
 debug = 0                  # global debug (D: hidden command)
 timeout = 0                # counts timeout
 timeoutact = True          # act on timeout warning
@@ -66,6 +68,7 @@ maxprevents = 0            # maximum number of timeout prevention (0 turns this 
 RUNNING = True             # signal to timeoutcheck
 WORKING = True             # signal to timeoutcheck
 bufferlock = threading.Lock()
+pastelock = threading.Lock()
 plugins = None             # all active plugins
 # Interactive regex matches for
 # - prompt (asd# ) (all)
@@ -113,6 +116,9 @@ def timeoutcheck(maxwait=1.0):
     """
     global bufferlock, debug, timeout, maxtimeout, charbuffer
     global RUNNING, WORKING
+    global conn
+    global effects
+    global pasteguard, pastebuffer, pastelock
 
     timeout = time.time()
     while RUNNING:
@@ -138,6 +144,35 @@ def timeoutcheck(maxwait=1.0):
             except threading.ThreadError as e:
                 if debug >= 1: print("\r\n\033[38;5;208mTERR-%s\033[0m\r\n" % e)  # DEBUG
                 pass
+        try:
+            pastelock.acquire()
+            if pasteguard and len(pastebuffer) > 0:
+                lineno = 1
+                line = pastebuffer.pop(0)
+                while len(pastebuffer) > 0:
+                    if 'paste_error' in effects:
+                        print("\r", colorize("Paste error at line %s: %s" %
+                                             (lineno, line.decode('utf-8', errors='ignore'))), sep="")
+                        pastebuffer = list()
+                        effects.discard('paste_error')
+                        effects.discard('paste_abort')
+                        conn.send("\r")
+                        break
+                    if 'paste_abort' in effects:
+                        print("\r", colorize("Paste aborted at line %s: %s" %
+                                             (lineno, line.decode('utf-8', errors='ignore'))), sep="")
+                        pastebuffer = list()
+                        effects.discard('paste_abort')
+                        effects.discard('paste_error')
+                        conn.send("\r")
+                        break
+                    line = pastebuffer.pop(0)
+                    lineno += 1
+                    conn.send(line)
+                    if debug >= 1: print("\r\n\033[38;5;208meffects:%s-PASTE-%s\033[0m\r\n" % (effects, line))  # DEBUG
+                    time.sleep(maxwait)
+        finally:
+            pastelock.release()
 
 
 def sigwinch_passthrough(sig, data):
@@ -184,9 +219,10 @@ T: highlight regex (empty turns off)""")
         print("%s: \"%s\"" % (key.upper(), value.strip(r'"')))
 
 
-def colorize(text, only_effect=None):
+def colorize(text, only_effect=None, matchers_only=False):
     """
     This function is manipulating input text
+    :param matchers_only: use for setting effects and do not modify text
     :param text: input string to colorize
     :param only_effect: select specific regex group(with specified effect) to work with
     :return: manipulated text
@@ -202,8 +238,7 @@ def colorize(text, only_effect=None):
         text = plugins.preprocess(text, effects)
     except UnicodeDecodeError:
         pass
-    except:
-        raise
+
     for line in text.splitlines(True):
         cmap_counter = 0
         if debug >= 2: print("\r\n\033[38;5;208mC-", repr(line), "\033[0m\r\n")  # DEBUG
@@ -235,6 +270,8 @@ def colorize(text, only_effect=None):
                     effects.remove('timeoutwarn')
                     preventtimeout()
                 continue
+            elif matchers_only:
+                continue
 
             origline = line
             if option == 2:  # need to cleanup existing coloring (CLEAR)
@@ -247,7 +284,8 @@ def colorize(text, only_effect=None):
                 if len(effect) > 0:  # we have an effect
                     effects.add(effect)
                 if 'prompt' in effects:  # prompt eliminates all other effects
-                    effects = {'prompt'}
+                    # remove effects other than prompt and pasting
+                    effects.intersection_update({'prompt', 'paste_error', 'paste_abort'})
                 if option > 0:  # non-zero means non-final match
                     break
             elif option == 2:  # need to restore existing coloring as there was no match (by CLEAR)
@@ -267,7 +305,8 @@ def ifilter(inputtext):
     :return: byte array of manipulated input. Type is expected by pexpect!
     """
     global is_break, timeout, prevents, interactive, effects
-    global pastepause_needed, pastepause
+    global pastepause_needed, pastepause, pasteguard
+    global pastebuffer, pastelock
 
     is_break = inputtext == b'\x1c'
     if not is_break:
@@ -294,6 +333,23 @@ def ifilter(inputtext):
             pastepause = True
         else:
             pastepause = False
+        if pasteguard:
+            if pastelock.locked() and inputtext == b'\x03':
+                effects.add('paste_abort')
+                inputtext = b''
+            elif pastelock.locked() or len(pastebuffer) > 0:
+                # do not let user input while pasting
+                print("\rPasting in progress... Input ignored! CTRL-C to abort pasting!\r")
+                inputtext = b''
+            elif inputtext.count(b'\r') > 1:
+                pastelock.acquire()
+                effects.discard('paste_error')
+                effects.discard('paste_abort')
+                pastebuffer = inputtext.splitlines(True)
+                # send only first line
+                # all other lines will be sent by timeoutchecker
+                inputtext = pastebuffer[0]
+                pastelock.release()
     return inputtext
 
 
@@ -316,7 +372,7 @@ def ofilter(inputtext):
     global effects
 
     # Coloring is paused by escape character or pasting
-    if pause or pastepause:
+    if pause:
         return inputtext
 
     # Normalize input. py2_py3
@@ -324,6 +380,10 @@ def ofilter(inputtext):
         inputtext = inputtext.decode('utf-8', errors='ignore')
     except AttributeError:
         pass
+
+    if pastepause:
+        return colorize(inputtext, matchers_only=True).encode('utf-8')
+
     bufferlock.acquire()  # we got input, have to access buffer exclusively
     WORKING = True
     try:
@@ -413,6 +473,7 @@ def main(argv=None):
     global is_break
     global maxtimeout, maxprevents
     global pastepause_needed
+    global pasteguard
     global RUNNING
     global plugins
     highlight = ""
@@ -455,6 +516,7 @@ def main(argv=None):
         'maxprevents': r'0',
         'maxwait': r'1.0',
         'pastepause': r'false',
+        'pasteguard': r'false',
         'update_caption': r'false',
         'default_caption': r'%(hostname)s',
         'F1': r'show ip interface brief | e unassign\r',
@@ -509,6 +571,7 @@ def main(argv=None):
     maxtimeout = config.getint('clicol', 'maxtimeout')
     maxprevents = config.getint('clicol', 'maxprevents')
     pastepause_needed = config.getboolean('clicol', 'pastepause')
+    pasteguard = config.getboolean('clicol', 'pasteguard')
     debug = config.getint('clicol', 'debug')
 
     colors = ConfigParser.SafeConfigParser()
