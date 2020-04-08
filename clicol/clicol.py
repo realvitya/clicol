@@ -469,14 +469,15 @@ def merge_dicts(x, y):
 
 
 def main(argv=None):
-    global conn, ct, cmap, pause, timeoutact, terminal, charbuffer, lastline, debug
+    global conn, ct, cmap, pause, timeoutact, charbuffer, lastline, debug
     global is_break
     global maxtimeout, maxprevents
     global pastepause_needed
     global pasteguard
     global RUNNING
     global plugins
-    highlight = ""
+    global highlight
+
     regex = ""
     cfgdir = "~/.clicol"
     tc = None
