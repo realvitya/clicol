@@ -106,7 +106,7 @@ def sigint_handler(sig, data):
 signal.signal(signal.SIGINT, sigint_handler)
 
 
-def timeoutcheck(maxwait=1.0):
+def timeoutcheck(maxwait=0.3):
     """
     This thread is responsible for outputting the buffer if the predefined timeout is overlapped.
     pexpect.interact does lock the main thread, this thread will dump the buffer if we experience unexpected input
@@ -367,7 +367,9 @@ def ofilter(inputtext):
     """
     global charbuffer
     global pause  # coloring must be paused
+    global pastelock
     global pastepause
+    global pastebuffer
     global lastline
     global debug
     global bufferlock
@@ -392,6 +394,7 @@ def ofilter(inputtext):
 
     bufferlock.acquire()  # we got input, have to access buffer exclusively
     WORKING = True
+    pastingcolors = ['prompt', 'paste_error'] if pastelock.locked() or pastebuffer else None
     try:
         # If not ending with linefeed we are interacting or buffering
         if not (inputtext[-1] == "\r" or inputtext[-1] == "\n"):
@@ -413,7 +416,7 @@ def ofilter(inputtext):
                 if debug: print("\r\n\033[38;5;208mINTERACT/effects:", repr(effects), "\033[0m\r\n")  # DEBUG
                 bufout = charbuffer
                 charbuffer = ""
-                bufout = colorize(bufout).encode('utf-8')
+                bufout = colorize(bufout, pastingcolors).encode('utf-8')
                 if 'prompt' in effects:
                     effects.discard('prompt')
                     interactive = True
@@ -425,7 +428,7 @@ def ofilter(inputtext):
                 if "\r" in inputtext or "\n" in inputtext:  # multiline input, not interactive
                     bufout = "".join(charbuffer.splitlines(True)[:-1])  # all buffer except last line
                     charbuffer = lastline  # delete printed text. last line remains in buffer
-                    bufout = colorize(bufout).encode('utf-8')
+                    bufout = colorize(bufout, pastingcolors).encode('utf-8')
                     # Ignore prompt in input
                     effects.discard('prompt')
                     interactive = False
@@ -442,7 +445,7 @@ def ofilter(inputtext):
                     return b""
                 else:
                     charbuffer = lastline  # delete printed text. last line remains in buffer
-                    bufout = colorize(bufout).encode('utf-8')
+                    bufout = colorize(bufout, pastingcolors).encode('utf-8')
                     # Ignore prompt in input
                     effects.discard('prompt')
                     return bufout
@@ -451,7 +454,7 @@ def ofilter(inputtext):
             # Got linefeed, dump buffer
             bufout = charbuffer + inputtext
             charbuffer = ""
-            bufout = colorize(bufout).encode('utf-8')
+            bufout = colorize(bufout, pastingcolors).encode('utf-8')
             # Ignore prompt in input
             effects.discard('prompt')
             interactive = False
@@ -770,6 +773,8 @@ def main(argv=None):
                             cmap[0] = cmap_highlight
                         else:
                             cmap.insert(0, cmap_highlight)
+                    elif command == "g":
+                        pasteguard = not pasteguard
                     elif command == "h":
                         printhelp(shortcuts)
                     elif command in plugins.keybinds.keys():
