@@ -53,6 +53,7 @@ Default break key is CTRL-\
 
 After hitting the break key you have some options:<BR>
 p - pausing coloring<BR>
+g - toggle pasteguard<BR>
 q - quit from session<BR>
 h - print help<BR>
 T - highlight regex (set regex in runtime to highligh something important)
