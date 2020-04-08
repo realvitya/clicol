@@ -67,6 +67,21 @@ Consider using aliases. A basic template can be found in *doc* folder.
 
 Your terminal software should support ANSI colors. [Putty](https://www.chiark.greenend.org.uk/~sgtatham/putty/)/[SecureCRT](https://www.vandyke.com/products/securecrt) are tested. I am developing with default colorsets. If you are using other software, colors can differ somewhat.
 
+FEATURES
+--------
+A bit more detail on the builtin features. All features are available in the session when pressing CTRL-\ break keysequence.
+
+1. Pause coloring<br>
+This feature turns off all modifications and features on the output. The only available feature which continues working is the break key CTRL-\ .
+You can toggle it by hitting the command.
+2. Pasteguard<br>
+This feature tries to prevent you from pasting configuration with errors. It will stop pasting when device return errors.
+You can also stop pasting by hitting CTRL-C.<br>
+*Note: error detection is through matchers which provides paste_error effect. You can add your own!*
+3. Highlight<br>
+This feature allows you to search for a given text snippet by specifying a regex. The specified text will be highlighted
+in the output. Useful if you are searching for something in a large output. It will catch your eyes!
+
 TESTING
 -------
 

@@ -70,6 +70,7 @@ WORKING = True             # signal to timeoutcheck
 bufferlock = threading.Lock()
 pastelock = threading.Lock()
 plugins = None             # all active plugins
+highlight = re.compile("") # highlight pattern
 # Interactive regex matches for
 # - prompt (asd# ) (all)
 # - question ([yes]) (cisco)
@@ -205,13 +206,18 @@ def printhelp(shortcuts):
     :param shortcuts: shortcut key list
     """
     global plugins
+    global pasteguard
+    global pause
+    global highlight
 
     print(
         """
 commands in BREAK mode:
 q: quit program
-p: pause coloring
-T: highlight regex (empty turns off)""")
+p: [%s] toggle pause coloring
+g: [%s] toggle pasteguard
+T: [%s] highlight regex (empty turns off)""" % ("On" if pause else "Off", "On" if pasteguard else "Off",
+                                                highlight.pattern))
     for key in plugins.keybinds.keys():
         print("%s:%s" % (key, plugins.keybinds[key].plugin_help(key)))
     print("Shortcuts")
@@ -738,8 +744,8 @@ def main(argv=None):
                 conn.interact(escape_character='\x1c' if PY3 else b'\x1c', output_filter=ofilter, input_filter=ifilter)
                 if is_break:
                     is_break = False
-                    print("\r" + " " * 100 + "\rCLICOL: q:quit,p:pause,T:highlight,F1-12,SF1-8:shortcuts,h-help",
-                          end='')
+                    print("\r" + " " * 100 +
+                          "\rCLICOL: q:quit,p:pause,g:pasteguard,T:highlight,F1-12,SF1-8:shortcuts,h-help", end='')
                     command = getcommand()
                     if command == "D":
                         debug += 1
