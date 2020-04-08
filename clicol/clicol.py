@@ -36,6 +36,7 @@ import timeit
 import threading
 import time
 import signal
+from heapq import heappush, heappop
 from socket import gethostname
 from pkg_resources import resource_filename
 from .command import getcommand
@@ -67,6 +68,7 @@ prevents = 0               # counts timeout prevention
 maxprevents = 0            # maximum number of timeout prevention (0 turns this off)
 RUNNING = True             # signal to timeoutcheck
 WORKING = True             # signal to timeoutcheck
+PASTING = False            # signal that pasting is in progress
 bufferlock = threading.Lock()
 pastelock = threading.Lock()
 plugins = None             # all active plugins
@@ -116,7 +118,7 @@ def timeoutcheck(maxwait=0.3):
     :param maxwait: float timeout value in seconds what we wait for end of output from device.
     """
     global bufferlock, debug, timeout, maxtimeout, charbuffer
-    global RUNNING, WORKING
+    global RUNNING, WORKING, PASTING
     global conn
     global effects
     global pasteguard, pastebuffer, pastelock
@@ -147,34 +149,35 @@ def timeoutcheck(maxwait=0.3):
                 pass
 
         if pasteguard and len(pastebuffer) > 0:
-            lineno = 1
-            pastelock.acquire()
-            line = pastebuffer.pop(0)
-            pastelock.release()
+            PASTING = True
             while len(pastebuffer) > 0:
-                if 'paste_error' in effects:
-                    print("\r", colorize("Paste error at line %s: %s" %
-                                         (lineno, line.decode('utf-8', errors='ignore'))), sep="")
-                    pastebuffer = list()
-                    effects.discard('paste_error')
-                    effects.discard('paste_abort')
-                    conn.send("\r")
-                    break
-                if 'paste_abort' in effects:
-                    print("\r", colorize("Paste aborted at line %s: %s" %
-                                         (lineno, line.decode('utf-8', errors='ignore'))), sep="")
-                    pastebuffer = list()
-                    effects.discard('paste_abort')
-                    effects.discard('paste_error')
-                    conn.send("\r")
-                    break
                 pastelock.acquire()
-                line = pastebuffer.pop(0)
+                lines = heappop(pastebuffer)[1]
                 pastelock.release()
-                lineno += 1
-                conn.send(line)
-                if debug >= 1: print("\r\n\033[38;5;208meffects:%s-PASTE-%s\033[0m\r\n" % (effects, line))  # DEBUG
-                time.sleep(maxwait)
+                lineno = 0
+                while len(lines) > 0:
+                    if 'paste_error' in effects:
+                        print("\r", colorize("Paste error at line %s: %s" %
+                                             (lineno, line.decode('utf-8', errors='ignore'))), sep="")
+                        pastebuffer = list()
+                        effects.discard('paste_error')
+                        effects.discard('paste_abort')
+                        conn.send("\r")
+                        break
+                    if 'paste_abort' in effects:
+                        print("\r", colorize("Paste aborted at line %s: %s" %
+                                             (lineno, line.decode('utf-8', errors='ignore'))), sep="")
+                        pastebuffer = list()
+                        effects.discard('paste_abort')
+                        effects.discard('paste_error')
+                        conn.send("\r")
+                        break
+                    line = lines.pop(0)
+                    lineno += 1
+                    conn.send(line)
+                    if debug >= 1: print("\r\n\033[38;5;208meffects:%s-PASTE-%s\033[0m\r\n" % (effects, line))  # DEBUG
+                    time.sleep(maxwait)
+            PASTING = False
 
 
 def sigwinch_passthrough(sig, data):
@@ -314,6 +317,7 @@ def ifilter(inputtext):
     global is_break, timeout, prevents, interactive, effects
     global pastepause_needed, pastepause, pasteguard
     global pastebuffer, pastelock
+    global PASTING
 
     is_break = inputtext == b'\x1c'
     if not is_break:
@@ -341,24 +345,24 @@ def ifilter(inputtext):
         else:
             pastepause = False
         if pasteguard:
-            if (pastelock.locked() or len(pastebuffer) > 0) and inputtext == b'\x03':
+            if PASTING and inputtext == b'\x03':
                 effects.add('paste_abort')
                 inputtext = b''
-            elif (pastelock.locked() or len(pastebuffer) > 0) and \
-                    not (effects.intersection({'paste_error', 'paste_abort'})):
+            elif PASTING and not (effects.intersection({'paste_error', 'paste_abort'})):
                 # If we got bulk data or user did input, add it to the buffer
                 pastelock.acquire()
-                pastebuffer += inputtext.splitlines(True)
+                heappush(pastebuffer, (time.time(), inputtext.splitlines(True)))
                 inputtext = b''
                 pastelock.release()
-            elif inputtext.count(b'\r') > 1:
+            elif len(inputtext) > inputtext.count(b'\r') > 1:
+                # start pasting. Ignore ENTERs only. That's when user lye on the button.
                 pastelock.acquire()
+                PASTING = True
                 effects.discard('paste_error')
                 effects.discard('paste_abort')
-                pastebuffer = inputtext.splitlines(True)
-                # send only first line
-                # all other lines will be sent by timeoutchecker
-                inputtext = pastebuffer[0]
+                heappush(pastebuffer, (time.time(), inputtext.splitlines(True)))
+                # all lines will be sent by timeoutchecker
+                inputtext = b''
                 pastelock.release()
     return inputtext
 
@@ -377,7 +381,7 @@ def ofilter(inputtext):
     global lastline
     global debug
     global bufferlock
-    global WORKING
+    global WORKING, PASTING
     global plugins
     global interactive
     global timeout
@@ -398,7 +402,7 @@ def ofilter(inputtext):
 
     bufferlock.acquire()  # we got input, have to access buffer exclusively
     WORKING = True
-    pastingcolors = ['prompt', 'paste_error'] if pastelock.locked() or pastebuffer else None
+    pastingcolors = ['prompt', 'paste_error'] if PASTING else None
     try:
         # If not ending with linefeed we are interacting or buffering
         if not (inputtext[-1] == "\r" or inputtext[-1] == "\n"):
