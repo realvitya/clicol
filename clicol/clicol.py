@@ -150,27 +150,27 @@ def timeoutcheck(maxwait=0.3):
 
         if pasteguard and len(pastebuffer) > 0:
             PASTING = True
+            lineno = 0
             while len(pastebuffer) > 0:
                 pastelock.acquire()
                 lines = heappop(pastebuffer)[1]
                 pastelock.release()
-                lineno = 0
                 while len(lines) > 0:
                     if 'paste_error' in effects:
-                        print("\r", colorize("Paste error at line %s: %s" %
-                                             (lineno, line.decode('utf-8', errors='ignore'))), sep="")
+                        conn.send("\r")
+                        print("\r", " "*100, "\r", colorize("Paste error at line %s: %s" %
+                                                            (lineno, line.decode('utf-8', errors='ignore'))), sep="")
                         pastebuffer = list()
                         effects.discard('paste_error')
                         effects.discard('paste_abort')
-                        conn.send("\r")
                         break
                     if 'paste_abort' in effects:
-                        print("\r", colorize("Paste aborted at line %s: %s" %
-                                             (lineno, line.decode('utf-8', errors='ignore'))), sep="")
+                        conn.send("\r")
+                        print("\r", " "*100, "\r", colorize("Paste aborted at line %s: %s" %
+                                                            (lineno, line.decode('utf-8', errors='ignore'))), sep="")
                         pastebuffer = list()
                         effects.discard('paste_abort')
                         effects.discard('paste_error')
-                        conn.send("\r")
                         break
                     line = lines.pop(0)
                     lineno += 1
