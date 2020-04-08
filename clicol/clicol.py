@@ -151,6 +151,7 @@ def timeoutcheck(maxwait=0.3):
         if pasteguard and len(pastebuffer) > 0:
             PASTING = True
             lineno = 0
+            line = ""
             while len(pastebuffer) > 0:
                 pastelock.acquire()
                 lines = heappop(pastebuffer)[1]
