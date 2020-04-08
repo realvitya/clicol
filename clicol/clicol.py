@@ -145,35 +145,36 @@ def timeoutcheck(maxwait=0.3):
             except threading.ThreadError as e:
                 if debug >= 1: print("\r\n\033[38;5;208mTERR-%s\033[0m\r\n" % e)  # DEBUG
                 pass
-        try:
+
+        if pasteguard and len(pastebuffer) > 0:
+            lineno = 1
             pastelock.acquire()
-            if pasteguard and len(pastebuffer) > 0:
-                lineno = 1
-                line = pastebuffer.pop(0)
-                while len(pastebuffer) > 0:
-                    if 'paste_error' in effects:
-                        print("\r", colorize("Paste error at line %s: %s" %
-                                             (lineno, line.decode('utf-8', errors='ignore'))), sep="")
-                        pastebuffer = list()
-                        effects.discard('paste_error')
-                        effects.discard('paste_abort')
-                        conn.send("\r")
-                        break
-                    if 'paste_abort' in effects:
-                        print("\r", colorize("Paste aborted at line %s: %s" %
-                                             (lineno, line.decode('utf-8', errors='ignore'))), sep="")
-                        pastebuffer = list()
-                        effects.discard('paste_abort')
-                        effects.discard('paste_error')
-                        conn.send("\r")
-                        break
-                    line = pastebuffer.pop(0)
-                    lineno += 1
-                    conn.send(line)
-                    if debug >= 1: print("\r\n\033[38;5;208meffects:%s-PASTE-%s\033[0m\r\n" % (effects, line))  # DEBUG
-                    time.sleep(maxwait)
-        finally:
+            line = pastebuffer.pop(0)
             pastelock.release()
+            while len(pastebuffer) > 0:
+                if 'paste_error' in effects:
+                    print("\r", colorize("Paste error at line %s: %s" %
+                                         (lineno, line.decode('utf-8', errors='ignore'))), sep="")
+                    pastebuffer = list()
+                    effects.discard('paste_error')
+                    effects.discard('paste_abort')
+                    conn.send("\r")
+                    break
+                if 'paste_abort' in effects:
+                    print("\r", colorize("Paste aborted at line %s: %s" %
+                                         (lineno, line.decode('utf-8', errors='ignore'))), sep="")
+                    pastebuffer = list()
+                    effects.discard('paste_abort')
+                    effects.discard('paste_error')
+                    conn.send("\r")
+                    break
+                pastelock.acquire()
+                line = pastebuffer.pop(0)
+                pastelock.release()
+                lineno += 1
+                conn.send(line)
+                if debug >= 1: print("\r\n\033[38;5;208meffects:%s-PASTE-%s\033[0m\r\n" % (effects, line))  # DEBUG
+                time.sleep(maxwait)
 
 
 def sigwinch_passthrough(sig, data):
@@ -340,13 +341,16 @@ def ifilter(inputtext):
         else:
             pastepause = False
         if pasteguard:
-            if pastelock.locked() and inputtext == b'\x03':
+            if (pastelock.locked() or len(pastebuffer) > 0) and inputtext == b'\x03':
                 effects.add('paste_abort')
                 inputtext = b''
-            elif pastelock.locked() or len(pastebuffer) > 0:
-                # do not let user input while pasting
-                print("\rPasting in progress... Input ignored! CTRL-C to abort pasting!\r")
+            elif (pastelock.locked() or len(pastebuffer) > 0) and \
+                    not (effects.intersection({'paste_error', 'paste_abort'})):
+                # If we got bulk data or user did input, add it to the buffer
+                pastelock.acquire()
+                pastebuffer += inputtext.splitlines(True)
                 inputtext = b''
+                pastelock.release()
             elif inputtext.count(b'\r') > 1:
                 pastelock.acquire()
                 effects.discard('paste_error')
