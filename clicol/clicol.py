@@ -497,6 +497,7 @@ def main(argv=None):
     cfgdir = "~/.clicol"
     tc = None
     caption = ""
+    cmd = None
     try:
         if not argv:
             argv = sys.argv
@@ -513,7 +514,8 @@ def main(argv=None):
             del argv[1]  # remove --caption from args
             del argv[1]  # remove caption string from args
     except IndexError:  # index error, wrong call
-        cmd = 'error'
+        print("Wrong arguments!\n")
+        cmd = "error"
     hostname = gethostname()
 
     default_config = {
@@ -654,7 +656,8 @@ def main(argv=None):
 
     # Check how we were called
     # valid options: clicol-telnet, clicol-ssh, clicol-test
-    cmd = str(os.path.basename(argv[0])).replace('clicol-', '')
+    if cmd != "error":
+        cmd = str(os.path.basename(argv[0])).replace('clicol-', '')
 
     if cmd == 'test' and len(argv) > 1:
         # Print starttime:
