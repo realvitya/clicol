@@ -233,6 +233,9 @@ T: [%s] highlight regex (empty turns off)""" % ("On" if pause else "Off", "On" i
 def colorize(text, only_effect=None, matchers_only=False):
     """
     This function is manipulating input text
+    :type only_effect: set
+    :type matchers_only: bool
+    :type text: str
     :param matchers_only: use for setting effects and do not modify text
     :param text: input string to colorize
     :param only_effect: select specific regex group(with specified effect) to work with
