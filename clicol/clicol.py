@@ -691,14 +691,14 @@ def main(argv=None):
                         print(repr(test_d['regex']))
                         print(repr(test_d['replacement']))
 
-                except:
+                except KeyError:
                     pass
 
             print("%s" % plugins.runtests())
     elif cmd == 'file' and len(argv) > 1:
         try:
             f = open(argv[1], 'r')
-        except:
+        except IOError:
             print("Error opening " + argv[1])
             raise
         for line in f:
@@ -789,7 +789,7 @@ def main(argv=None):
                     elif command in plugins.keybinds.keys():
                         plugins.keybinds[command].plugin_command(command)
 
-                    print("\r" + " " * 100 + "\r" + colorize(lastline, ["prompt"]), end='')  # restore last line/prompt
+                    print("\r" + " " * 100 + "\r" + colorize(lastline, {"prompt"}), end='')  # restore last line/prompt
 
                     if command is not None:
                         for (key, value) in shortcuts:
