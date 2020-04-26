@@ -22,11 +22,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 try:
-    #  python2
-    import ConfigParser
-except ImportError:
     #  python3
-    import configparser as ConfigParser
+    import configparser
+except ImportError:
+    #  python2
+    import ConfigParser as configparser
 
 import os
 import sys
@@ -568,9 +568,9 @@ def main(argv=None):
         'SF7': r'',
         'SF8': r'', }
     try:
-        config = ConfigParser.SafeConfigParser(default_config, allow_no_value=True)
+        config = configparser.SafeConfigParser(default_config, allow_no_value=True)
     except TypeError:
-        config = ConfigParser.SafeConfigParser(default_config)  # keep compatibility with pre2.7
+        config = configparser.SafeConfigParser(default_config)  # keep compatibility with pre2.7
     starttime = time.time()
     config.add_section('clicol')
     #  Read config in this order (last are the lastly read, therefore it overrides everything set before)
@@ -578,7 +578,7 @@ def main(argv=None):
                  os.path.expanduser('~/clicol.cfg')])
     terminal = config.get('clicol', 'terminal')
     plugincfgfile = config.get('clicol', 'plugincfg')
-    plugincfg = ConfigParser.SafeConfigParser()
+    plugincfg = configparser.SafeConfigParser()
     plugincfg.read([os.path.expanduser(plugincfgfile)])
 
     shortcuts = [o_v for o_v in config.items('clicol') if
@@ -602,12 +602,12 @@ def main(argv=None):
     pasteguard = config.getboolean('clicol', 'pasteguard')
     debug = config.getint('clicol', 'debug')
 
-    colors = ConfigParser.SafeConfigParser()
+    colors = configparser.SafeConfigParser()
     colors.read([resource_filename(__name__, 'ini/colors_' + terminal + '.ini'),
                  os.path.expanduser(cfgdir + '/clicol_customcolors.ini'),
                  os.path.expanduser('~/clicol_customcolors.ini')])
 
-    ctfile = ConfigParser.SafeConfigParser(dict(colors.items('colors')))
+    ctfile = configparser.SafeConfigParser(dict(colors.items('colors')))
     del colors
     if cct == "dbg_net" or cct == "lbg_net":
         ctfile.read(
@@ -639,7 +639,7 @@ def main(argv=None):
             ct[key] = value.decode('unicode_escape')
     except AttributeError:
         pass
-    cmaps = ConfigParser.SafeConfigParser(merge_dicts(ct, default_cmap))
+    cmaps = configparser.SafeConfigParser(merge_dicts(ct, default_cmap))
     if len(regex) == 0:
         regex = config.get('clicol', 'regex')
     if regex == "all":
@@ -714,7 +714,8 @@ def main(argv=None):
             raise
         for line in f:
             # convert to CRLF to support files created in linux
-            print(ofilter(line).decode() if PY3 else ofilter(line), end='')
+            print(ofilter(line.encode('utf-8', 'ignore')).decode() if PY3
+                  else ofilter(line), end='')
         f.close()
     elif cmd == 'telnet' or cmd == 'ssh' or (cmd == 'cmd' and len(argv) > 1):
         try:
