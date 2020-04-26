@@ -264,9 +264,10 @@ def colorize(text, only_effect=None, matchers_only=False):
             cdebug = i[7]   # debug
             name = i[8]     # regex name
 
-            if only_effect and effect not in only_effect:  # check if only specified regexes should be used
+            # check if only specified regexes should be used
+            if only_effect and (effect not in only_effect) and ('all' not in only_effect):
                 continue  # move on to the next regex
-            if len(dep) > 0 and dep not in effects:  # we don't meet our dependency
+            if len(dep) > 0 and (dep not in effects) and ('all' not in only_effect):  # we don't meet our dependency
                 continue  # move on to the next regex
             if cdebug > 0:
                 print("\r\n\033[38;5;208mD-", name, repr(line), repr(effects), "\033[0m\r\n")  # debug
@@ -365,7 +366,7 @@ def ifilter(inputtext):
     return inputtext
 
 
-def ofilter(inputtext):
+def ofilter(inputtext, testrun=False):
     """
     This function manipulate output text.
     :type inputtext: bytes
@@ -463,6 +464,8 @@ def ofilter(inputtext):
             # Got linefeed, dump buffer
             bufout = charbuffer + inputtext
             charbuffer = ""
+            if testrun:
+                pastingcolors = {'all'}
             bufout = colorize(bufout, pastingcolors).encode('utf-8')
             # Ignore prompt in input
             effects.discard('prompt')
@@ -497,6 +500,7 @@ def main(argv=None):
     global highlight
 
     regex = ""
+    plugintestrun = False
     cfgdir = "~/.clicol"
     tc = None
     caption = ""
@@ -516,6 +520,9 @@ def main(argv=None):
             caption = argv[2]
             del argv[1]  # remove --caption from args
             del argv[1]  # remove caption string from args
+        if len(argv) > 1 and argv[1] == '--plugins':  # run plugin tests
+            plugintestrun = True
+            del argv[1]
     except IndexError:  # index error, wrong call
         print("Wrong arguments!\n")
         cmd = "error"
@@ -662,7 +669,7 @@ def main(argv=None):
     if cmd != "error":
         cmd = str(os.path.basename(argv[0])).replace('clicol-', '')
 
-    if cmd == 'test' and len(argv) > 1:
+    if cmd == 'test' and (len(argv) > 1 or plugintestrun):
         # Print starttime:
         print("Starttime: %s s" % (round(time.time() - starttime, 3)))
         # Sanity check on colormaps
@@ -682,7 +689,7 @@ def main(argv=None):
                     match_in_regex = re.findall(r'(?<!\\)\((?!\?)', test_d['regex'].replace(r'%(BOS)s', ''))
                     match_in_replace = re.findall(r'(?<!\\)\\[0-9](?![0-9])', test_d['replacement'])
 
-                    outtext = ofilter(('%s\n' % test_d['example'].replace('\'', '')).encode('utf-8'))
+                    outtext = ofilter(('%s\n' % test_d['example'].replace('\'', '')).encode('utf-8'), testrun=True)
                     if PY3:
                         outtext = outtext.decode()
                     print("%s:%s" % (test, outtext))
@@ -697,6 +704,7 @@ def main(argv=None):
                 except KeyError:
                     pass
 
+        if plugintestrun:
             print("%s" % plugins.runtests())
     elif cmd == 'file' and len(argv) > 1:
         try:
