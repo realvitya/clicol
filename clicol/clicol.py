@@ -157,21 +157,15 @@ def timeoutcheck(maxwait=0.3):
                 lines = heappop(pastebuffer)[1]
                 pastelock.release()
                 while len(lines) > 0:
-                    if 'paste_error' in effects:
+                    if effects.intersection({'paste_error', 'paste_abort'}):
                         conn.send("\r")
-                        print("\r", " "*100, "\r", colorize("Paste error at line %s: %s" %
+                        print("\r", " "*100, "\r", colorize("Paste " +
+                                                            ("error" if 'paste_error' in effects else "aborted") +
+                                                            " at line %s: %s" %
                                                             (lineno, line.decode('utf-8', errors='ignore'))), sep="")
                         pastebuffer = list()
                         effects.discard('paste_error')
                         effects.discard('paste_abort')
-                        break
-                    if 'paste_abort' in effects:
-                        conn.send("\r")
-                        print("\r", " "*100, "\r", colorize("Paste aborted at line %s: %s" %
-                                                            (lineno, line.decode('utf-8', errors='ignore'))), sep="")
-                        pastebuffer = list()
-                        effects.discard('paste_abort')
-                        effects.discard('paste_error')
                         break
                     line = lines.pop(0)
                     lineno += 1
@@ -270,7 +264,7 @@ def colorize(text, only_effect=None, matchers_only=False):
             cdebug = i[7]   # debug
             name = i[8]     # regex name
 
-            if only_effect != [] and effect not in only_effect:  # check if only specified regexes should be used
+            if only_effect and effect not in only_effect:  # check if only specified regexes should be used
                 continue  # move on to the next regex
             if len(dep) > 0 and dep not in effects:  # we don't meet our dependency
                 continue  # move on to the next regex
