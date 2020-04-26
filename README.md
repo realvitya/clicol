@@ -38,12 +38,13 @@ Available command line option for clicol:<BR>
 `clicol-{telnet|ssh} [--c {colormap}] [--cfgdir {dir}] [--caption {caption}] [args]`<BR>
 `clicol-file         [--c {colormap}] [--cfgdir {dir}] {inputfile}`<BR>
 `clicol-cmd          [--c {colormap}] [--cfgdir {dir}] {command} [args]`<BR>
-`clicol-test         [--c {colormap}] [--cfgdir {dir}] {colormap regex name (e.g.: '.*' or 'cisco_if|juniper_if')}`
+`clicol-test         [--c {colormap}] [--cfgdir {dir}] [--plugins] {colormap regex (.*, common.*, etc)}`
 
 Explanation for arguments:<BR>
 `--c {colormap}` : use only specified colormap (`all`, `common`, `cisco`, `juniper`) Defaulted to `all`<BR>
 `--cfgdir {dir}` : use specified config directory. Defaulted to `~/.clicol`<BR>
-`--caption {caption}`: use this caption template (you can use `%(host)s` for connected device and `%(hostname)s` for actual host name) Defaulted to `%(host)s`
+`--caption {caption}`: use this caption template (you can use `%(host)s` for connected device and `%(hostname)s` for actual host name) Defaulted to `%(host)s`<BR>
+`--plugins`: run also plugin tests
 
 clicol can be run on Windows in [cygwin](https://www.cygwin.com). If you want to use [SecureCRT](https://www.vandyke.com/products/securecrt), you must enable sshd in [cygwin](https://www.cygwin.com) and connect to localhost. It is not necessary to be administrator on the desktop for this to work. You must bind to localhost and use port number >1024.
 
@@ -105,6 +106,10 @@ List only certain matchers:
 Then the desired regex can be specified in the clicol.cfg in your $HOME and only these matchers will be used.
 
 Output can be tested by running `clicol-file {filename}` script. This will colorize the textfile and dump it. Good for testing.
+
+Plugins can be tested by calling with `--plugins` argument:
+
+`clicol-test --plugins`
 
 CUSTOMIZING
 -----------

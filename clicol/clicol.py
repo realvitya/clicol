@@ -14,7 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     If you need to contact the author, you can do so by emailing:
-    vkertesz2 [~at~] gmail [/dot\] com
+    vkertesz2 [~at~] gmail [dot] com
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -47,32 +47,32 @@ from .__init__ import __version__
 
 # Global variables
 PY3 = sys.version_info.major == 3
-conn = None                # connection handler
-charbuffer = u''           # input buffer
-lastline = u''             # input buffer's last line
-is_break = False           # is break key pressed?
-effects = set()            # state effects set
-ct = dict()                # color table (contains colors)
-cmap = list()              # color map (contains coloring rules)
-pause = 0                  # if true, then coloring is paused
+conn = None  # connection handler
+charbuffer = u''  # input buffer
+lastline = u''  # input buffer's last line
+is_break = False  # is break key pressed?
+effects = set()  # state effects set
+ct = dict()  # color table (contains colors)
+cmap = list()  # color map (contains coloring rules)
+pause = 0  # if true, then coloring is paused
 pastepause_needed = False  # switch for turning off coloring while pasting multiple lines
-pastepause = False         # while pasting multiple lines, turn off coloring
-pasteguard = False         # While pasting, catch errors and stop pasting
-pastebuffer = list()       # Buffer containing remaining lines to paste
-debug = 0                  # global debug (D: hidden command)
-timeout = 0                # counts timeout
-timeoutact = True          # act on timeout warning
-maxtimeout = 0             # maximum timeout (0 turns off this feature)
-interactive = False        # signal to buffering
-prevents = 0               # counts timeout prevention
-maxprevents = 0            # maximum number of timeout prevention (0 turns this off)
-RUNNING = True             # signal to timeoutcheck
-WORKING = True             # signal to timeoutcheck
-PASTING = False            # signal that pasting is in progress
-bufferlock = threading.Lock()
-pastelock = threading.Lock()
-plugins = None             # all active plugins
-highlight = re.compile("") # highlight pattern
+pastepause = False  # while pasting multiple lines, turn off coloring
+pasteguard = False  # While pasting, catch errors and stop pasting
+pastebuffer = list()  # Buffer containing remaining lines to paste
+debug = 0  # global debug (D: hidden command)
+timeout = 0  # counts timeout
+timeoutact = True  # act on timeout warning
+maxtimeout = 0  # maximum timeout (0 turns off this feature)
+interactive = False  # signal to buffering
+prevents = 0  # counts timeout prevention
+maxprevents = 0  # maximum number of timeout prevention (0 turns this off)
+RUNNING = True  # signal to timeoutcheck
+WORKING = True  # signal to timeoutcheck
+PASTING = False  # signal that pasting is in progress
+bufferlock = threading.Lock()  # lock charbuffer for read/write
+pastelock = threading.Lock()  # lock pastebuffer for read/write
+plugins = None  # all active plugins
+highlight = re.compile("")  # highlight pattern
 # Interactive regex matches for
 # - prompt (asd# ) (all)
 # - question ([yes]) (cisco)
@@ -368,7 +368,10 @@ def ifilter(inputtext):
 def ofilter(inputtext):
     """
     This function manipulate output text.
+    :type inputtext: bytes
+    :type testrun: bool
     :param inputtext: UTF-8 encoded text to manipulate
+    :param testrun: upon testrun we don't care about dependencies
     :return: byte array of manipulated input. Type is expected by pexpect!
     """
     global charbuffer
@@ -820,7 +823,7 @@ def main(argv=None):
 Usage: clicol-{telnet|ssh} [--c {colormap}] [--cfgdir {dir}] [--caption {caption}] [args]
 Usage: clicol-file         [--c {colormap}] [--cfgdir {dir}] {inputfile}
 Usage: clicol-cmd          [--c {colormap}] [--cfgdir {dir}] {command} [args]
-Usage: clicol-test         [--c {colormap}] [--cfgdir {dir}] {colormap regex name (e.g.: '.*' or 'cisco_if|juniper_if')}
+Usage: clicol-test         [--c {colormap}] [--cfgdir {dir}] [--plugins] {colormap regex (.*, common.*, etc)}
 
 Usage while in session
 Press break key CTRL-\\""")
