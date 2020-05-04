@@ -73,6 +73,8 @@ bufferlock = threading.Lock()  # lock charbuffer for read/write
 pastelock = threading.Lock()  # lock pastebuffer for read/write
 plugins = None  # all active plugins
 highlight = re.compile("")  # highlight pattern
+rows = 0
+cols = 0
 # Interactive regex matches for
 # - prompt (asd# ) (all)
 # - question ([yes]) (cisco)
@@ -105,7 +107,25 @@ def sigint_handler(sig, data):
         sys.exit(0)
 
 
+# noinspection PyUnusedLocal
+def sigwinch_passthrough(sig, data):
+    """
+    Update known window size for proper text wrapping
+    parameters are not used but signal handler passes them!
+    :param sig: getting this signal from terminal
+    :param data: getting this data from signal handling
+    """
+    global conn, rows, cols
+
+    rows, cols = getterminalsize()
+    if conn:
+        conn.setwinsize(rows, cols)
+
+
+# Set signal handler for CTRL-C
 signal.signal(signal.SIGINT, sigint_handler)
+# Set signal handler for window resizing
+signal.signal(signal.SIGWINCH, sigwinch_passthrough)
 
 
 def timeoutcheck(maxwait=0.3):
@@ -122,6 +142,7 @@ def timeoutcheck(maxwait=0.3):
     global conn
     global effects
     global pasteguard, pastebuffer, pastelock
+    global rows, cols
 
     timeout = time.time()
     while RUNNING:
@@ -159,11 +180,12 @@ def timeoutcheck(maxwait=0.3):
                 while len(lines) > 0:
                     if effects.intersection({'paste_error', 'paste_abort'}):
                         conn.send("\r")
-                        print("\r", " " * 100, "\r", colorize("Paste " +
-                                                              ("error" if 'paste_error' in effects else "aborted") +
-                                                              " at line %s: %s" %
-                                                              (lineno, line.decode('utf-8', errors='ignore'))), sep="")
-                        pastebuffer = list()
+                        print("\r", " " * cols, "\r", colorize("!CLICOL - Paste " +
+                                                               ("error" if 'paste_error' in effects else "aborted") +
+                                                               " at line %s: %s" %
+                                                               (lineno, line.decode('utf-8', errors='ignore'))), sep="",
+                              end='')
+                        pastebuffer = []
                         effects.discard('paste_error')
                         effects.discard('paste_abort')
                         break
@@ -173,19 +195,6 @@ def timeoutcheck(maxwait=0.3):
                     if debug >= 1: print("\r\n\033[38;5;208meffects:%s-PASTE-%s\033[0m\r\n" % (effects, line))  # DEBUG
                     time.sleep(maxwait)
             PASTING = False
-
-
-def sigwinch_passthrough(sig, data):
-    """
-    Update known window size for proper text wrapping
-    parameters are not used but signal handler passes them!
-    :param sig: getting this signal from terminal
-    :param data: getting this data from signal handling
-    """
-    global conn
-
-    rows, cols = getterminalsize()
-    conn.setwinsize(rows, cols)
 
 
 def preventtimeout():
@@ -498,6 +507,7 @@ def main(argv=None):
     global RUNNING
     global plugins
     global highlight
+    global rows, cols
 
     regex = ""
     plugintestrun = False
@@ -741,8 +751,6 @@ def main(argv=None):
                     print("\033]2;%s\007" % caption, end='')
                     break
             conn = pexpect.spawn(cmd, args, timeout=1)
-            # Set signal handler for window resizing
-            signal.signal(signal.SIGWINCH, sigwinch_passthrough)
             # Set initial terminal size
             rows, cols = getterminalsize()
             conn.setwinsize(rows, cols)
@@ -768,7 +776,7 @@ def main(argv=None):
                 conn.interact(escape_character='\x1c' if PY3 else b'\x1c', output_filter=ofilter, input_filter=ifilter)
                 if is_break:
                     is_break = False
-                    print("\r" + " " * 100 +
+                    print("\r" + " " * cols +
                           "\rCLICOL: q:quit,p:pause,g:pasteguard,T:highlight,F1-12,SF1-8:shortcuts,h-help", end='')
                     command = getcommand()
                     if command == "D":
@@ -782,7 +790,7 @@ def main(argv=None):
                         conn.close()
                         break
                     elif command == "T":
-                        highlight = getregex()
+                        highlight = getregex(cols)
                         cmap_highlight = [False, 0, "", "", highlight,
                                           dict(ctfile.items('colortable'))['highlight'] + r"\1" +
                                           dict(ctfile.items('colortable'))['default'], 0, 0, 'user_highlight']
@@ -801,7 +809,7 @@ def main(argv=None):
                     elif command in plugins.keybinds.keys():
                         plugins.keybinds[command].plugin_command(command)
 
-                    print("\r" + " " * 100 + "\r" + colorize(lastline, {"prompt"}), end='')  # restore last line/prompt
+                    print("\r" + " " * cols + "\r" + colorize(lastline, {"prompt"}), end='')  # restore last line/prompt
 
                     if command is not None:
                         for (key, value) in shortcuts:
