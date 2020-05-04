@@ -93,6 +93,7 @@ INTERACT = re.compile(r"(?i)^("  # START of whole line matches
                       flags=re.S)
 
 
+# noinspection PyUnusedLocal
 def sigint_handler(sig, data):
     """
     Handle SIGINT (CTRL-C) inside clicol. If spawned connection is alive, do not exit.
@@ -723,7 +724,7 @@ def main(argv=None):
             print("Error opening " + argv[1])
             raise
         for line in f:
-            # convert to CRLF to support files created in linux
+            # noinspection PyTypeChecker
             print(ofilter(line.encode('utf-8', 'ignore')).decode() if PY3
                   else ofilter(line), end='')
         f.close()
