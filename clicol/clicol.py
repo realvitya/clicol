@@ -181,11 +181,10 @@ def timeoutcheck(maxwait=0.3):
                 while len(lines) > 0:
                     if effects.intersection({'paste_error', 'paste_abort'}):
                         conn.send("\r")
-                        print("\r", " " * cols, "\r", colorize("!CLICOL - Paste " +
+                        print("\r", " " * cols, "\r", colorize("#CLICOL - Paste " +
                                                                ("error" if 'paste_error' in effects else "aborted") +
                                                                " at line %s: %s" %
-                                                               (lineno, line.decode('utf-8', errors='ignore'))), sep="",
-                              end='')
+                                                               (lineno, line.decode('utf-8', errors='ignore'))), sep="")
                         pastebuffer = []
                         effects.discard('paste_error')
                         effects.discard('paste_abort')
