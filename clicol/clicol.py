@@ -52,13 +52,13 @@ charbuffer = u''  # input buffer
 lastline = u''  # input buffer's last line
 is_break = False  # is break key pressed?
 effects = set()  # state effects set
-ct = dict()  # color table (contains colors)
-cmap = list()  # color map (contains coloring rules)
+ct = {}  # color table (contains colors)
+cmap = []  # color map (contains coloring rules)
 pause = 0  # if true, then coloring is paused
 pastepause_needed = False  # switch for turning off coloring while pasting multiple lines
 pastepause = False  # while pasting multiple lines, turn off coloring
 pasteguard = False  # While pasting, catch errors and stop pasting
-pastebuffer = list()  # Buffer containing remaining lines to paste
+pastebuffer = []  # Buffer containing remaining lines to paste
 debug = 0  # global debug (D: hidden command)
 timeout = 0  # counts timeout
 timeoutact = True  # act on timeout warning
@@ -673,7 +673,7 @@ def main(argv=None):
         # Print starttime:
         print("Starttime: %s s" % (round(time.time() - starttime, 3)))
         # Sanity check on colormaps
-        cmbuf = list()
+        cmbuf = []
         for cm in cmap:
             # search for duplicate patterns
             if cm[4] in cmbuf:
