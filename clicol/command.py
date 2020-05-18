@@ -131,8 +131,8 @@ def getcommand():
     return cmd
 
 
-def getregex():
-    regexstr = input("\r" + " " * 100 + "\rHighlight regex: ")
+def getregex(cols=80):
+    regexstr = input("\r" + " " * cols + "\rHighlight regex: ")
     if not PY3:
         regexstr = regexstr.decode('utf-8')
     try:
@@ -160,8 +160,7 @@ def getterminalsize():
     def ioctl_GWINSZ(fd):
         try:
             import fcntl, termios, struct, os
-            cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,
-                                                 '1234'))
+            cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
         except:
             return
         return cr

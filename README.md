@@ -38,12 +38,13 @@ Available command line option for clicol:<BR>
 `clicol-{telnet|ssh} [--c {colormap}] [--cfgdir {dir}] [--caption {caption}] [args]`<BR>
 `clicol-file         [--c {colormap}] [--cfgdir {dir}] {inputfile}`<BR>
 `clicol-cmd          [--c {colormap}] [--cfgdir {dir}] {command} [args]`<BR>
-`clicol-test         [--c {colormap}] [--cfgdir {dir}] {colormap regex name (e.g.: '.*' or 'cisco_if|juniper_if')}`
+`clicol-test         [--c {colormap}] [--cfgdir {dir}] [--plugins] {colormap regex (.*, common.*, etc)}`
 
 Explanation for arguments:<BR>
 `--c {colormap}` : use only specified colormap (`all`, `common`, `cisco`, `juniper`) Defaulted to `all`<BR>
 `--cfgdir {dir}` : use specified config directory. Defaulted to `~/.clicol`<BR>
-`--caption {caption}`: use this caption template (you can use `%(host)s` for connected device and `%(hostname)s` for actual host name) Defaulted to `%(host)s`
+`--caption {caption}`: use this caption template (you can use `%(host)s` for connected device and `%(hostname)s` for actual host name) Defaulted to `%(host)s`<BR>
+`--plugins`: run also plugin tests
 
 clicol can be run on Windows in [cygwin](https://www.cygwin.com). If you want to use [SecureCRT](https://www.vandyke.com/products/securecrt), you must enable sshd in [cygwin](https://www.cygwin.com) and connect to localhost. It is not necessary to be administrator on the desktop for this to work. You must bind to localhost and use port number >1024.
 
@@ -53,6 +54,7 @@ Default break key is CTRL-\
 
 After hitting the break key you have some options:<BR>
 p - pausing coloring<BR>
+g - toggle pasteguard<BR>
 q - quit from session<BR>
 h - print help<BR>
 T - highlight regex (set regex in runtime to highligh something important)
@@ -66,6 +68,21 @@ F1-F12 keys are shortcuts for various commands. Examples are in example config f
 Consider using aliases. A basic template can be found in *doc* folder.
 
 Your terminal software should support ANSI colors. [Putty](https://www.chiark.greenend.org.uk/~sgtatham/putty/)/[SecureCRT](https://www.vandyke.com/products/securecrt) are tested. I am developing with default colorsets. If you are using other software, colors can differ somewhat.
+
+FEATURES
+--------
+A bit more detail on the builtin features. All features are available in the session when pressing CTRL-\ break keysequence.
+
+1. Pause coloring<br>
+This feature turns off all modifications and features on the output. The only available feature which continues working is the break key CTRL-\ .
+You can toggle it by hitting the command.
+2. Pasteguard<br>
+This feature tries to prevent you from pasting configuration with errors. It will stop pasting when device return errors.
+You can also stop pasting by hitting CTRL-C.<br>
+*Note: error detection is through matchers which provides paste_error effect. You can add your own!*
+3. Highlight<br>
+This feature allows you to search for a given text snippet by specifying a regex. The specified text will be highlighted
+in the output. Useful if you are searching for something in a large output. It will catch your eyes!
 
 TESTING
 -------
@@ -89,6 +106,10 @@ List only certain matchers:
 Then the desired regex can be specified in the clicol.cfg in your $HOME and only these matchers will be used.
 
 Output can be tested by running `clicol-file {filename}` script. This will colorize the textfile and dump it. Good for testing.
+
+Plugins can be tested by calling with `--plugins` argument:
+
+`clicol-test --plugins`
 
 CUSTOMIZING
 -----------
