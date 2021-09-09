@@ -36,7 +36,6 @@ import timeit
 import threading
 import time
 import signal
-from functools import lru_cache
 from heapq import heappush, heappop
 from socket import gethostname
 from pkg_resources import resource_filename
@@ -234,7 +233,6 @@ T: [%s] highlight regex (empty turns off)""" % ("On" if pause else "Off", "On" i
         print("%s: \"%s\"" % (key.upper(), value.strip(r'"')))
 
 
-@lru_cache(maxsize=1024)
 def colorize(text, only_effect=None, matchers_only=False):
     """
     This function is manipulating input text
@@ -247,7 +245,7 @@ def colorize(text, only_effect=None, matchers_only=False):
     :return: manipulated text
     """
     if only_effect is None:
-        only_effect = frozenset()
+        only_effect = []
     global effects, cmap, conn, timeoutact, plugins, debug
     colortext = ""
     backupline = ""
@@ -415,13 +413,12 @@ def ofilter(inputtext, testrun=False):
 
     bufferlock.acquire()  # we got input, have to access buffer exclusively
     WORKING = True
-    pastingcolors = frozenset({'prompt', 'paste_error'}) if PASTING else None
+    pastingcolors = {'prompt', 'paste_error'} if PASTING else None
     try:
         # If not ending with linefeed we are interacting or buffering
         if not (inputtext[-1] == "\r" or inputtext[-1] == "\n"):
             # collect the input into buffer
             charbuffer += inputtext
-            if debug: print("\r\n\033[38;5;208mC-", colorize.cache_info(), "\033[0m\r\n")  # DEBUG
             if debug: print("\r\n\033[38;5;208mI-", repr(inputtext), "\033[0m\r\n")  # DEBUG
             lastline = charbuffer.splitlines(True)[-1]
             if debug: print("\r\n\033[38;5;208mL-", repr(lastline), "\033[0m\r\n")  # DEBUG
@@ -433,7 +430,7 @@ def ofilter(inputtext, testrun=False):
                     lastline[0] != "\a" and lastline[0] != "\b") and inputtext == lastline:
                 bufout = charbuffer
                 charbuffer = ""
-                return colorize(bufout, frozenset({"prompt"})).encode('utf-8')
+                return colorize(bufout, {"prompt"}).encode('utf-8')
             if INTERACT.search(lastline):  # prompt or question at the end
                 if debug: print("\r\n\033[38;5;208mINTERACT/effects:", repr(effects), "\033[0m\r\n")  # DEBUG
                 bufout = charbuffer
@@ -458,7 +455,7 @@ def ofilter(inputtext, testrun=False):
                 elif interactive or 'prompt' in effects or 'ping' in effects:
                     charbuffer = ""
                     # colorize only short stuff (up key,ping)
-                    return colorize(bufout, frozenset({"prompt", "ping"})).encode('utf-8')
+                    return colorize(bufout, {"prompt", "ping"}).encode('utf-8')
                 else:  # need to collect more output
                     return b""
             else:  # large data. we need to print until last line which goes into buffer
@@ -477,7 +474,7 @@ def ofilter(inputtext, testrun=False):
             bufout = charbuffer + inputtext
             charbuffer = ""
             if testrun:
-                pastingcolors = frozenset({'all'})
+                pastingcolors = {'all'}
             bufout = colorize(bufout, pastingcolors).encode('utf-8')
             # Ignore prompt in input
             effects.discard('prompt')
@@ -812,7 +809,7 @@ def main(argv=None):
                     elif command in plugins.keybinds.keys():
                         plugins.keybinds[command].plugin_command(command)
 
-                    print("\r" + " " * cols + "\r" + colorize(lastline, frozenset({"prompt"})), end='')  # restore last line/prompt
+                    print("\r" + " " * cols + "\r" + colorize(lastline, {"prompt"}), end='')  # restore last line/prompt
 
                     if command is not None:
                         for (key, value) in shortcuts:
