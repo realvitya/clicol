@@ -697,7 +697,7 @@ def main(argv=None):
                 try:
                     # search for dirty patterns
                     match_in_regex = re.findall(r'(?<!\\)\((?!\?)', test_d['regex'].replace(r'%(BOS)s', ''))
-                    match_in_replace = re.findall(r'(?<!\\)\\[0-9](?![0-9])', test_d['replacement'])
+                    match_in_replace = re.findall(r'(?<!\\)\\[1-9][0-9]*(?![0-9])', test_d['replacement'])
 
                     outtext = ofilter(('%s\n' % test_d['example'].replace('\'', '')).encode('utf-8'), testrun=True)
                     if PY3:
