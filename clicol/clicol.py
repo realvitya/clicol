@@ -578,9 +578,9 @@ def main(argv=None):
         'SF7': r'',
         'SF8': r'', }
     try:
-        config = configparser.SafeConfigParser(default_config, allow_no_value=True)
+        config = configparser.ConfigParser(default_config, allow_no_value=True)
     except TypeError:
-        config = configparser.SafeConfigParser(default_config)  # keep compatibility with pre2.7
+        config = configparser.ConfigParser(default_config)  # keep compatibility with pre2.7
     starttime = time.time()
     config.add_section('clicol')
     #  Read config in this order (last are the lastly read, therefore it overrides everything set before)
@@ -588,7 +588,7 @@ def main(argv=None):
                  os.path.expanduser('~/clicol.cfg')])
     terminal = config.get('clicol', 'terminal')
     plugincfgfile = config.get('clicol', 'plugincfg')
-    plugincfg = configparser.SafeConfigParser()
+    plugincfg = configparser.ConfigParser()
     plugincfg.read([os.path.expanduser(plugincfgfile)])
 
     shortcuts = [o_v for o_v in config.items('clicol') if
@@ -612,12 +612,12 @@ def main(argv=None):
     pasteguard = config.getboolean('clicol', 'pasteguard')
     debug = config.getint('clicol', 'debug')
 
-    colors = configparser.SafeConfigParser()
+    colors = configparser.ConfigParser()
     colors.read([resource_filename(__name__, 'ini/colors_' + terminal + '.ini'),
                  os.path.expanduser(cfgdir + '/clicol_customcolors.ini'),
                  os.path.expanduser('~/clicol_customcolors.ini')])
 
-    ctfile = configparser.SafeConfigParser(dict(colors.items('colors')))
+    ctfile = configparser.ConfigParser(dict(colors.items('colors')))
     del colors
     if cct == "dbg_net" or cct == "lbg_net":
         ctfile.read(
@@ -649,7 +649,7 @@ def main(argv=None):
             ct[key] = value.decode('unicode_escape')
     except AttributeError:
         pass
-    cmaps = configparser.SafeConfigParser(merge_dicts(ct, default_cmap))
+    cmaps = configparser.ConfigParser(merge_dicts(ct, default_cmap))
     if len(regex) == 0:
         regex = config.get('clicol', 'regex')
     if regex == "all":
