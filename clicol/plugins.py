@@ -1,9 +1,4 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-
-import sys
-from pkg_resources import iter_entry_points
-PY3 = sys.version_info.major == 3
+from ._compat import iter_entry_points
 
 
 class Plugins:
@@ -93,4 +88,4 @@ class Plugins:
                 inputtext += "\r\n" * 2
             except AttributeError:
                 pass
-        return inputtext.encode('utf-8').decode('unicode_escape') if PY3 else inputtext
+        return inputtext.encode('utf-8').decode('unicode_escape')

@@ -1,20 +1,14 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import input
 import re
-import sys
 try:
     import readline
 except ImportError:
     pass
 
-PY3 = sys.version_info.major == 3
-
 
 def getchar():
     """
     Read a single character from terminal
-    :return: read character as unicode string
+    :return: read character as a string
     """
     # figure out which function to use once, and store it in _func
     if "_func" not in getchar.__dict__:
@@ -133,8 +127,6 @@ def getcommand():
 
 def getregex(cols=80):
     regexstr = input("\r" + " " * cols + "\rHighlight regex: ")
-    if not PY3:
-        regexstr = regexstr.decode('utf-8')
     try:
         output = re.compile('(' + regexstr + ')')
     except re.error:

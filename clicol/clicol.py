@@ -16,17 +16,8 @@
     If you need to contact the author, you can do so by emailing:
     vkertesz2 [~at~] gmail [dot] com
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
-try:
-    #  python3
-    import configparser
-except ImportError:
-    #  python2
-    import ConfigParser as configparser
+import configparser
 
 import os
 import sys
@@ -38,7 +29,7 @@ import time
 import signal
 from heapq import heappush, heappop
 from socket import gethostname
-from pkg_resources import resource_filename
+from ._compat import read_config_resource
 from .command import getcommand
 from .command import getregex
 from .command import getterminalsize
@@ -46,10 +37,9 @@ from .plugins import Plugins
 from .__init__ import __version__
 
 # Global variables
-PY3 = sys.version_info.major == 3
 conn = None  # connection handler
-charbuffer = u''  # input buffer
-lastline = u''  # input buffer's last line
+charbuffer = ''  # input buffer
+lastline = ''  # input buffer's last line
 is_break = False  # is break key pressed?
 effects = set()  # state effects set
 ct = {}  # color table (contains colors)
@@ -250,11 +240,7 @@ def colorize(text, only_effect=None, matchers_only=False):
     colortext = ""
     backupline = ""
     start = timeit.default_timer()
-    # Run preprocessors. Ugly workaround to maintain py2_py3
-    try:
-        text = plugins.preprocess(text, effects)
-    except UnicodeDecodeError:
-        pass
+    text = plugins.preprocess(text, effects)
 
     for line in text.splitlines(True):
         cmap_counter = 0
@@ -402,11 +388,7 @@ def ofilter(inputtext, testrun=False):
     if pause:
         return inputtext
 
-    # Normalize input. py2_py3
-    try:
-        inputtext = inputtext.decode('utf-8', errors='ignore')
-    except AttributeError:
-        pass
+    inputtext = inputtext.decode('utf-8', errors='ignore')
 
     if pastepause:
         return colorize(inputtext, matchers_only=True).encode('utf-8')
@@ -488,7 +470,7 @@ def ofilter(inputtext, testrun=False):
 
 def merge_dicts(x, y):
     """
-    Merge two dicts. Needed only because of compatibility
+    Merge two dicts, with values in y overriding values in x.
     :param x: dict1
     :param y: dict2
     :return: dict1 and dict2 merged together
@@ -577,10 +559,7 @@ def main(argv=None):
         'SF6': r'',
         'SF7': r'',
         'SF8': r'', }
-    try:
-        config = configparser.ConfigParser(default_config, allow_no_value=True)
-    except TypeError:
-        config = configparser.ConfigParser(default_config)  # keep compatibility with pre2.7
+    config = configparser.ConfigParser(default_config, allow_no_value=True)
     starttime = time.time()
     config.add_section('clicol')
     #  Read config in this order (last are the lastly read, therefore it overrides everything set before)
@@ -613,15 +592,16 @@ def main(argv=None):
     debug = config.getint('clicol', 'debug')
 
     colors = configparser.ConfigParser()
-    colors.read([resource_filename(__name__, 'ini/colors_' + terminal + '.ini'),
-                 os.path.expanduser(cfgdir + '/clicol_customcolors.ini'),
+    read_config_resource(colors, 'ini/colors_' + terminal + '.ini')
+    colors.read([os.path.expanduser(cfgdir + '/clicol_customcolors.ini'),
                  os.path.expanduser('~/clicol_customcolors.ini')])
 
     ctfile = configparser.ConfigParser(dict(colors.items('colors')))
     del colors
     if cct == "dbg_net" or cct == "lbg_net":
+        read_config_resource(ctfile, 'ini/ct_' + cct + '.ini')
         ctfile.read(
-            [resource_filename(__name__, 'ini/ct_' + cct + '.ini'), os.path.expanduser(cfgdir + '/clicol_customct.ini'),
+            [os.path.expanduser(cfgdir + '/clicol_customct.ini'),
              os.path.expanduser('~/clicol_customct.ini')])
     else:
         print("No such colortable: " + cct)
@@ -644,18 +624,13 @@ def main(argv=None):
         'CLEAR': '2',
     }
     ct = dict(ctfile.items('colortable'))
-    try:
-        for key, value in ct.items():
-            ct[key] = value.decode('unicode_escape')
-    except AttributeError:
-        pass
     cmaps = configparser.ConfigParser(merge_dicts(ct, default_cmap))
     if len(regex) == 0:
         regex = config.get('clicol', 'regex')
     if regex == "all":
         regex = '.*'
     for cm in ["common", "cisco", "juniper"]:
-        cmaps.read(resource_filename(__name__, 'ini/cm_' + cm + '.ini'))
+        read_config_resource(cmaps, 'ini/cm_' + cm + '.ini')
     cmaps.read([os.path.expanduser(cfgdir + '/clicol_customcmap.ini'), os.path.expanduser('~/clicol_customcmap.ini')])
     for cmap_i in cmaps.sections():
         c = dict(cmaps.items(cmap_i))
@@ -700,8 +675,7 @@ def main(argv=None):
                     match_in_replace = re.findall(r'(?<!\\)\\[1-9][0-9]*(?![0-9])', test_d['replacement'])
 
                     outtext = ofilter(('%s\n' % test_d['example'].replace('\'', '')).encode('utf-8'), testrun=True)
-                    if PY3:
-                        outtext = outtext.decode()
+                    outtext = outtext.decode()
                     print("%s:%s" % (test, outtext))
                     if len(match_in_regex) != len(match_in_replace):
                         print(
@@ -724,8 +698,7 @@ def main(argv=None):
             raise
         for line in f:
             # noinspection PyTypeChecker
-            print(ofilter(line.encode('utf-8', 'ignore')).decode() if PY3
-                  else ofilter(line), end='')
+            print(ofilter(line.encode('utf-8', 'ignore')).decode(), end='')
         f.close()
     elif cmd == 'telnet' or cmd == 'ssh' or (cmd == 'cmd' and len(argv) > 1):
         try:
@@ -773,7 +746,7 @@ def main(argv=None):
             while conn.isalive():
                 # esc code table: http://jkorpela.fi/chars/c0.html
                 # \x1c = CTRL-\
-                conn.interact(escape_character='\x1c' if PY3 else b'\x1c', output_filter=ofilter, input_filter=ifilter)
+                conn.interact(escape_character='\x1c', output_filter=ofilter, input_filter=ifilter)
                 if is_break:
                     is_break = False
                     print("\r" + " " * cols +

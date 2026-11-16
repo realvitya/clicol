@@ -11,7 +11,7 @@ This project is to colorize output of command line interface for devices where C
 INSTALL
 -------
 
- -   You will need python 2.6+/3 and pexpect
+ -   You will need Python 3 and pexpect
  -   telnet and/or ssh should be installed
  -   I recommend installing [virtualenv](https://pypi.org/project/virtualenv) and install [clicol](https://pypi.org/project/clicol) into that virtual environment:
         *   `pip install virtualenv`
@@ -118,7 +118,7 @@ CUSTOMIZING
 
 You can override or extend the colors and regexes so you can modify default behaviour and view. This can be done by creating the customized files in the format below. You may find examples in default ini files here
 
-`ls -l $VIRTUAL_ENV/lib/python2*/site-packages/clicol/ini`
+`ls -l $VIRTUAL_ENV/lib/python3*/site-packages/clicol/ini`
 
 Default configuration directory is `$HOME/.clicol`. All configuration or plugin file should be in that directory! Configuration files in the user directory will override the .clicol directory files!
 
