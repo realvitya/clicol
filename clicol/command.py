@@ -1,4 +1,5 @@
 import re
+import sys
 try:
     import readline
 except ImportError:
